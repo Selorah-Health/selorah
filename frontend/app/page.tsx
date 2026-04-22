@@ -140,16 +140,16 @@ export default function LandingPage() {
         <div className="grid md:grid-cols-3 gap-6 mb-16">
           {[
             {
-              quote: "I was at an emergency room with my father. The nurses asked about his allergies. Nobody in the room knew the answer.",
-              author: "Chisom, 34, Enugu"
+              quote: "Our friend had an accident, was rushed to the hospital where the nurses insisted that we purchase a card before they can touch her. We lost her between the nurses' reluctance and procuring the money",
+              author: "Chisom, 34, Lagos"
             },
             {
-              quote: "I've seen the same specialist three times in two cities. None of them have ever seen what the others said.",
-              author: "Biodun, 41, Ibadan"
+              quote: "I wanted to have my baby in a different environment. Changing locations now seemed like a life-changing decision, because you would have to start over with a new doctor. New tests, injections, trying to connect or 'trust' the doctor. And I hated injections.",
+              author: "Blessing, 41, Ibadan"
             },
             {
               quote: "I travelled for surgery abroad. I spent two weeks gathering records from four hospitals before they would operate.",
-              author: "Tunde, 38, Lagos"
+              author: "Tunde, 38, Abuja"
             }
           ].map((item, i) => (
             <div key={i} className="bg-white border border-[var(--border)] p-8 rounded-2xl shadow-sm">
@@ -350,15 +350,15 @@ export default function LandingPage() {
           
           <div className="grid md:grid-cols-3 gap-8 text-left">
              <div className="bg-[var(--background)] p-8 rounded-2xl">
-               <p className="text-lg font-medium mb-6 leading-relaxed">"I was at an emergency room with my father. They asked if he had any allergies. I had no idea. That will never happen again."</p>
+               <p className="text-lg font-medium mb-6 leading-relaxed">"Now, with Selorah, all I have to do is present my QR-code to my new doctor so that they now have access to my medical history. I don&apos;t have to store and try to remember card numbers again."</p>
                <p className="text-sm font-bold text-muted">— Chisom, 34, Enugu</p>
              </div>
              <div className="bg-[var(--background)] p-8 rounded-2xl">
-               <p className="text-lg font-medium mb-6 leading-relaxed">"I've been managing my diabetes for six years across three different hospitals. For the first time, every doctor I see knows my full history."</p>
+               <p className="text-lg font-medium mb-6 leading-relaxed">"This is a masterpiece, I&apos;d say. This will reduce the mortality rate in Nigeria. Now parents can get to start storing their kids medical data, so that they have to go through the hassle we went through."</p>
                <p className="text-sm font-bold text-muted">— Biodun, 41, Ibadan</p>
              </div>
              <div className="bg-[var(--background)] p-8 rounded-2xl">
-               <p className="text-lg font-medium mb-6 leading-relaxed">"I travel for work every month. My GP in London now has exactly the same records as my doctor in Abuja. It took me twenty minutes to set up."</p>
+               <p className="text-lg font-medium mb-6 leading-relaxed">"Not only do I get to carry my medical records around, I also earn from it! This is incredible, honestly. You should try it."</p>
                <p className="text-sm font-bold text-muted">— Tunde, 38, Lagos</p>
              </div>
           </div>
