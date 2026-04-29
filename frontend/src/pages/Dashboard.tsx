@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  HomeIcon, 
-  DocumentDuplicateIcon, 
-  BeakerIcon, 
+import {
+  HomeIcon,
+  DocumentDuplicateIcon,
+  BeakerIcon,
   WalletIcon,
   MagnifyingGlassIcon,
   ArrowRightOnRectangleIcon,
@@ -119,14 +119,14 @@ export default function Dashboard() {
               {!isCollapsed && <span className="font-bold text-2xl tracking-tight">Selorah</span>}
             </div>
             <button className="text-white opacity-80 hover:opacity-100 transition-opacity" onClick={() => setIsCollapsed(!isCollapsed)}>
-               <img src="/assets/menu-closed.png" alt="M" className="w-5 h-5 object-contain" />
+              <img src="/assets/menu-closed.png" alt="M" className="w-5 h-5 object-contain" />
             </button>
           </div>
         </div>
 
         {/* Upload Section */}
         <div className={`py-6 border-b border-white/10 ${isCollapsed ? 'px-3' : 'px-5'}`}>
-          <button 
+          <button
             onClick={handleUploadClick}
             className={`w-full border-2 border-dashed border-white/30 rounded-xl py-3 flex items-center justify-center gap-3 hover:bg-white/10 transition-all ${isCollapsed ? 'px-0' : ''}`}
             title="Upload Record"
@@ -139,7 +139,7 @@ export default function Dashboard() {
         {/* Nav Section */}
         <nav className={`flex-1 py-4 space-y-1 overflow-y-auto scrollbar-hide ${isCollapsed ? 'px-3' : 'px-3'}`}>
           {menuItems.map((item) => (
-            <button 
+            <button
               key={item.name}
               onClick={() => setActiveTab(item.name)}
               title={item.name}
@@ -154,11 +154,11 @@ export default function Dashboard() {
         {/* Bottom Section with Logout */}
         <div className="mt-auto border-t border-white/10 pt-6 pb-6">
           <div className={`mb-6 flex items-center gap-3 ${isCollapsed ? 'justify-center px-0 flex-col' : 'px-5'}`}>
-            <div className="relative shrink-0 w-12 h-12 rounded-full flex items-center justify-center p-[2px]" style={{ backgroundImage: "url('/assets/custom-profile-icon-ring.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
-               <div className={`w-full h-full rounded-full ${avatarGradient}`}></div>
-               <div className={`absolute ${isCollapsed ? '-bottom-2' : '-bottom-1 -right-2'} bg-[#DCE4FF] text-[#6183FF] text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm whitespace-nowrap z-10`}>
-                  PRO
-               </div>
+            <div className="relative shrink-0 w-12 h-12 rounded-full flex items-center justify-center p-[2px] shadow-sm" style={{ backgroundImage: "url('/assets/custom-profile-icon-ring.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <div className={`w-full h-full rounded-full ${avatarGradient}`}></div>
+              <div className={`absolute ${isCollapsed ? '-bottom-2' : '-bottom-1 -right-2'} bg-[#DCE4FF] text-[#6183FF] text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm whitespace-nowrap z-10`}>
+                PRO
+              </div>
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
@@ -167,9 +167,9 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          
+
           <div className={`${isCollapsed ? 'px-3' : 'px-5'}`}>
-            <button 
+            <button
               onClick={handleLogout}
               title="Logout"
               className={`w-full bg-[#83A0FF] py-3 rounded-full flex items-center justify-center gap-3 hover:bg-white/30 transition-all font-bold text-base text-white shadow-sm ${isCollapsed ? 'px-0' : ''}`}
@@ -190,39 +190,55 @@ export default function Dashboard() {
               <Bars3Icon className="w-6 h-6" />
             </button>
             <h1 className="text-2xl font-bold text-[#101217] tracking-tight">
-              {activeTab === 'Home' ? 'Dashboard' : 
-               activeTab === 'Records' ? 'Medical Records' : 
-               activeTab === 'Research' ? 'Research' : 
-               activeTab === 'Earnings' ? 'Earnings' : 
-               activeTab === 'Profile' ? 'Profile & Settings' : 'Dashboard'}
+              {activeTab === 'Home' ? 'Dashboard' :
+                activeTab === 'Records' ? 'My Medical Records' :
+                  activeTab === 'Research' ? 'Research' :
+                    activeTab === 'Earnings' ? 'My Earnings' :
+                      activeTab === 'Profile' ? 'Profile & Settings' : 'Dashboard'}
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-6">
             <div className="relative hidden md:block w-[320px]">
               <MagnifyingGlassIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Search for records..." 
+              <input
+                type="text"
+                placeholder="Search for records..."
                 className="w-full bg-transparent border border-gray-200 rounded-full py-2.5 pl-12 pr-6 text-sm focus:outline-none focus:border-[#6183FF] transition-all placeholder:text-gray-300 font-medium"
               />
             </div>
-            
-            <div className="flex items-center gap-3">
-              <button onClick={() => alert('Notifications')} className="w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-sm border border-gray-50 relative">
-                <div className="w-6 h-6 rounded-full border border-[#6183FF]/30 flex items-center justify-center p-[3px]">
-                  <img src="/assets/custom-notification-icon.png" alt="N" className="w-full h-full object-contain" />
-                </div>
-                <div className="absolute top-[8px] right-[10px] w-2 h-2 bg-[#6183FF] rounded-full border-2 border-white"></div>
+
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => alert('Notifications')}
+                className="w-12 h-12 flex items-center justify-center bg-white rounded-full 
+  shadow-[0_8px_24px_-6px_rgba(97,131,255,0.4)] 
+  border border-[#6183FF]/30 
+  hover:scale-105 transition-transform relative"
+              >
+                <img
+                  src="/assets/custom-notification-icon.png"
+                  alt="N"
+                  className="w-7 h-7 object-contain drop-shadow-sm"
+                />
+                <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-[#6183FF] rounded-full border-2 border-white"></div>
               </button>
-              
-              <button onClick={() => alert('QR Code Scanner')} className="w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-sm border border-gray-50">
-                <div className="w-6 h-6 rounded-full border border-[#6183FF]/30 flex items-center justify-center p-[4px]">
-                  <img src="/assets/custom-qr-code-icon.png" alt="Q" className="w-full h-full object-contain" />
-                </div>
+
+              <button
+                onClick={() => setActiveTab('QRCodes')}
+                className="w-12 h-12 flex items-center justify-center bg-white rounded-full 
+  shadow-[0_8px_24px_-6px_rgba(97,131,255,0.4)] 
+  border border-[#6183FF]/30 
+  hover:scale-105 transition-transform"
+              >
+                <img
+                  src="/assets/custom-qr-code-icon.png"
+                  alt="Q"
+                  className="w-7 h-7 object-contain drop-shadow-sm"
+                />
               </button>
-              
-              <button onClick={() => setActiveTab('Profile')} className="relative">
+
+              <button onClick={() => setActiveTab('Profile')} className="relative ml-2">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center p-[2px] shadow-sm relative" style={{ backgroundImage: "url('/assets/custom-profile-icon-ring.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
                   <div className={`w-full h-full rounded-full ${avatarGradient}`}></div>
                 </div>
@@ -231,6 +247,7 @@ export default function Dashboard() {
                 </div>
               </button>
             </div>
+
           </div>
         </header>
 
@@ -324,8 +341,8 @@ export default function Dashboard() {
                     <div className="h-[140px] flex items-end justify-between gap-3">
                       {[40, 70, 90, 60, 95, 45].map((h, i) => (
                         <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-                           <div className={`w-full rounded-md ${i === 5 ? 'bg-[#6183FF]' : 'bg-[#6183FF]/10'}`} style={{ height: `${h}%` }}></div>
-                           <span className="text-[9px] text-gray-400 font-bold uppercase">{['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'][i]}</span>
+                          <div className={`w-full rounded-md ${i === 5 ? 'bg-[#6183FF]' : 'bg-[#6183FF]/10'}`} style={{ height: `${h}%` }}></div>
+                          <span className="text-[9px] text-gray-400 font-bold uppercase">{['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'][i]}</span>
                         </div>
                       ))}
                     </div>
@@ -339,7 +356,7 @@ export default function Dashboard() {
             <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-10 min-h-[400px]">
               <h2 className="text-2xl font-bold text-[#101217] mb-6">Medical Records Management</h2>
               <p className="text-gray-500 mb-8">View, manage, and upload your medical history.</p>
-              
+
               <div className="divide-y divide-gray-50">
                 {records.map((record) => (
                   <div key={record.id} className="flex items-center justify-between py-5 first:pt-0 last:pb-0 hover:bg-gray-50 px-4 rounded-xl transition-colors cursor-pointer">
