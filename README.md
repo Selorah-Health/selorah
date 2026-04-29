@@ -5,9 +5,9 @@
 
   **Your health story, everywhere you go.**
 
-  [**View Live Application**](http://localhost:3000/)
+  [**View Live Application**](http://selorah.vercel.app/)
 
-  [𝕏 (@selorahealth)](https://x.com/selorahealth) • [LinkedIn (Selorah Health)](https://www.linkedin.com/in/selorahealth/) • [GitHub](https://github.com/Selorah-Health)
+  [𝕏 (@selorahealth)](https://x.com/selorahealth) • [LinkedIn (Selorah Health)](https://www.linkedin.com/company/selorahealth/) • [GitHub](https://github.com/Selorah-Health)
 
   ---
 </div>
@@ -32,5 +32,5 @@ This repository is architected as a **Turborepo** separating concerns into disti
 
 ---
 <div align="center">
-  <i>Built with ❤️ by the Selorah Team</i>
+  <i>Built with ❤️ by Selorah Health Limited </i>
 </div>
