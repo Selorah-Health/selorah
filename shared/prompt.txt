@@ -2,7 +2,7 @@ Install @heroicons/react if not present.
 
 Replace ALL lucide-react icons and emojis.
 
-FIX build errors
+FIX (vercel or netlify) build errors
 
 For the navbar and the hero section, little changes has to be made.
 
