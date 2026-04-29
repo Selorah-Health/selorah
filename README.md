@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./frontend/public/assets/logo.png" alt="Selorah Health Logo" width="150" />
+  <img src="./frontend/public/logo.png" alt="Selorah Health Logo" width="150" />
 
   # Selorah Health
 
