@@ -1,43 +1,14 @@
-Install @heroicons/react if not present. 
+change the project from NextJS to ReactJS. leave the typescript, heroicons, tailwindcss and other dependencies.
 
-Replace ALL lucide-react icons and emojis.
+but it has to be reactjs.
 
-FIX (vercel or netlify) build errors
+make sure the dashboards look exactly like "shared/5.png" and "shared/6.png". the colors, layouts, fonts, images.
 
-For the navbar and the hero section, little changes has to be made.
+for fonts, icons, or images check the "public/assets/" folder.
 
-let the hero section, be IDENTICAL to the first image in the "/sselorah1/shared" folder. the next slide should be identical to the second image in the "/sselorah1/shared" folder. the "next-slide-preview" card (bottom-right) card will always slide up (or slide in) from below when the section loads...
+DO NOT USE EMOJIS.
 
-The background is supposed to be a video... (you would locate this videos in "\frontend\public\assets\hero-bg-video-1.mp4" for the first slide, and "\frontend\public\assets\hero-bg-video-2.mp4" for the second one."
+create a custom 404 page.
+create a login and signup page that should match the layout of the image in "/shared/7.png"
 
-in the "next-slide-preview" card replace the preview image with a video. that means, for every slide, there will be two videos (the hero background video, and the next slide's preview image.
-
-if the "next story" button (in the "next-slide-preview" card) is clicked, it will lead to the next slide.
-each slide will slide in from the right. will the previous slide will slide out in the opposite direction.
-
-notice, the navbar. there are 7 navlinks, and this is how they are to be routed:
-
-"how it works" is already routed properly.
-"for hospitals" should lead to the "hospitals and clinics" card in the "built for everyone" section. same with the "for researchers" and "for insurers" link.
-
-the remaining two links at the end, should be "log in" and "join waitlist" buttons.
-
-create a pricing page. explaining why patients have to pay for the subscription, and how much hospitals will have to pay per scan and researchers, and insurers would benefit if they join the platform.
-
-add a price comparison table below.
-
-make the "join waitlist" button functional. it shouldn't lead to another page. it should bring up a modal when clicked.
-
-when users put in their emails, they get a success message, like: "congratulations [email address], you're in! 🎉". 
-
-for the avatar-badge section below/underneath the hero section, there's been a custom avatar badge image already. Just use that. don't duplicate it! it's already 5-in-1. just make it large just the way it is in the 3rd image above.
-
-the image should be large enough. then the "Building across Africa — join the early wave" should be below it and a big "join the waitlist" button.
-
-the footer needs to look like the fourth image. the exact layout.
-
-the dashboard should look exactly like the 5th and 6th images. the layouts, texts, icons etcetera. give me the exact replica of the 5th image. make all the buttons functional.
-
-the images I'm referring to are stored in the "/sselorah1/shared" folder.
-
-You're an expert so let's see if you can do all this in the next, 40 minutes. Your time starts now!
+for the landing page (hero section), make it responsive.
