@@ -2,10 +2,10 @@ import LegalLayout from '../components/LegalLayout';
 
 export default function Careers() {
   return (
-    <LegalLayout title="Careers">
+    <LegalLayout title="Careers" className="text-primary">
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Hero Section */}
-        <div className="text-center mb-16">
+        <div className="mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
             Join the Revolution
           </h1>
