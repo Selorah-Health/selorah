@@ -4,10 +4,11 @@ import { Link } from 'react-router-dom';
 export default function About() {
   return (
     <div className="min-h-screen bg-white font-sora">
+      
       {/* Hero Section */}
       <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden bg-[#101217]">
         <img 
-          src="/selorah_about_hero_1777556610448.png" 
+          src="/assets/hero-bg-image-1.jpg" 
           alt="Selorah Team" 
           className="absolute inset-0 w-full h-full object-cover opacity-50"
         />
