@@ -32,7 +32,7 @@ export default function Research() {
       </div>
 
       {/* Available Studies */}
-      <div className="bg-white rounded-[40px] border border-gray-50 shadow-sm p-10">
+      <div className="bg-white rounded-[40px] border border-gray-50 shadow-sm p-6 md:p-10">
         <div className="flex items-center justify-between mb-10">
           <h3 className="text-xl font-bold text-[#101217]">Recommended for You</h3>
           <button className="text-[#6183FF] font-bold text-sm flex items-center gap-2 hover:underline">

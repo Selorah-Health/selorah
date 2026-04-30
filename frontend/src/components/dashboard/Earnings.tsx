@@ -52,11 +52,11 @@ export default function Earnings() {
         ))}
       </div>
 
-      <div className="bg-white rounded-[40px] border border-gray-50 shadow-sm p-10">
-        <div className="flex items-center justify-between mb-12">
+      <div className="bg-white rounded-[40px] border border-gray-50 shadow-sm p-6 md:p-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 sm:mb-12 gap-4">
           <div className="flex items-center gap-2">
-            <h3 className="text-2xl font-bold text-[#101217]">Earnings (Last 6 months)</h3>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6 text-[#6183FF]">
+            <h3 className="text-xl md:text-2xl font-bold text-[#101217]">Earnings (Last 6 months)</h3>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 md:w-6 md:h-6 text-[#6183FF]">
               <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
             </svg>
           </div>

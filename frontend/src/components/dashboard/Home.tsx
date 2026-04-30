@@ -61,8 +61,8 @@ export default function Home({ user, records, getFormattedDate }: HomeProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-7 bg-white rounded-[32px] border border-gray-50 shadow-sm p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-7 bg-white rounded-[32px] border border-gray-50 shadow-sm p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-[#101217]">Recent Records</h3>
             <button onClick={() => navigate('/dashboard/records')} className="text-[#6183FF] font-bold text-sm flex items-center gap-1 group hover:underline">
@@ -90,7 +90,7 @@ export default function Home({ user, records, getFormattedDate }: HomeProps) {
             ))}
           </div>
         </div>
-        <div className="col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-6">
           <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-8">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold text-[#101217]">Access Log</h3>

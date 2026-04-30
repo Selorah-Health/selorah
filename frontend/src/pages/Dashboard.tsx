@@ -159,7 +159,7 @@ export default function Dashboard() {
       <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
 
       {/* Sidebar - Collapsible */}
-      <aside className={`transition-all duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[260px]'} bg-[#6183FF] text-white flex flex-col shrink-0 h-full relative z-50`}>
+      <aside className={`hidden md:flex transition-all duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[260px]'} bg-[#6183FF] text-white flex-col shrink-0 h-full relative z-50`}>
         {/* Top Section */}
         <div className={`p-6 pb-4 border-b border-white/10 ${isCollapsed ? 'px-4' : ''}`}>
           <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'}`}>
@@ -241,11 +241,8 @@ export default function Dashboard() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header - Transparent, smaller elements */}
-        <header className="h-[70px] bg-transparent flex items-center justify-between px-8 lg:px-12 shrink-0 z-10">
+        <header className="h-[70px] bg-transparent flex items-center justify-between px-4 md:px-8 lg:px-12 shrink-0 z-10">
           <div className="flex items-center gap-4">
-            <button className="lg:hidden text-[#101217]" onClick={() => setIsSidebarOpen(true)}>
-              <Bars3Icon className="w-6 h-6" />
-            </button>
             <h1 className="text-2xl font-bold text-[#101217] tracking-tight">
               {getPageTitle()}
             </h1>
@@ -300,7 +297,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-10 scrollbar-hide pt-4">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 pb-24 md:pb-8 lg:pb-12 space-y-10 scrollbar-hide pt-4">
           <Routes>
             <Route index element={<Home user={user} records={records} getFormattedDate={getFormattedDate} />} />
             <Route path="records" element={<Records records={records} handleUploadClick={handleUploadClick} />} />
@@ -319,6 +316,23 @@ export default function Dashboard() {
 
           <div className="text-center py-6 opacity-30"><p className="text-[#101217] text-[10px] font-normal">Copyright (c) 2026, Selorah Health Limited. All rights reserved.</p></div>
         </div>
+
+        {/* Mobile Bottom Nav */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex items-center justify-around px-2 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.path}
+              end={item.path === '/dashboard'}
+              className={({ isActive }) =>
+                `flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${isActive ? 'text-[#6183FF]' : 'text-gray-400 hover:text-gray-600'}`
+              }
+            >
+              <item.icon className="w-6 h-6" />
+              <span className="text-[10px] font-bold">{item.name}</span>
+            </NavLink>
+          ))}
+        </nav>
       </main>
     </div>
   );
