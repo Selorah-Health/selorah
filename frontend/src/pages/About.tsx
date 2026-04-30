@@ -43,7 +43,7 @@ export default function About() {
           </div>
           <div className="relative">
             <img 
-              src="/selorah_mission_data_1777556673003.png" 
+              src="/assets/hero-bg-image-2.jpg" 
               alt="Mission Data" 
               className="rounded-[48px] shadow-2xl relative z-10"
             />
