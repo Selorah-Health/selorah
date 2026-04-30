@@ -6,10 +6,8 @@ export default function Careers() {
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Join the Revolution
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <h1> Join the Revolution </h1>
+          <p>
             We're building the future of healthcare data ownership. 
             If you're passionate about privacy, blockchain, and healthcare technology, 
             we'd love to have you on board.
