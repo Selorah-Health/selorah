@@ -2,11 +2,11 @@ import LegalLayout from '../components/LegalLayout';
 
 export default function Careers() {
   return (
-    <LegalLayout title="Careers" className="text-primary">
+    <LegalLayout title="Careers">
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="mb-16">
-          <h1> Join the Revolution </h1>
+          <h1 className="text-3xl font-semibold text-primary/70 mb-10">Join the Revolution</h1>
           <p>
             We're building the future of healthcare data ownership. 
             If you're passionate about privacy, blockchain, and healthcare technology, 
