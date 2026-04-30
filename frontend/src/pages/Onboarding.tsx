@@ -4,258 +4,389 @@ import {
   UserIcon, 
   SparklesIcon, 
   CheckCircleIcon,
-  ChevronRightIcon,
-  ChevronLeftIcon,
   BuildingOffice2Icon,
   BeakerIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  ArrowRightIcon,
+  PhoneIcon,
+  PlusIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
+
+interface EmergencyContact {
+  name: string;
+  relationship: string;
+  phone: string;
+}
 
 export default function Onboarding() {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    role: 'patient',
+    role: '',
     firstName: '',
     lastName: '',
     dateOfBirth: '',
     gender: '',
-    interests: [] as string[]
+    whatsappNumber: '',
+    vitals: { height: '', weight: '', bloodType: '' },
+    allergies: '',
+    medicalConditions: '',
+    emergencyContacts: [] as EmergencyContact[],
+    orgName: '',
+    licenseNumber: '',
+    taxId: '',
+    officialEmail: '',
+    officialPhone: '',
+    otpSent: false,
+    otpVerified: false
   });
 
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
-  const toggleInterest = (interest: string) => {
-    setFormData(prev => ({
-      ...prev,
-      interests: prev.interests.includes(interest) 
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
-    }));
-  };
-
   const handleFinish = () => {
-    // Save to Supabase here later
     navigate('/dashboard');
   };
 
+  const addContact = () => {
+    if (formData.emergencyContacts.length < 3) {
+      setFormData({
+        ...formData,
+        emergencyContacts: [...formData.emergencyContacts, { name: '', relationship: '', phone: '' }]
+      });
+    }
+  };
+
+  const removeContact = (index: number) => {
+    setFormData({
+      ...formData,
+      emergencyContacts: formData.emergencyContacts.filter((_, i) => i !== index)
+    });
+  };
+
+  const updateContact = (index: number, field: keyof EmergencyContact, value: string) => {
+    const newContacts = [...formData.emergencyContacts];
+    newContacts[index][field] = value;
+    setFormData({ ...formData, emergencyContacts: newContacts });
+  };
+
+  const roles = [
+    { id: 'patient', title: 'Patient', desc: 'Manage your personal health records and history.', icon: UserIcon },
+    { id: 'provider', title: 'Provider', desc: 'Access and update patient medical records securely.', icon: BuildingOffice2Icon },
+    { id: 'researcher', title: 'Researcher', desc: 'Analyze anonymized health data for clinical studies.', icon: BeakerIcon },
+    { id: 'insurer', title: 'Insurer', desc: 'Verify health claims and manage policies efficiently.', icon: ShieldCheckIcon },
+    { id: 'developer', title: 'Developer', desc: 'Build and integrate with the Selorah Health API.', icon: SparklesIcon },
+    { id: 'partner', title: 'Partner', desc: 'Collaborate to build modern health tech solutions.', icon: CheckCircleIcon },
+  ];
+
+  const totalSteps = formData.role === 'patient' ? 5 : 4;
+
   return (
-    <div className="min-h-screen bg-[#0A0B14] text-white flex flex-col font-sora selection:bg-primary/30">
-      {/* Header */}
-      <header className="p-8 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Selorah Logo" className="w-10 h-10" />
-          <span className="text-2xl font-bold tracking-tight">Selorah</span>
-        </div>
-        <div className="flex gap-2">
-          {[1, 2, 3, 4].map((s) => (
-            <div 
-              key={s} 
-              className={`h-1.5 rounded-full transition-all duration-500 ${s === step ? 'w-8 bg-primary' : s < step ? 'w-4 bg-primary/40' : 'w-4 bg-white/10'}`}
-            ></div>
-          ))}
-        </div>
+    <div className="min-h-screen bg-white text-[#050038] flex flex-col font-sora selection:bg-[#4262FF]/10">
+      {/* Header Line */}
+      <header className="w-full h-[70px] border-b border-gray-100 flex items-center px-12 shrink-0">
+        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity group">
+          <img src="/logo.png" alt="Selorah Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
+          <span className="text-xl font-bold tracking-tight text-[#4262FF]">Selorah</span>
+        </Link>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div className="max-w-xl w-full">
+      <main className="flex-1 overflow-y-auto px-12 py-12 scrollbar-hide">
+        <div className="w-full max-w-[850px] mx-auto">
+          
+          {/* Step 1: Role Selection */}
           {step === 1 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="space-y-2">
-                <h1 className="text-4xl font-bold">How will you use Selorah?</h1>
-                <p className="text-white/60 text-lg">Choose the account type that fits you best.</p>
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-10">
+                <h1 className="text-2xl font-bold text-[#050038] mb-1 tracking-tight">What do you want to do?</h1>
+                <p className="text-[#676767] text-sm">Choose the area you want to work in.</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { id: 'patient', title: 'Patient', desc: 'Manage your personal health records', icon: UserIcon },
-                  { id: 'provider', title: 'Provider', desc: 'Access and update patient records', icon: BuildingOffice2Icon },
-                  { id: 'researcher', title: 'Researcher', desc: 'Analyze anonymized health data', icon: BeakerIcon },
-                  { id: 'insurer', title: 'Insurer', desc: 'Verify health claims securely', icon: ShieldCheckIcon },
-                ].map((role) => (
-                  <button 
-                    key={role.id}
-                    onClick={() => setFormData({...formData, role: role.id})}
-                    className={`p-6 rounded-3xl border text-left transition-all flex flex-col gap-4 ${formData.role === role.id ? 'bg-primary border-primary shadow-lg shadow-primary/20' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
-                  >
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${formData.role === role.id ? 'bg-white/20' : 'bg-white/10'}`}>
-                      <role.icon className="w-6 h-6" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {roles.map((role) => {
+                  const isSelected = formData.role === role.id;
+                  return (
+                    <div 
+                      key={role.id}
+                      onClick={() => {
+                        setFormData({...formData, role: role.id});
+                        setTimeout(() => setStep(2), 400);
+                      }}
+                      className={`rounded-2xl p-5 h-[150px] flex flex-col cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'bg-[#f0f0ff] border-2 border-[#4262ff]' 
+                          : 'bg-white border border-slate-100 hover:border-[#4262ff]/40 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-base text-[#050038] leading-tight">{role.title}</h3>
+                        {isSelected && <ArrowRightIcon className="w-3 h-3 text-[#4262ff] stroke-[3]" />}
+                      </div>
+                      
+                      <p className="text-[11px] text-gray-500 leading-relaxed line-clamp-2">
+                        {role.desc}
+                      </p>
+
+                      <div className="mt-auto">
+                        <role.icon className={`w-8 h-8 stroke-[1.5] ${isSelected ? 'text-[#4262ff]' : 'text-[#050038]'}`} />
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-xl">{role.title}</p>
-                      <p className={`text-sm ${formData.role === role.id ? 'text-white/80' : 'text-white/40'}`}>{role.desc}</p>
-                    </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
 
-              <button 
-                onClick={nextStep}
-                className="w-full bg-primary py-5 rounded-2xl font-bold hover:bg-primary-hover transition-all flex items-center justify-center gap-2 group"
-              >
-                Continue
-                <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              <div className="mt-10">
+                <button onClick={() => setStep(totalSteps)} className="text-[#676767] text-xs hover:text-[#050038] transition-colors font-medium">
+                  I just want to <span className="text-[#4262ff] font-bold">try out the tool →</span>
+                </button>
+              </div>
             </div>
           )}
 
+          {/* Step 2: Basic Info (Patient) or KYC (Other) */}
           {step === 2 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="space-y-2">
-                <h1 className="text-4xl font-bold">Let's get to know you</h1>
-                <p className="text-white/60 text-lg">Personalize your {formData.role} experience.</p>
+            <div className="max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-8">
+                <h1 className="text-2xl font-bold text-[#050038] mb-1">{formData.role === 'patient' ? 'Registration' : 'KYC Verification'}</h1>
+                <p className="text-gray-500 text-sm">{formData.role === 'patient' ? "Let's set up your secure health profile." : "Official documentation is required."}</p>
               </div>
 
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-white/40 uppercase tracking-widest">First Name</label>
+              <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm shadow-blue-500/5">
+                {formData.role === 'patient' ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input 
+                        type="text" placeholder="First Name"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm text-[#050038] font-medium"
+                        value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                      />
+                      <input 
+                        type="text" placeholder="Last Name"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm text-[#050038] font-medium"
+                        value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                      />
+                    </div>
                     <input 
-                      type="text" 
-                      placeholder="Samuel"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-primary transition-all"
-                      value={formData.firstName}
-                      onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                      type="date" className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm text-[#050038] font-medium"
+                      value={formData.dateOfBirth} onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-white/40 uppercase tracking-widest">Last Name</label>
+                    <div className="relative">
+                      <input 
+                        type="tel" placeholder="WhatsApp Number"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm text-[#050038] font-medium"
+                        value={formData.whatsappNumber} onChange={(e) => setFormData({...formData, whatsappNumber: e.target.value})}
+                      />
+                      <PhoneIcon className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                    </div>
+                  </>
+                ) : (
+                  <>
                     <input 
-                      type="text" 
-                      placeholder="Amanze"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-primary transition-all"
-                      value={formData.lastName}
-                      onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                      type="text" placeholder="Organization Name"
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm font-medium"
+                      value={formData.orgName} onChange={(e) => setFormData({...formData, orgName: e.target.value})}
                     />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-white/40 uppercase tracking-widest">Date of Birth</label>
-                  <input 
-                    type="date" 
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-primary transition-all text-white"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-white/40 uppercase tracking-widest">Gender</label>
-                  <div className="grid grid-cols-3 gap-4">
-                    {['Male', 'Female', 'Other'].map((g) => (
-                      <button 
-                        key={g}
-                        onClick={() => setFormData({...formData, gender: g})}
-                        className={`py-4 rounded-2xl border transition-all ${formData.gender === g ? 'bg-primary border-primary font-bold' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
-                      >
-                        {g}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input 
+                        type="text" placeholder="License #"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm font-medium"
+                        value={formData.licenseNumber} onChange={(e) => setFormData({...formData, licenseNumber: e.target.value})}
+                      />
+                      <input 
+                        type="text" placeholder="Tax ID"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm font-medium"
+                        value={formData.taxId} onChange={(e) => setFormData({...formData, taxId: e.target.value})}
+                      />
+                    </div>
+                    <input 
+                      type="email" placeholder="Official Email"
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm font-medium"
+                      value={formData.officialEmail} onChange={(e) => setFormData({...formData, officialEmail: e.target.value})}
+                    />
+                  </>
+                )}
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-3 mt-8">
+                <button onClick={prevStep} className="flex-1 bg-white border border-gray-100 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-[#050038]">Back</button>
                 <button 
-                  onClick={prevStep}
-                  className="flex-1 bg-white/5 py-5 rounded-2xl font-bold hover:bg-white/10 transition-all flex items-center justify-center gap-2"
-                >
-                  <ChevronLeftIcon className="w-5 h-5" />
-                  Back
-                </button>
-                <button 
-                  onClick={nextStep}
-                  disabled={!formData.firstName || !formData.gender}
-                  className="flex-[2] bg-primary py-5 rounded-2xl font-bold hover:bg-primary-hover transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={nextStep} 
+                  className="flex-[2] bg-[#4262FF] text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                  disabled={formData.role === 'patient' ? !formData.firstName : !formData.orgName}
                 >
                   Continue
-                  <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>
           )}
 
+          {/* Step 3: Medical Info or Document Upload */}
           {step === 3 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="space-y-2">
-                <h1 className="text-4xl font-bold">What are your goals?</h1>
-                <p className="text-white/60 text-lg">Choose what matters most to you.</p>
+            <div className="max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-8">
+                <h1 className="text-2xl font-bold text-[#050038] mb-1">{formData.role === 'patient' ? 'Emergency Info' : 'Upload Documents'}</h1>
+                <p className="text-gray-500 text-sm">{formData.role === 'patient' ? "Critical information for first responders." : "Proof of identity and license."}</p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                {[
-                  { id: 'records', title: 'Manage Records', desc: 'Securely store and share medical documents', icon: UserIcon },
-                  { id: 'research', title: 'Contribute to Research', desc: 'Help advance medicine with anonymized data', icon: SparklesIcon },
-                  { id: 'earnings', title: 'Earn Rewards', desc: 'Get paid for your contributions', icon: CheckCircleIcon },
-                ].map((item) => (
-                  <button 
-                    key={item.id}
-                    onClick={() => toggleInterest(item.id)}
-                    className={`p-6 rounded-[2rem] border text-left transition-all flex items-center gap-6 ${formData.interests.includes(item.id) ? 'bg-primary/20 border-primary shadow-lg shadow-primary/10' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
-                  >
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${formData.interests.includes(item.id) ? 'bg-primary' : 'bg-white/10'}`}>
-                      <item.icon className="w-7 h-7" />
+              {formData.role === 'patient' ? (
+                <div className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                  <div className="grid grid-cols-3 gap-3">
+                    <input 
+                      type="text" placeholder="H (cm)"
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-3 py-3 focus:outline-none focus:border-[#4262FF] text-xs font-bold"
+                      value={formData.vitals.height} onChange={(e) => setFormData({...formData, vitals: {...formData.vitals, height: e.target.value}})}
+                    />
+                    <input 
+                      type="text" placeholder="W (kg)"
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-3 py-3 focus:outline-none focus:border-[#4262FF] text-xs font-bold"
+                      value={formData.vitals.weight} onChange={(e) => setFormData({...formData, vitals: {...formData.vitals, weight: e.target.value}})}
+                    />
+                    <select 
+                      className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-2 py-3 focus:outline-none focus:border-[#4262FF] text-xs font-bold"
+                      value={formData.vitals.bloodType} onChange={(e) => setFormData({...formData, vitals: {...formData.vitals, bloodType: e.target.value}})}
+                    >
+                      <option value="">Blood</option>
+                      {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <textarea 
+                    placeholder="Known Allergies"
+                    className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm font-medium min-h-[60px]"
+                    value={formData.allergies} onChange={(e) => setFormData({...formData, allergies: e.target.value})}
+                  />
+                  <textarea 
+                    placeholder="Medical Conditions"
+                    className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm font-medium min-h-[60px]"
+                    value={formData.medicalConditions} onChange={(e) => setFormData({...formData, medicalConditions: e.target.value})}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {['Org ID', 'Medical License', 'Official ID'].map((doc) => (
+                    <div key={doc} className="bg-gray-50/50 p-6 rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 hover:bg-[#EEF2FF]/30 transition-all cursor-pointer">
+                      <CloudArrowUpIcon className="w-6 h-6 text-gray-300" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{doc}</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-bold text-xl">{item.title}</p>
-                      <p className="text-white/50">{item.desc}</p>
-                    </div>
-                    {formData.interests.includes(item.id) && (
-                      <CheckCircleIcon className="w-8 h-8 text-primary" />
-                    )}
-                  </button>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
-              <div className="flex gap-4">
-                <button 
-                  onClick={prevStep}
-                  className="flex-1 bg-white/5 py-5 rounded-2xl font-bold hover:bg-white/10 transition-all flex items-center justify-center gap-2"
-                >
-                  <ChevronLeftIcon className="w-5 h-5" />
-                  Back
-                </button>
-                <button 
-                  onClick={nextStep}
-                  className="flex-[2] bg-primary py-5 rounded-2xl font-bold hover:bg-primary-hover transition-all flex items-center justify-center gap-2 group"
-                >
-                  Almost done
-                  <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
+              <div className="flex gap-3 mt-8">
+                <button onClick={prevStep} className="flex-1 bg-white border border-gray-100 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-[#050038]">Back</button>
+                <button onClick={nextStep} className="flex-[2] bg-[#4262FF] text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20">Continue</button>
               </div>
             </div>
           )}
 
+          {/* Step 4: Emergency Contacts (Patient) or Completion (Other) */}
           {step === 4 && (
-            <div className="space-y-12 text-center animate-in zoom-in duration-700">
-              <div className="relative">
-                <div className="w-32 h-32 bg-primary rounded-full mx-auto flex items-center justify-center shadow-2xl shadow-primary/40 relative z-10">
-                  <CheckCircleIcon className="w-16 h-16" />
+            <div className="max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {formData.role === 'patient' ? (
+                <>
+                  <div className="mb-8">
+                    <h1 className="text-2xl font-bold text-[#050038] mb-1">Emergency Contacts</h1>
+                    <p className="text-gray-500 text-sm">Add up to 3 contacts for emergencies.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {formData.emergencyContacts.map((contact, index) => (
+                      <div key={index} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative">
+                        <button onClick={() => removeContact(index)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors">
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                          <input 
+                            type="text" placeholder="Name"
+                            className="w-full bg-gray-50/50 border border-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:border-[#4262FF] text-xs font-bold"
+                            value={contact.name} onChange={(e) => updateContact(index, 'name', e.target.value)}
+                          />
+                          <input 
+                            type="text" placeholder="Relation"
+                            className="w-full bg-gray-50/50 border border-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:border-[#4262FF] text-xs font-bold"
+                            value={contact.relationship} onChange={(e) => updateContact(index, 'relationship', e.target.value)}
+                          />
+                        </div>
+                        <input 
+                          type="tel" placeholder="Phone"
+                          className="w-full bg-gray-50/50 border border-gray-100 rounded-lg px-3 py-2 focus:outline-none focus:border-[#4262FF] text-xs font-bold"
+                          value={contact.phone} onChange={(e) => updateContact(index, 'phone', e.target.value)}
+                        />
+                      </div>
+                    ))}
+
+                    {formData.emergencyContacts.length < 3 && (
+                      <button 
+                        onClick={addContact}
+                        className="w-full py-4 border-2 border-dashed border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-300 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
+                      >
+                        <PlusIcon className="w-4 h-4" /> Add Contact
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3 mt-8">
+                    <button onClick={prevStep} className="flex-1 bg-white border border-gray-100 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-[#050038]">Back</button>
+                    <button 
+                      onClick={nextStep} 
+                      className="flex-[2] bg-[#4262FF] text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20"
+                    >
+                      Complete
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-10">
+                  <div className="w-20 h-20 bg-[#F0F2FF] rounded-full mx-auto flex items-center justify-center mb-6 border-4 border-white shadow-xl shadow-blue-500/10">
+                    <CheckCircleIcon className="w-10 h-10 text-[#4262FF]" />
+                  </div>
+                  <h1 className="text-3xl font-bold text-[#050038] mb-3">Verification Pending</h1>
+                  <p className="text-gray-500 text-sm mb-10 leading-relaxed px-4">Our team is reviewing your documents. You can explore the dashboard in the meantime.</p>
+                  <button onClick={handleFinish} className="w-full bg-[#4262FF] text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-blue-500/20 hover:opacity-90 transition-all">Go to Dashboard</button>
                 </div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
-              </div>
+              )}
+            </div>
+          )}
 
-              <div className="space-y-4">
-                <h1 className="text-5xl font-bold">You are all set!</h1>
-                <p className="text-white/60 text-xl max-w-sm mx-auto">Welcome to the future of healthcare ownership, {formData.firstName}.</p>
+          {/* Final Step: Completion (Patient) */}
+          {step === 5 && formData.role === 'patient' && (
+            <div className="max-w-md mx-auto text-center py-10">
+              <div className="w-20 h-20 bg-[#F0F2FF] rounded-full mx-auto flex items-center justify-center mb-6 border-4 border-white shadow-xl shadow-blue-500/10">
+                <CheckCircleIcon className="w-10 h-10 text-[#4262FF]" />
               </div>
-
+              <h1 className="text-3xl font-bold text-[#050038] mb-2 tracking-tight">Setup Complete!</h1>
+              <p className="text-gray-500 text-sm mb-10">Welcome to Selorah Health, {formData.firstName}.</p>
               <button 
                 onClick={handleFinish}
-                className="w-full bg-primary py-6 rounded-[2rem] font-bold text-xl hover:bg-primary-hover transition-all shadow-xl shadow-primary/20 hover:scale-105 active:scale-95"
+                className="w-full bg-[#4262FF] text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-blue-500/20 hover:opacity-90 transition-all"
               >
-                Go to Dashboard
+                Launch Dashboard
               </button>
             </div>
           )}
+
         </div>
       </main>
 
-      <footer className="p-8 text-center opacity-20">
-        <p className="text-sm font-bold uppercase tracking-[0.3em]">Selorah Health • Privacy by Design</p>
-      </footer>
+      {/* Pagination Dots */}
+      <div className="w-full py-8 flex items-center justify-center gap-2">
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <div 
+            key={i} 
+            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i + 1 === step ? 'bg-[#4262FF] w-4' : 'bg-gray-100'}`}
+          ></div>
+        ))}
+      </div>
     </div>
   );
 }
+
+function CloudArrowUpIcon(props: any) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+    </svg>
+  );
+}
+
+

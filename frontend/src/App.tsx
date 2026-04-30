@@ -6,16 +6,30 @@ import Signup from './pages/Signup';
 import Pricing from './pages/Pricing';
 import Onboarding from './pages/Onboarding';
 import NotFound from './pages/NotFound';
+import SharedRecord from './pages/SharedRecord';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import About from './pages/About';
+import Careers from './pages/Careers';
+import CookiePolicy from './pages/CookiePolicy';
+import DataProcessing from './pages/DataProcessing';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/dashboard/*" element={<Dashboard />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="/shared/:token" element={<SharedRecord />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/careers" element={<Careers />} />
+      <Route path="/cookie-policy" element={<CookiePolicy />} />
+      <Route path="/dpa" element={<DataProcessing />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

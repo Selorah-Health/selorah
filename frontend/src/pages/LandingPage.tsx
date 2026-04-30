@@ -16,6 +16,8 @@ import {
   ArrowRightIcon
 } from '@heroicons/react/24/outline';
 import WaitlistModal from '../components/WaitlistModal';
+import LanguageSelector from '../components/LanguageSelector';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const HERO_SLIDES = [
   {
@@ -39,6 +41,7 @@ const HERO_SLIDES = [
 ];
 
 export default function LandingPage() {
+  const { t } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -52,6 +55,13 @@ export default function LandingPage() {
 
   useEffect(() => {
     setIsLoaded(true);
+    
+    // Auto-advance slides every 10 seconds
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 10000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -105,11 +115,11 @@ export default function LandingPage() {
 
       {/* NAVIGATION BAR */}
       <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px]" />
+        <div className="max-w-7xl mx-auto px-12 h-20 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">
+            <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px] group-hover:scale-105 transition-transform" />
             <span className="font-bold text-xl tracking-tight text-white">Selorah Health</span>
-          </div>
+          </Link>
 
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-white/80">
             <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
@@ -117,6 +127,7 @@ export default function LandingPage() {
             <button onClick={() => scrollToSection('researchers')} className="hover:text-white transition-colors">For Researchers</button>
             <button onClick={() => scrollToSection('insurers')} className="hover:text-white transition-colors">For Insurers</button>
             <Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <LanguageSelector />
             <Link to="/login" className="px-6 py-2 rounded-full border border-white/20 hover:bg-white/10 transition-colors">Log in</Link>
             <button
               onClick={() => setIsModalOpen(true)}
@@ -134,7 +145,7 @@ export default function LandingPage() {
 
       {/* MOBILE MENU */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-[#0A0B14] pt-24 px-6 lg:hidden">
+        <div className="fixed inset-0 z-40 bg-[#0A0B14] pt-24 px-12 lg:hidden">
           <div className="flex flex-col gap-6 text-xl font-medium text-white/80">
             <a href="#how-it-works" onClick={() => setIsMenuOpen(false)}>How It Works</a>
             <button onClick={() => { scrollToSection('hospitals'); setIsMenuOpen(false); }} className="text-left">For Hospitals</button>
@@ -165,7 +176,7 @@ export default function LandingPage() {
               muted
               loop
               playsInline
-              className="absolute inset-0 w-full h-full object-cover opacity-60"
+              className="absolute inset-0 w-full h-full object-cover opacity-40"
             >
               <source src={slide.video} type="video/mp4" />
             </video>
@@ -177,10 +188,10 @@ export default function LandingPage() {
 
               {/* Content area above card — takes remaining height minus card (~384px) */}
               <div
-                className="flex flex-col justify-center px-6 flex-1"
+                className="flex flex-col justify-center px-12 flex-1"
                 style={{ paddingBottom: 'clamp(120px, 25vh, 400px)' }}
               >
-                <div className="max-w-2xl space-y-6 mx-auto w-full lg:ml-[8%] lg:mr-auto">
+                <div className="max-w-2xl space-y-6 w-full lg:mr-auto">
                   <h1 className="text-5xl lg:text-6xl xl:text-7xl font-medium leading-[1.05] tracking-tight text-white">
                     {slide.title} {slide.subtitle && (
                       <span className="italic font-light">{slide.subtitle}</span>
@@ -191,11 +202,22 @@ export default function LandingPage() {
                     {slide.description}
                   </p>
 
-                  <div className="pt-2">
+                  <div className="pt-2 flex items-center justify-between">
                     <a href={slide.buttonLink} className="inline-flex items-center gap-3 text-white font-bold tracking-widest border-b-2 border-white/20 pb-2 hover:border-primary transition-all group">
                       <ChevronRightIcon className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                       {slide.buttonText}
                     </a>
+
+                    {/* Slide dots aligned with button */}
+                    <div className="flex gap-2">
+                      {HERO_SLIDES.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setCurrentSlide(i)}
+                          className={`h-1 rounded-full transition-all duration-500 ${i === currentSlide ? 'w-8 bg-primary' : 'w-2 bg-white/30 hover:bg-white/50'}`}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -203,90 +225,12 @@ export default function LandingPage() {
           </div>
         ))}
 
-        {/* Slide dots */}
-        <div
-          className="absolute z-20 hidden lg:flex gap-2"
-          style={{
-            bottom: 'calc(clamp(120px, 25vh, 400px) / 2)',
-            left: 'calc((100% - 380px) / 2)',
-            transform: 'translateX(-50%)',
-          }}
-        >
-          {HERO_SLIDES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
-              className={`h-1 rounded-full transition-all duration-500 ${i === currentSlide ? 'w-8 bg-primary' : 'w-2 bg-white/30'}`}
-            />
-          ))}
-        </div>
-        {/* Mobile dots */}
-        <div
-          className="absolute z-20 flex lg:hidden gap-2"
-          style={{ bottom: '5rem', left: '50%', transform: 'translateX(-50%)' }}
-        >
-          {HERO_SLIDES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
-              className={`h-1 rounded-full transition-all duration-500 ${i === currentSlide ? 'w-8 bg-primary' : 'w-2 bg-white/30'}`}
-            />
-          ))}
-        </div>
 
-        {/* NEXT SLIDE PREVIEW CARD — anchored bottom-right, fully visible */}
-        <div
-          className={`absolute bottom-0 right-0 z-20 w-[350px] 
-            bg-white overflow-hidden shadow-2xl transition-all 
-            duration-1000 delay-500 hidden sm:block
-            ${isLoaded ? 'translate-y-0  opacity-100' : 'translate-y-20 opacity-0'}`}
-        >
-          <div className="relative aspect-video">
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full h-full object-cover"
-            >
-              <source src={HERO_SLIDES[nextSlide].video} type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-black/20"></div>
-          </div>
 
-          <div className="p-6 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 leading-tight">
-              {HERO_SLIDES[nextSlide].id === 2 ? '"Tired of Chasing Your Own Records?"' : 'Securing Health Records from Patient to Provider'}
-            </h3>
-            <p className="text-sm text-gray-500">
-              {HERO_SLIDES[nextSlide].id === 2
-                ? "Selorah Health gives you full ownership — encrypted, portable, private. Access your data anytime, anywhere, with anyone you trust."
-                : "At Selorah Health, we transform how your medical history travels with you — putting ownership where it has always belonged: in your hands."}
-            </p>
-            <div className="flex items-center justify-between pt-2">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="text-primary text-sm font-bold flex items-center gap-1 group"
-              >
-                Join the Waitlist
-                <ArrowRightIcon className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </button>
-              <button
-                onClick={handleNextSlide}
-                className="text-[10px] font-black text-gray-400 tracking-widest uppercase flex items-center gap-2 group"
-              >
-                NEXT STORY
-                <div className="w-6 h-6 rounded-full border-2 border-gray-200 flex items-center justify-center transition-colors group-hover:border-primary group-hover:bg-primary/5">
-                  <ChevronRightIcon className="w-3 h-3 text-gray-400 group-hover:text-primary" />
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* AVATAR BADGE SECTION */}
-      <section className="bg-white py-24 text-center px-6">
+      <section className="bg-white py-24 text-center px-12">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
           <img
             src="/assets/custom-avatar-badge.png"
@@ -306,7 +250,7 @@ export default function LandingPage() {
       </section>
 
       {/* THE PROBLEM */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
+      <section className="py-24 px-12 max-w-7xl mx-auto">
         <div className="mb-16">
           <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">The Problem</p>
           <h2 className="text-4xl md:text-5xl font-bold max-w-3xl leading-tight">
@@ -340,7 +284,7 @@ export default function LandingPage() {
 
       {/* HOW IT WORKS */}
       <section id="how-it-works" className="py-24 bg-gray-50 border-y border-[var(--border)]">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-12">
           <div className="text-center max-w-3xl mx-auto mb-20">
             <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">How It Works</p>
             <h2 className="text-4xl md:text-5xl font-bold mb-6">Four steps. One QR. Complete control.</h2>
@@ -352,26 +296,30 @@ export default function LandingPage() {
               {
                 step: "01",
                 title: "Add Your Records",
-                desc: "Scan a paper document, upload a file, or connect directly to a hospital on the Selorah network. Records are encrypted on your device before they leave it. We cannot read them.",
-                video: "/assets/how-it-works-1.mp4"
+                desc: "Scan a paper document, upload a file, or connect directly to a hospital on the Selorah network. Records are encrypted on your device before they leave it.",
+                video: "/assets/here-s-it-how-it-works/step1.mp4",
+                poster: "/how_it_works_step1_poster_1777556796073.png"
               },
               {
                 step: "02",
                 title: "Your QR is Always Ready",
-                desc: "Open Selorah. Tap Share. One QR. Any doctor, any hospital, any city, any country. You set how long they have access — one hour, one day, one week.",
-                video: "/assets/how-it-works-2.mp4"
+                desc: "Open Selorah. Tap Share. One QR. Any doctor, any hospital, any city. You set how long they have access — one hour, one day, one week.",
+                video: "/assets/here-s-it-how-it-works/step2.mp4",
+                poster: "/how_it_works_step2_poster_1777556815064.png"
               },
               {
                 step: "03",
                 title: "Doctors See Your History",
-                desc: "Lab results. Prescriptions. Diagnoses. Vaccinations. Each record labelled by its source. Verified records carry a green badge. Your doctor always knows what they're looking at.",
-                video: "/assets/how-it-works-3.mp4"
+                desc: "Lab results. Prescriptions. Diagnoses. Each record labelled by its source. Verified records carry a green badge. Your doctor always knows what they're looking at.",
+                video: "/assets/here-s-it-how-it-works/step3.mp4",
+                poster: "/how_it_works_step3_poster_1777557133852.png"
               },
               {
                 step: "04",
                 title: "You See Who Looked",
-                desc: "Every scan, every access — logged permanently on the blockchain. You can audit your own history at any time. You decide. You revoke. You're in control.",
-                video: "/assets/how-it-works-4.mp4"
+                desc: "Every scan, every access — logged permanently. You can audit your own history at any time. You decide. You revoke. You're in control.",
+                video: "/assets/here-s-it-how-it-works/step4.mp4",
+                poster: "/how_it_works_step4_poster_1777557231636.png"
               }
             ].map((stepper, i) => (
               <div
@@ -381,31 +329,32 @@ export default function LandingPage() {
               >
                 <div className="flex-1 space-y-6">
                   <div className="text-primary/20 text-6xl font-bold mb-2">{stepper.step}</div>
-                  <h3 className="text-3xl font-bold">{stepper.title}</h3>
-                  <p className="text-lg text-muted leading-relaxed">{stepper.desc}</p>
+                  <h2 className="text-4xl font-black text-[#101217] tracking-tight">{stepper.title}</h2>
+                  <p className="text-lg text-gray-500 font-medium leading-relaxed">{stepper.desc}</p>
                   {!stepVideoEnded[i] && (
-                    <div className="flex items-center gap-2 text-sm text-primary/70 font-medium">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                      <span>Watch to continue scrolling</span>
+                    <div className="flex items-center gap-3 py-3 px-5 bg-primary/5 rounded-2xl w-fit">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-xs font-bold text-primary uppercase tracking-widest">Watch to continue</span>
                     </div>
                   )}
                 </div>
                 <div className="flex-1 w-full relative">
-                  <div className="aspect-[4/3] bg-gray-900 rounded-3xl border border-[var(--border)] overflow-hidden shadow-lg relative">
+                  <div className="aspect-[4/3] bg-gray-900 rounded-[40px] border border-gray-100 overflow-hidden shadow-2xl relative group">
                     <video
                       ref={(el: HTMLVideoElement | null) => { stepVideoRefs.current[i] = el; }}
                       muted
                       playsInline
                       preload="auto"
+                      poster={stepper.poster}
                       onEnded={() => handleStepVideoEnd(i)}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     >
                       <source src={stepper.video} type="video/mp4" />
                     </video>
                     {!stepVideoEnded[i] && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                          <PlayIcon className="w-8 h-8 text-white ml-1" />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20 group-hover:bg-black/10 transition-all">
+                        <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-2xl transform transition-transform group-hover:scale-110">
+                          <PlayIcon className="w-10 h-10 text-white ml-1" />
                         </div>
                       </div>
                     )}
@@ -418,7 +367,7 @@ export default function LandingPage() {
       </section>
 
       {/* BUILT FOR EVERYONE */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
+      <section className="py-24 px-12 max-w-7xl mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">Built for Everyone</p>
           <h2 className="text-4xl md:text-5xl font-bold mb-6">One platform. Every stakeholder.</h2>
@@ -467,7 +416,7 @@ export default function LandingPage() {
 
       {/* PRIVACY ARCHITECTURE */}
       <section className="bg-[#0A0B14] text-white py-24">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-12">
           <div className="mb-16">
             <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">The Architecture</p>
             <h2 className="text-4xl md:text-5xl font-bold max-w-3xl leading-tight mb-6">
@@ -496,7 +445,7 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-[#0A0B14] text-white pt-24 pb-12 px-6 border-t border-white/10 overflow-hidden relative">
+      <footer className="bg-[#0A0B14] text-white pt-24 pb-12 px-12 border-t border-white/10 overflow-hidden relative">
         {/* Background Text */}
         <div className="absolute bottom-0 left-0 w-full opacity-5 pointer-events-none select-none">
           <h2 className="text-[20vw] font-black leading-none whitespace-nowrap -mb-8">selorahealth</h2>
@@ -505,9 +454,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-24">
             <div className="lg:col-span-1">
-              <div className="flex items-center mb-8">
+              <Link to="/" className="flex items-center mb-8 hover:opacity-80 transition-opacity">
                 <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px]" />
-              </div>
+              </Link>
             </div>
 
             <div>
@@ -524,19 +473,19 @@ export default function LandingPage() {
             <div>
               <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Company</h4>
               <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><Link to="#" className="hover:text-white transition-colors">About</Link></li>
+                <li><Link to="/about" className="hover:text-white transition-colors">About</Link></li>
                 <li><a href="https://samuel-amanze.vercel.app/" className="hover:text-white transition-colors">Schedule a meeting</a></li>
-                <li><Link to="#" className="hover:text-white transition-colors">Career</Link></li>
+                <li><Link to="/careers" className="hover:text-white transition-colors">Career</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Legal</h4>
               <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                <li><Link to="#" className="hover:text-white transition-colors">Terms of use</Link></li>
-                <li><Link to="#" className="hover:text-white transition-colors">Cookie Policy</Link></li>
-                <li><Link to="#" className="hover:text-white transition-colors">Data Processing Agreement</Link></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-white transition-colors">Terms of use</Link></li>
+                <li><Link to="/cookie-policy" className="hover:text-white transition-colors">Cookie Policy</Link></li>
+                <li><Link to="/dpa" className="hover:text-white transition-colors">Data Processing Agreement</Link></li>
               </ul>
             </div>
 
@@ -565,8 +514,8 @@ export default function LandingPage() {
             </div>
 
             <div className="text-gray-500 text-xs flex gap-6">
-              <Link to="#" className="hover:text-white transition-colors">Terms</Link>
-              <Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             </div>
           </div>
         </div>

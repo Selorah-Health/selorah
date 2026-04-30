@@ -13,7 +13,22 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink, Routes, Route, useLocation } from 'react-router-dom';
+
+// Tab Components
+import Home from '../components/dashboard/Home';
+import Records from '../components/dashboard/Records';
+import Research from '../components/dashboard/Research';
+import Earnings from '../components/dashboard/Earnings';
+import Profile from '../components/dashboard/Profile';
+import Notifications from './Notifications';
+import RecordDetails from './RecordDetails';
+import AccessLog from './AccessLog';
+import QRCodes from './QRCodes';
+import AccessLogDetails from './AccessLogDetails';
+import Security from './Security';
+import Billing from './Billing';
+import Family from './Family';
 
 interface Record {
   id: string;
@@ -24,7 +39,6 @@ interface Record {
 }
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('Home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -32,6 +46,7 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const supabase = createClient();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -39,20 +54,40 @@ export default function Dashboard() {
   useEffect(() => {
     async function getUser() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setUser({ email: 'use..ail@gmail.com', user_metadata: { first_name: 'User' } });
-          fetchRecords('mock-id');
-          return;
+        const savedUser = localStorage.getItem('selorah_user');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          setUser({
+            email: parsed.email || parsed.phone,
+            user_metadata: {
+              first_name: parsed.first_name,
+              last_name: parsed.last_name,
+              is_pro: parsed.is_pro
+            }
+          });
+          fetchRecords(parsed.first_name);
+        } else {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            setUser({ email: 'user@selorah.com', user_metadata: { first_name: 'Guest', is_pro: false } });
+            fetchRecords('Guest');
+          } else {
+            setUser(user);
+            fetchRecords(user.user_metadata?.first_name || 'User');
+          }
         }
-        setUser(user);
-        fetchRecords(user.id);
       } catch (err) {
-        setUser({ email: 'use..ail@gmail.com', user_metadata: { first_name: 'User' } });
-        fetchRecords('mock-id');
+        setUser({ email: 'user@selorah.com', user_metadata: { first_name: 'User', is_pro: false } });
+        fetchRecords('User');
       }
     }
+
     getUser();
+
+    // Listen for storage changes (for real-time plan/profile updates)
+    const handleStorageChange = () => getUser();
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const getFormattedDate = () => {
@@ -65,15 +100,15 @@ export default function Dashboard() {
     return `${weekday}, ${day}${suffix} ${month} ${year}`;
   };
 
-  const fetchRecords = async (userId: string) => {
+  const fetchRecords = async (name: string) => {
     setLoading(true);
     try {
       setRecords([
-        { id: '1', name: 'SNH Lab Result', date: 'Yesterday • St. Nicholas Hospital • Lagos Island', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-        { id: '2', name: 'Metformin 500mg Prescription', date: '03/15/2026 • Igando General Hospital • Dr. Adeyemi', status: 'Encrypted', icon: '/assets/custom-prescription-icon.png' },
-        { id: '3', name: 'YFB Vaccination', date: '03/16/2026 • Self-reported', status: 'Shared Once', icon: '/assets/custom-vaccination-icon.png' },
-        { id: '4', name: 'HSH Lab Result', date: '01/10/2026 • Havana Specialist Hospital • Surulere', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-        { id: '5', name: 'Pregnacare Prescription', date: '12/15/2025 • Havana Specialist Hospital • Surulere', status: 'Encrypted', icon: '/assets/custom-prescription-icon.png' },
+        { id: '1', name: `${name}'s Health Checkup`, date: 'Today • Selorah Medical Center', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
+        { id: '2', name: 'SNH Lab Result', date: 'Yesterday • St. Nicholas Hospital • Lagos Island', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
+        { id: '3', name: 'Metformin 500mg Prescription', date: '03/15/2026 • Igando General Hospital', status: 'Encrypted', icon: '/assets/custom-prescription-icon.png' },
+        { id: '4', name: 'YFB Vaccination', date: '03/16/2026 • Self-reported', status: 'Shared Once', icon: '/assets/custom-vaccination-icon.png' },
+        { id: '5', name: 'HSH Lab Result', date: '01/10/2026 • Havana Specialist Hospital', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
       ]);
     } catch (err) { } finally { setLoading(false); }
   };
@@ -92,18 +127,32 @@ export default function Dashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem('selorah_user');
     navigate('/login');
   };
 
   const menuItems = [
-    { name: 'Home', icon: HomeIcon },
-    { name: 'Records', icon: DocumentDuplicateIcon },
-    { name: 'Research', icon: BeakerIcon },
-    { name: 'Earnings', icon: WalletIcon },
+    { name: 'Home', icon: HomeIcon, path: '/dashboard' },
+    { name: 'Records', icon: DocumentDuplicateIcon, path: '/dashboard/records' },
+    { name: 'Research', icon: BeakerIcon, path: '/dashboard/research' },
+    { name: 'Earnings', icon: WalletIcon, path: '/dashboard/earnings' },
   ];
 
   // Random gradient for new users
   const avatarGradient = "bg-gradient-to-tr from-[#14F1D9] to-[#3672F8]";
+
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === '/dashboard') return 'Dashboard';
+    if (path.startsWith('/dashboard/records')) return 'My Medical Records';
+    if (path === '/dashboard/research') return 'Research';
+    if (path === '/dashboard/earnings') return 'My Earnings';
+    if (path === '/dashboard/profile') return 'Profile & Settings';
+    if (path === '/dashboard/notifications') return 'Notifications';
+    if (path === '/dashboard/access-log') return 'Access Log';
+    if (path === '/dashboard/qrcodes') return 'QR Codes';
+    return 'Dashboard';
+  };
 
   return (
     <div className="flex h-screen bg-[#F8F9FE] overflow-hidden font-sora selection:bg-primary/30">
@@ -115,8 +164,8 @@ export default function Dashboard() {
         <div className={`p-6 pb-4 border-b border-white/10 ${isCollapsed ? 'px-4' : ''}`}>
           <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'}`}>
             <div className="flex items-center gap-2">
-              <img src="/assets/logo/selora-logo-icon-white-outline.png" alt="Logo" className="w-8 h-8 object-contain shrink-0" />
-              {!isCollapsed && <span className="font-bold text-2xl tracking-tight">Selorah</span>}
+              <img src="/logo.svg" alt="Logo" className="w-10 h-10 object-contain shrink-0" />
+              {!isCollapsed && <span className="font-bold text-xl tracking-tight">Selorah</span>}
             </div>
             <button className="text-white opacity-80 hover:opacity-100 transition-opacity" onClick={() => setIsCollapsed(!isCollapsed)}>
               <img src="/assets/menu-closed.png" alt="M" className="w-5 h-5 object-contain" />
@@ -139,21 +188,29 @@ export default function Dashboard() {
         {/* Nav Section */}
         <nav className={`flex-1 py-4 space-y-1 overflow-y-auto scrollbar-hide ${isCollapsed ? 'px-3' : 'px-3'}`}>
           {menuItems.map((item) => (
-            <button
+            <NavLink
               key={item.name}
-              onClick={() => setActiveTab(item.name)}
+              to={item.path}
+              end={item.path === '/dashboard'}
               title={item.name}
-              className={`w-full flex items-center px-5 py-3 rounded-xl transition-all ${activeTab === item.name ? 'bg-white/20 font-bold' : 'hover:bg-white/5 text-white/80 hover:text-white'} ${isCollapsed ? 'justify-center px-0' : 'gap-3'}`}
+              className={({ isActive }) =>
+                `w-full flex items-center px-5 py-3 rounded-xl transition-all ${isActive ? 'bg-white/20 font-bold' : 'hover:bg-white/5 text-white/80 hover:text-white'} ${isCollapsed ? 'justify-center px-0' : 'gap-3'}`
+              }
             >
               <item.icon className="w-5 h-5 shrink-0" />
               {!isCollapsed && <span className="text-base tracking-tight whitespace-nowrap">{item.name}</span>}
-            </button>
+            </NavLink>
           ))}
         </nav>
 
         {/* Bottom Section with Logout */}
         <div className="mt-auto border-t border-white/10 pt-6 pb-6">
-          <div className={`mb-6 flex items-center gap-3 ${isCollapsed ? 'justify-center px-0 flex-col' : 'px-5'}`}>
+          <NavLink
+            to="/dashboard/profile"
+            className={({ isActive }) =>
+              `mb-6 flex items-center gap-3 transition-all rounded-xl mx-3 p-2 ${isActive ? 'bg-white/10' : 'hover:bg-white/5'} ${isCollapsed ? 'justify-center flex-col' : ''}`
+            }
+          >
             <div className="relative shrink-0 w-12 h-12 rounded-full flex items-center justify-center p-[2px] shadow-sm" style={{ backgroundImage: "url('/assets/custom-profile-icon-ring.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
               <div className={`w-full h-full rounded-full ${avatarGradient}`}></div>
               <div className={`absolute ${isCollapsed ? '-bottom-2' : '-bottom-1 -right-2'} bg-[#DCE4FF] text-[#6183FF] text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm whitespace-nowrap z-10`}>
@@ -166,7 +223,7 @@ export default function Dashboard() {
                 <p className="text-white/40 text-[11px] truncate font-medium">{user?.email || 'use..ail@gmail.com'}</p>
               </div>
             )}
-          </div>
+          </NavLink>
 
           <div className={`${isCollapsed ? 'px-3' : 'px-5'}`}>
             <button
@@ -190,11 +247,7 @@ export default function Dashboard() {
               <Bars3Icon className="w-6 h-6" />
             </button>
             <h1 className="text-2xl font-bold text-[#101217] tracking-tight">
-              {activeTab === 'Home' ? 'Dashboard' :
-                activeTab === 'Records' ? 'My Medical Records' :
-                  activeTab === 'Research' ? 'Research' :
-                    activeTab === 'Earnings' ? 'My Earnings' :
-                      activeTab === 'Profile' ? 'Profile & Settings' : 'Dashboard'}
+              {getPageTitle()}
             </h1>
           </div>
 
@@ -208,43 +261,39 @@ export default function Dashboard() {
               />
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => alert('Notifications')}
-                className="w-12 h-12 flex items-center justify-center bg-white rounded-full 
-  shadow-[0_8px_24px_-6px_rgba(97,131,255,0.4)] 
-  border border-[#6183FF]/30 
-  hover:scale-105 transition-transform relative"
+                onClick={() => navigate('/dashboard/notifications')}
+                className="relative w-fit h-fit hover:scale-105 transition-transform"
               >
                 <img
                   src="/assets/custom-notification-icon.png"
                   alt="N"
-                  className="w-7 h-7 object-contain drop-shadow-sm"
+                  className=" w-18 h-18 relative object-contain drop-shadow-sm"
                 />
-                <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-[#6183FF] rounded-full border-2 border-white"></div>
+                <div className="absolute top-3.5 right-4 w-3.5 h-3.5 bg-[#6183FF] rounded-full border-2 border-white"></div>
               </button>
 
               <button
-                onClick={() => setActiveTab('QRCodes')}
-                className="w-12 h-12 flex items-center justify-center bg-white rounded-full 
-  shadow-[0_8px_24px_-6px_rgba(97,131,255,0.4)] 
-  border border-[#6183FF]/30 
-  hover:scale-105 transition-transform"
+                onClick={() => navigate('/dashboard/qrcodes')}
+                className="w-fit h-fit hover:scale-105 transition-transform ml-2"
               >
                 <img
                   src="/assets/custom-qr-code-icon.png"
                   alt="Q"
-                  className="w-7 h-7 object-contain drop-shadow-sm"
+                  className="w-18 h-18 object-contain drop-shadow-sm"
                 />
               </button>
 
-              <button onClick={() => setActiveTab('Profile')} className="relative ml-2">
+              <button onClick={() => navigate('/dashboard/profile')} className="relative ml-2">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center p-[2px] shadow-sm relative" style={{ backgroundImage: "url('/assets/custom-profile-icon-ring.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
                   <div className={`w-full h-full rounded-full ${avatarGradient}`}></div>
                 </div>
-                <div className="absolute -bottom-1 -right-1 bg-[#DCE4FF] text-[#6183FF] text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm z-10">
-                  PRO
-                </div>
+                {user?.user_metadata?.is_pro && (
+                  <div className="absolute -bottom-1 -right-1 bg-[#DCE4FF] text-[#6183FF] text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm z-10">
+                    PRO
+                  </div>
+                )}
               </button>
             </div>
 
@@ -252,155 +301,23 @@ export default function Dashboard() {
         </header>
 
         <div className="flex-1 overflow-y-auto p-8 lg:p-12 space-y-10 scrollbar-hide pt-4">
-          {activeTab === 'Home' && (
-            <>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-3xl font-bold text-[#101217] tracking-tight">Welcome back, {user?.user_metadata?.first_name || 'User'}</h2>
-                  <img src="/assets/custom-heart.png" alt="H" className="w-8 h-8 object-contain" />
-                </div>
-                <p className="text-gray-400 font-medium text-base">{getFormattedDate()}</p>
-              </div>
+          <Routes>
+            <Route index element={<Home user={user} records={records} getFormattedDate={getFormattedDate} />} />
+            <Route path="records" element={<Records records={records} handleUploadClick={handleUploadClick} />} />
+            <Route path="records/:id" element={<RecordDetails />} />
+            <Route path="research" element={<Research />} />
+            <Route path="earnings" element={<Earnings />} />
+            <Route path="profile" element={<Profile user={user} avatarGradient={avatarGradient} />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="access-log" element={<AccessLog />} />
+            <Route path="access-log/:id" element={<AccessLogDetails />} />
+            <Route path="qrcodes" element={<QRCodes />} />
+            <Route path="security" element={<Security />} />
+            <Route path="billing" element={<Billing />} />
+            <Route path="family" element={<Family />} />
+          </Routes>
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div className="bg-[#6183FF] text-white p-6 rounded-[24px] shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:opacity-90 transition-opacity">
-                  <div><p className="text-[10px] font-bold opacity-80 mb-1 uppercase tracking-wider">Health Score</p><span className="text-[36px] font-bold leading-none">60/100</span></div>
-                  <div className="flex items-end justify-between">
-                    <p className="text-[11px] font-medium">↑ +5 this month</p>
-                    <img src="/assets/custom-heart.png" alt="I" className="w-8 h-8 brightness-0 invert opacity-60" />
-                  </div>
-                </div>
-                <div onClick={() => setActiveTab('Records')} className="bg-white p-6 rounded-[24px] border border-gray-50 shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-[#6183FF]/30 transition-colors">
-                  <div><p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Total Records</p><span className="text-[36px] font-bold text-[#101217] leading-none">12</span></div>
-                  <div className="flex items-end justify-between">
-                    <p className="text-[11px] font-bold text-gray-400">8 verified • 4 self-reported</p>
-                    <img src="/assets/total-records-card-icon.png" alt="I" className="w-8 h-8" />
-                  </div>
-                </div>
-                <div onClick={() => setActiveTab('Earnings')} className="bg-white p-6 rounded-[24px] border border-gray-50 shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-[#6183FF]/30 transition-colors">
-                  <div><p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">This Month Earnings</p><span className="text-[36px] font-bold text-[#101217] leading-none">₦3,000</span></div>
-                  <div className="flex items-end justify-between">
-                    <p className="text-[11px] font-bold text-gray-400">₦10,000 projected</p>
-                    <img src="/assets/this-month-earnings-card-icon.png" alt="I" className="w-8 h-8" />
-                  </div>
-                </div>
-                <div className="bg-white p-6 rounded-[24px] border border-gray-50 shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-[#6183FF]/30 transition-colors">
-                  <div><p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Active Access Grants</p><span className="text-[36px] font-bold text-[#101217] leading-none">2</span></div>
-                  <div className="flex items-end justify-between">
-                    <p className="text-[11px] font-bold text-gray-400">1 expiring soon</p>
-                    <img src="/assets/active-access-grants-card-icon.png" alt="I" className="w-8 h-8" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-7 bg-white rounded-[32px] border border-gray-50 shadow-sm p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-[#101217]">Recent Records</h3>
-                    <button onClick={() => setActiveTab('Records')} className="text-[#6183FF] font-bold text-sm flex items-center gap-1 group hover:underline">
-                      See all <ChevronRightIcon className="w-3 h-3 transition-transform group-hover:translate-x-1" />
-                    </button>
-                  </div>
-                  <div className="divide-y divide-gray-50">
-                    {records.map((record) => (
-                      <div key={record.id} className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                        <div className="flex items-center gap-4"><div className="w-12 h-12 bg-[#F8F9FE] rounded-xl flex items-center justify-center p-1.5"><img src={record.icon} alt="R" className="w-full h-full object-contain" /></div><div><p className="font-bold text-[#101217] text-base">{record.name}</p><p className="text-[12px] text-gray-400 font-medium">{record.date}</p></div></div>
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${record.status === 'Shared Once' ? 'bg-[#EEF2FF] text-[#6183FF]' : 'bg-[#6183FF] text-white'}`}>{record.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="col-span-5 space-y-6">
-                  <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-8">
-                    <div className="flex items-center justify-between mb-8">
-                      <h3 className="text-xl font-bold text-[#101217]">Access Log</h3>
-                      <button onClick={() => setActiveTab('Records')} className="text-[#6183FF] font-bold text-sm flex items-center gap-1 hover:underline">
-                        View Full Audit <ChevronRightIcon className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <div className="space-y-6">
-                      {[
-                        { title: 'Reddington Hospital', action: 'viewed SNH Lab Result', time: '2hr ago', color: 'bg-[#22C55E]' },
-                        { title: 'St. Nicholas Hospital', action: 'gained access to your medical history', time: 'Yesterday', color: 'bg-[#FACC15]' },
-                        { title: 'Igandon General Hospital', action: 'viewed YFB Vaccination', time: '2 days ago', color: 'bg-[#EF4444]' },
-                      ].map((log, i) => (
-                        <div key={i} className="flex items-start gap-3"><div className={`w-2.5 h-2.5 rounded-full ${log.color} mt-1 shrink-0 border border-white shadow-sm`}></div><div className="flex-1"><p className="text-[13px] font-medium text-[#101217] leading-tight"><span className="font-bold">{log.title}</span> {log.action}</p></div><span className="text-[10px] text-gray-400 font-black uppercase whitespace-nowrap pt-0.5">{log.time}</span></div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-bold text-[#101217]">Earnings (Last 6 months)</h3>
-                      <button className="text-[#6183FF] hover:bg-[#6183FF]/10 p-1.5 rounded-md transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                          <path fillRule="evenodd" d="M12.53 16.28a.75.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="h-[140px] flex items-end justify-between gap-3">
-                      {[40, 70, 90, 60, 95, 45].map((h, i) => (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-                          <div className={`w-full rounded-md ${i === 5 ? 'bg-[#6183FF]' : 'bg-[#6183FF]/10'}`} style={{ height: `${h}%` }}></div>
-                          <span className="text-[9px] text-gray-400 font-bold uppercase">{['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'][i]}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {activeTab === 'Records' && (
-            <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-10 min-h-[400px]">
-              <h2 className="text-2xl font-bold text-[#101217] mb-6">Medical Records Management</h2>
-              <p className="text-gray-500 mb-8">View, manage, and upload your medical history.</p>
-
-              <div className="divide-y divide-gray-50">
-                {records.map((record) => (
-                  <div key={record.id} className="flex items-center justify-between py-5 first:pt-0 last:pb-0 hover:bg-gray-50 px-4 rounded-xl transition-colors cursor-pointer">
-                    <div className="flex items-center gap-6"><div className="w-14 h-14 bg-[#F8F9FE] rounded-2xl flex items-center justify-center p-2"><img src={record.icon} alt="R" className="w-full h-full object-contain" /></div><div><p className="font-bold text-[#101217] text-lg">{record.name}</p><p className="text-[13px] text-gray-400 font-medium mt-1">{record.date}</p></div></div>
-                    <span className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider ${record.status === 'Shared Once' ? 'bg-[#EEF2FF] text-[#6183FF]' : 'bg-[#6183FF] text-white'}`}>{record.status}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'Research' && (
-            <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-10 min-h-[400px] flex flex-col items-center justify-center text-center">
-              <BeakerIcon className="w-16 h-16 text-[#6183FF] mb-4 opacity-50" />
-              <h2 className="text-2xl font-bold text-[#101217] mb-2">Research Opportunities</h2>
-              <p className="text-gray-500 max-w-md">Discover and participate in ongoing medical research that matches your health profile.</p>
-            </div>
-          )}
-
-          {activeTab === 'Earnings' && (
-            <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-10 min-h-[400px] flex flex-col items-center justify-center text-center">
-              <WalletIcon className="w-16 h-16 text-[#6183FF] mb-4 opacity-50" />
-              <h2 className="text-2xl font-bold text-[#101217] mb-2">Your Earnings</h2>
-              <p className="text-gray-500 max-w-md">Track compensation from active data grants and research participation.</p>
-            </div>
-          )}
-
-          {activeTab === 'Profile' && (
-            <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-10 min-h-[400px]">
-              <h2 className="text-2xl font-bold text-[#101217] mb-6">Profile & Settings</h2>
-              <div className="flex items-center gap-6 mb-10">
-                <div className="w-24 h-24 rounded-full flex items-center justify-center p-[3px] shadow-sm relative" style={{ backgroundImage: "url('/assets/custom-profile-icon-ring.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                  <div className={`w-full h-full rounded-full ${avatarGradient}`}></div>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-[#101217]">{user?.user_metadata?.first_name || 'User'} {user?.user_metadata?.last_name || ''}</h3>
-                  <p className="text-gray-500">{user?.email || 'use..ail@gmail.com'}</p>
-                  <span className="inline-block mt-2 bg-[#EEF2FF] text-[#6183FF] text-[10px] font-black uppercase px-2 py-1 rounded-md">Pro Member</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="text-center py-6 opacity-30"><p className="text-[#101217] text-[10px] font-bold uppercase tracking-[0.4em]">© 2026, Selorah Health. All Rights Reserved.</p></div>
+          <div className="text-center py-6 opacity-30"><p className="text-[#101217] text-[10px] font-normal">Copyright (c) 2026, Selorah Health Limited. All rights reserved.</p></div>
         </div>
       </main>
     </div>

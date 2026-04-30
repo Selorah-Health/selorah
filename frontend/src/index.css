@@ -1,6 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap');
 @import "tailwindcss";
 
+/* Hide Google Translate UI */
+.goog-te-banner-frame.skiptranslate, 
+.goog-te-banner-frame,
+#goog-gt-tt, 
+.goog-te-balloon-frame {
+  display: none !important;
+}
+body {
+  top: 0px !important;
+}
+.goog-te-gadget {
+  display: none !important;
+}
+.goog-te-menu-value {
+  display: none !important;
+}
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+/* End Hide Google Translate UI */
+
 :root {
   /* Off-white background colors. Meeting WCAG contrast requirements with foreground */
   --background: #F8F9FA;
@@ -80,6 +102,10 @@ a:hover .btn-arrow-right {
 
 .dashboard-icon-button {
   @apply w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-sm border border-gray-100 hover:bg-gray-50 transition-all;
+}
+
+.standard-margin {
+  @apply px-4;
 }
 
 .scrollbar-hide::-webkit-scrollbar {

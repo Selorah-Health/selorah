@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import WaitlistModal from '../components/WaitlistModal';
+import LanguageSelector from '../components/LanguageSelector';
+import { useLanguage } from '../contexts/LanguageContext';
+import { detectCurrency, CurrencyInfo } from '../lib/utils/currency';
 import {
   ChevronRightIcon,
   Bars3Icon,
@@ -9,8 +12,29 @@ import {
 } from "@heroicons/react/24/solid";
 
 export default function Pricing() {
+  const { t } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currency, setCurrency] = useState<CurrencyInfo>(() => {
+    // Immediate guess based on browser locale to prevent flicker
+    const locale = navigator.language || 'en-US';
+    if (locale.includes('NG')) return { code: 'NGN', symbol: '₦', rate: 1500, countryName: 'Nigeria' };
+    return { code: 'USD', symbol: '$', rate: 1, countryName: 'United States' };
+  });
+
+  useEffect(() => {
+    detectCurrency().then(setCurrency);
+  }, []);
+
+  const formatPrice = (usdAmount: number) => {
+    const localAmount = usdAmount * currency.rate;
+    // Simple localized formatting
+    const formattedAmount = localAmount.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+    return `${currency.symbol}${formattedAmount}`;
+  };
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -25,11 +49,11 @@ export default function Pricing() {
 
       {/* NAVIGATION BAR */}
       <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px]" />
+        <div className="max-w-7xl mx-auto px-12 h-20 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">
+            <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px] group-hover:scale-105 transition-transform" />
             <span className="font-bold text-xl tracking-tight text-white">Selorah Health</span>
-          </div>
+          </Link>
 
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-white/80">
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
@@ -37,6 +61,7 @@ export default function Pricing() {
             <button onClick={() => scrollToSection('researchers')} className="hover:text-white transition-colors">For Researchers</button>
             <button onClick={() => scrollToSection('insurers')} className="hover:text-white transition-colors">For Insurers</button>
             <Link to="/pricing" className="text-primary font-bold transition-colors">Pricing</Link>
+            <LanguageSelector />
             <Link to="/login" className="px-6 py-2 rounded-full border border-white/20 hover:bg-white/10 transition-colors">Log in</Link>
             <button
               onClick={() => setIsModalOpen(true)}
@@ -54,7 +79,7 @@ export default function Pricing() {
 
       {/* MOBILE MENU */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-[#0A0B14] pt-24 px-6 lg:hidden">
+        <div className="fixed inset-0 z-40 bg-[#0A0B14] pt-24 px-12 lg:hidden">
           <div className="flex flex-col gap-6 text-xl font-medium text-white/80 text-left">
             <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
             <button onClick={() => { scrollToSection('hospitals'); setIsMenuOpen(false); }} className="text-left">For Hospitals</button>
@@ -73,7 +98,7 @@ export default function Pricing() {
       )}
 
       {/* HEADER SECTION */}
-      <section className="pt-40 pb-20 px-6 max-w-4xl mx-auto text-center">
+      <section className="pt-40 pb-20 px-12 max-w-7xl mx-auto text-center">
         <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">Transparent Pricing</p>
         <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-8">
           A sustainable model for<br />
@@ -86,7 +111,7 @@ export default function Pricing() {
       </section>
 
       {/* PRICING CARDS */}
-      <section className="py-12 px-6 max-w-7xl mx-auto text-left">
+      <section className="py-12 px-12 max-w-7xl mx-auto text-left">
         <div className="grid md:grid-cols-3 gap-8">
           {/* Patient Tier */}
           <div className="bg-white border-2 border-primary rounded-3xl p-8 shadow-xl relative">
@@ -96,9 +121,11 @@ export default function Pricing() {
             <h3 className="text-2xl font-bold mb-2 text-gray-900">Patient Premium</h3>
             <p className="text-muted mb-6 h-12">Full control over your medical history, forever.</p>
             <div className="mb-8">
-              <span className="text-5xl font-bold text-gray-900">₦4,500</span>
+              <span className="text-5xl font-bold text-gray-900">{formatPrice(3)}</span>
               <span className="text-muted font-medium"> / month</span>
-              <p className="text-xs text-primary font-bold mt-2">*Early access pricing locked in forever</p>
+              <p className="text-xs text-primary font-bold mt-2">
+                *Early access pricing locked in forever
+              </p>
             </div>
             <ul className="space-y-4 mb-8">
               {['Unlimited encrypted record storage', 'QR sharing with providers', 'Emergency profile', 'Family health vault (up to 6 members)', 'Opt-in research earnings (₦2k - ₦8k/mo)'].map((feat, i) => (
@@ -118,7 +145,7 @@ export default function Pricing() {
             <h3 className="text-2xl font-bold mb-2 text-gray-900">Hospitals & Clinics</h3>
             <p className="text-muted mb-6 h-12">Pay only for the data you access.</p>
             <div className="mb-8">
-              <span className="text-5xl font-bold text-gray-900">₦500</span>
+              <span className="text-5xl font-bold text-gray-900">{formatPrice(0.35)}</span>
               <span className="text-muted font-medium"> / scan</span>
               <p className="text-xs text-muted mt-2">Zero setup fees. Zero maintenance.</p>
             </div>
@@ -159,7 +186,7 @@ export default function Pricing() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-[#0A0B14] text-white pt-24 pb-12 px-6 border-t border-white/10 overflow-hidden relative text-left">
+      <footer className="bg-[#0A0B14] text-white pt-24 pb-12 px-12 border-t border-white/10 overflow-hidden relative text-left">
         <div className="absolute bottom-0 left-0 w-full opacity-5 pointer-events-none select-none">
           <h2 className="text-[20vw] font-black leading-none whitespace-nowrap -mb-8">selorahealth</h2>
         </div>
@@ -167,9 +194,9 @@ export default function Pricing() {
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-24">
             <div className="lg:col-span-1">
-              <div className="flex items-center mb-8">
+              <Link to="/" className="flex items-center mb-8 hover:opacity-80 transition-opacity">
                 <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px]" />
-              </div>
+              </Link>
             </div>
 
             <div>
