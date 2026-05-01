@@ -88,7 +88,8 @@ export default function Onboarding() {
       {/* Header */}
       <header className="w-full h-[70px] border-b border-gray-100 flex items-center px-12 shrink-0">
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity group">
-          <img src="/logo.png" alt="Selorah Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
+          <img src="/logo.svg" alt="Selorah Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
+          
           <span className="text-xl font-bold tracking-tight text-[#4262FF]">Selorah</span>
         </Link>
       </header>
