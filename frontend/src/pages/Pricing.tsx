@@ -10,6 +10,9 @@ import {
   XMarkIcon,
   CheckIcon
 } from "@heroicons/react/24/solid";
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import SEOTitle from '../components/SEOTitle';
 
 export default function Pricing() {
   const { t } = useLanguage();
@@ -45,57 +48,8 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans selection:bg-primary/30 selection:text-primary overflow-x-hidden">
-      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-
-      {/* NAVIGATION BAR */}
-      <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-12 h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">
-            <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px] group-hover:scale-105 transition-transform" />
-            <span className="font-bold text-xl tracking-tight text-white">Selorah Health</span>
-          </Link>
-
-          <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-white/80">
-            <Link to="/" className="hover:text-white transition-colors">Home</Link>
-            <button onClick={() => scrollToSection('hospitals')} className="hover:text-white transition-colors">For Hospitals</button>
-            <button onClick={() => scrollToSection('researchers')} className="hover:text-white transition-colors">For Researchers</button>
-            <button onClick={() => scrollToSection('insurers')} className="hover:text-white transition-colors">For Insurers</button>
-            <Link to="/pricing" className="text-primary font-bold transition-colors">Pricing</Link>
-            <LanguageSelector />
-            <Link to="/login" className="px-6 py-2 rounded-full border border-white/20 hover:bg-white/10 transition-colors">Log in</Link>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-primary text-white px-6 py-2 rounded-full font-bold hover:bg-primary-hover transition-colors"
-            >
-              Join Waitlist
-            </button>
-          </div>
-
-          <button className="lg:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
-          </button>
-        </div>
-      </nav>
-
-      {/* MOBILE MENU */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-[#0A0B14] pt-24 px-12 lg:hidden">
-          <div className="flex flex-col gap-6 text-xl font-medium text-white/80 text-left">
-            <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
-            <button onClick={() => { scrollToSection('hospitals'); setIsMenuOpen(false); }} className="text-left">For Hospitals</button>
-            <button onClick={() => { scrollToSection('researchers'); setIsMenuOpen(false); }} className="text-left">For Researchers</button>
-            <button onClick={() => { scrollToSection('insurers'); setIsMenuOpen(false); }} className="text-left">For Insurers</button>
-            <Link to="/pricing" onClick={() => setIsMenuOpen(false)}>Pricing</Link>
-            <Link to="/login" className="text-primary" onClick={() => setIsMenuOpen(false)}>Log in</Link>
-            <button
-              onClick={() => { setIsModalOpen(true); setIsMenuOpen(false); }}
-              className="bg-primary text-white py-4 rounded-xl font-bold"
-            >
-              Join Waitlist
-            </button>
-          </div>
-        </div>
-      )}
+      <SEOTitle title="Pricing" />
+      <Header />
 
       {/* HEADER SECTION */}
       <section className="pt-40 pb-20 px-12 max-w-7xl mx-auto text-center">
@@ -185,81 +139,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-[#0A0B14] text-white pt-24 pb-12 px-12 border-t border-white/10 overflow-hidden relative text-left">
-        <div className="absolute bottom-0 left-0 w-full opacity-5 pointer-events-none select-none">
-          <h2 className="text-[20vw] font-black leading-none whitespace-nowrap -mb-8">selorahealth</h2>
-        </div>
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-24">
-            <div className="lg:col-span-1">
-              <Link to="/" className="flex items-center mb-8 hover:opacity-80 transition-opacity">
-                <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px]" />
-              </Link>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Product</h4>
-              <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><Link to="/" className="hover:text-white transition-colors">Patient App</Link></li>
-                <li><button onClick={() => scrollToSection('hospitals')} className="hover:text-white transition-colors">Hospital Portal</button></li>
-                <li><button onClick={() => scrollToSection('researchers')} className="hover:text-white transition-colors">Research Portal</button></li>
-                <li><button onClick={() => scrollToSection('insurers')} className="hover:text-white transition-colors">Insurer Portal</button></li>
-                <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Company</h4>
-              <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><Link to="#" className="hover:text-white transition-colors">About</Link></li>
-                <li><a href="https://samuel-amanze.vercel.app/" className="hover:text-white transition-colors">Schedule a meeting</a></li>
-                <li><Link to="#" className="hover:text-white transition-colors">Career</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Legal</h4>
-              <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                <li><Link to="#" className="hover:text-white transition-colors">Terms of use</Link></li>
-                <li><Link to="#" className="hover:text-white transition-colors">Cookie Policy</Link></li>
-                <li><Link to="#" className="hover:text-white transition-colors">Data Processing Agreement</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Social</h4>
-              <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><a href="https://linkedin.com/company/selorahealth/" className="hover:text-white transition-colors">LinkedIn</a></li>
-                <li><a href="https://x.com/selorahealth" className="hover:text-white transition-colors">X/Twitter</a></li>
-                <li><a href="https://chat.whatsapp.com/JI2LK41IF8yHiJjEuWKk2M?mode=gi_t" className="hover:text-white transition-colors">WhatsApp Community</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center justify-between pt-12 border-t border-white/5 gap-8">
-            <div className="text-gray-500 text-xs flex flex-wrap justify-center gap-6">
-              <span>Copyright (c) 2026, Selorah Health Limited. All rights reserved.</span>
-            </div>
-
-            <div className="flex-1 max-w-md w-full md:px-8">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-primary text-white px-6 py-2 rounded-full font-bold hover:bg-primary-hover transition-colors"
-              >
-                Join Waitlist
-              </button>
-            </div>
-
-            <div className="text-gray-500 text-xs flex gap-6">
-              <Link to="#" className="hover:text-white transition-colors">Terms</Link>
-              <Link to="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

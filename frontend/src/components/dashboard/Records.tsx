@@ -16,6 +16,19 @@ interface RecordsProps {
 
 export default function Records({ records, handleUploadClick }: RecordsProps) {
   const navigate = useNavigate();
+  const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('selorah_demo_upload');
+    if (saved) setUploadedFile(saved);
+    
+    const handleStorage = () => {
+      const s = localStorage.getItem('selorah_demo_upload');
+      if (s) setUploadedFile(s);
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   return (
     <div className="space-y-10 font-sora">
@@ -51,8 +64,33 @@ export default function Records({ records, handleUploadClick }: RecordsProps) {
               </button>
             </div>
             <div className="divide-y divide-gray-50">
+              {uploadedFile && (
+                <div className="flex items-center justify-between py-4 first:pt-0 hover:bg-gray-50 px-2 -mx-2 rounded-xl transition-colors cursor-pointer border-l-4 border-green-500 animate-in fade-in slide-in-from-left-2">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center p-2">
+                      <img src="/assets/total-records-card-icon.png" alt="R" className="w-full h-full object-contain" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-[#101217] text-base">New Uploaded Document</p>
+                      <p className="text-[12px] text-gray-400 font-medium">Just now • Demo Preview Available</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase tracking-wider">New</span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(uploadedFile, '_blank');
+                      }}
+                      className="text-[#6183FF] text-[10px] font-black uppercase hover:underline"
+                    >
+                      View Original
+                    </button>
+                  </div>
+                </div>
+              )}
               {records.map((record) => (
-                <div key={record.id} onClick={() => navigate(`/dashboard/records/${record.id}`)} className="flex items-center justify-between py-4 first:pt-0 last:pb-0 hover:bg-gray-50 px-2 -mx-2 rounded-xl transition-colors cursor-pointer">
+                <div key={record.id} onClick={() => navigate(`/dashboard/records/${record.id}`)} className="flex items-center justify-between py-4 last:pb-0 hover:bg-gray-50 px-2 -mx-2 rounded-xl transition-colors cursor-pointer">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-[#F8F9FE] rounded-xl flex items-center justify-center p-1.5">
                       <img src={record.icon} alt="R" className="w-full h-full object-contain" />

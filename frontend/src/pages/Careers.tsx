@@ -1,8 +1,10 @@
 import LegalLayout from '../components/LegalLayout';
+import SEOTitle from '../components/SEOTitle';
 
 export default function Careers() {
   return (
     <LegalLayout title="Careers">
+      <SEOTitle title="Careers" />
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="mb-16">

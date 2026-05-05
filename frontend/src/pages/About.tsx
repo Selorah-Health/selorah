@@ -1,10 +1,16 @@
 import { ShieldCheckIcon, GlobeAltIcon, UserGroupIcon, RocketLaunchIcon, ArrowRightIcon, BeakerIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import SEOTitle from '../components/SEOTitle';
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-white font-sora">
-      
+    <div className="min-h-screen bg-white font-sora selection:bg-primary/30">
+      <SEOTitle title="About Us" />
+      <Header theme="light" />
+      <div className="h-20 shrink-0" /> {/* Spacer for fixed nav */}
+
       {/* Hero Section */}
       <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden bg-[#101217]">
         <img 
@@ -117,10 +123,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* Simple Footer Link */}
-      <div className="py-12 text-center border-t border-gray-100">
-        <Link to="/" className="text-gray-400 hover:text-[#6183FF] font-bold text-sm">Back to Home</Link>
-      </div>
+      <Footer />
     </div>
   );
 }

@@ -46,7 +46,25 @@ export default function Onboarding() {
   const prevStep = () => setStep(step - 1);
 
   const handleFinish = () => {
-    navigate('/dashboard');
+    // Save user profile state
+    const savedUserStr = localStorage.getItem('selorah_user');
+    const savedUser = savedUserStr ? JSON.parse(savedUserStr) : {};
+    localStorage.setItem('selorah_user', JSON.stringify({
+      ...savedUser,
+      first_name: formData.firstName || formData.orgName,
+      last_name: formData.lastName || '',
+      role: formData.role
+    }));
+
+    if (formData.role === 'provider' || formData.role === 'hospital') {
+      navigate('/hospital');
+    } else if (formData.role === 'researcher') {
+      navigate('/researcher');
+    } else if (formData.role === 'insurer') {
+      navigate('/insurer');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const addContact = () => {
@@ -73,11 +91,9 @@ export default function Onboarding() {
 
   const roles = [
     { id: 'patient', title: 'Patient', desc: 'Manage your personal health records and history.', icon: UserIcon },
-    { id: 'provider', title: 'Provider', desc: 'Access and update patient medical records securely.', icon: BuildingOffice2Icon },
+    { id: 'hospital', title: 'Hospital / Clinic', desc: 'Manage medical records for thousands of patients.', icon: BuildingOffice2Icon },
     { id: 'researcher', title: 'Researcher', desc: 'Analyze anonymized health data for clinical studies.', icon: BeakerIcon },
     { id: 'insurer', title: 'Insurer', desc: 'Verify health claims and manage policies efficiently.', icon: ShieldCheckIcon },
-    { id: 'developer', title: 'Developer', desc: 'Build and integrate with the Selorah Health API.', icon: SparklesIcon },
-    { id: 'partner', title: 'Partner', desc: 'Collaborate to build modern health tech solutions.', icon: CheckCircleIcon },
   ];
 
   const isPatient = formData.role === 'patient';
@@ -150,10 +166,10 @@ export default function Onboarding() {
             <div className="max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-8">
                 <h1 className="text-2xl font-bold text-[#050038] mb-1">
-                  {isPatient ? 'Registration' : 'KYC Verification'}
+                  {isPatient ? 'Registration' : 'Institutional Setup'}
                 </h1>
                 <p className="text-gray-500 text-sm">
-                  {isPatient ? "Let's set up your secure health profile." : "Official documentation is required."}
+                  {isPatient ? "Let's set up your secure health profile." : "Official organization details are required."}
                 </p>
               </div>
 
@@ -182,16 +198,6 @@ export default function Onboarding() {
                       value={formData.dateOfBirth}
                       onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                     />
-                    <div className="relative">
-                      <input
-                        type="tel"
-                        placeholder="WhatsApp Number"
-                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm"
-                        value={formData.whatsappNumber}
-                        onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                      />
-                      <PhoneIcon className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" />
-                    </div>
                   </>
                 ) : (
                   <>
@@ -202,22 +208,6 @@ export default function Onboarding() {
                       value={formData.orgName}
                       onChange={(e) => setFormData({ ...formData, orgName: e.target.value })}
                     />
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        placeholder="License #"
-                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm"
-                        value={formData.licenseNumber}
-                        onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Tax ID"
-                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm"
-                        value={formData.taxId}
-                        onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
-                      />
-                    </div>
                     <input
                       type="email"
                       placeholder="Official Email"
@@ -227,6 +217,16 @@ export default function Onboarding() {
                     />
                   </>
                 )}
+                <div className="relative">
+                  <input
+                    type="tel"
+                    placeholder="WhatsApp Number"
+                    className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm"
+                    value={formData.whatsappNumber}
+                    onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                  />
+                  <PhoneIcon className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                </div>
               </div>
 
               <div className="flex gap-3 mt-8">

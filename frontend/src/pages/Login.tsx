@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon, ArrowPathIcon, PhoneIcon } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
+import SEOTitle from '../components/SEOTitle';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +14,7 @@ export default function Login() {
   const [formData, setFormData] = useState({
     identifier: '',
     password: '',
+    role: 'patient',
     remember: false
   });
 
@@ -47,9 +49,18 @@ export default function Login() {
           ...userData,
           email: validateIdentifier(formData.identifier) === 'email' ? formData.identifier : userData.email,
           phone: validateIdentifier(formData.identifier) === 'phone' ? formData.identifier : userData.phone,
+          role: formData.role
         }));
 
-        navigate('/dashboard');
+        if (formData.role === 'provider' || formData.role === 'hospital') {
+          navigate('/hospital');
+        } else if (formData.role === 'researcher') {
+          navigate('/researcher');
+        } else if (formData.role === 'insurer') {
+          navigate('/insurer');
+        } else {
+          navigate('/dashboard');
+        }
       }, 1500);
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');
@@ -59,6 +70,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-[#0A0B14] text-white selection:bg-primary/30 font-sora">
+      <SEOTitle title="Login" />
       {/* Left Side: Image & Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
@@ -131,6 +143,18 @@ export default function Login() {
               >
                 {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </button>
+            </div>
+
+            <div className="relative">
+              <select
+                className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-4 focus:outline-none focus:border-[#4262FF] transition-all text-white appearance-none"
+                value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              >
+                <option value="patient">Login as Patient</option>
+                <option value="provider">Login as Hospital / Provider</option>
+                <option value="researcher">Login as Researcher</option>
+                <option value="insurer">Login as Insurer</option>
+              </select>
             </div>
 
             <div className="flex items-center justify-between">

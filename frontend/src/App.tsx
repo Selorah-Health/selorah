@@ -16,6 +16,9 @@ const About = lazy(() => import('./pages/About'));
 const Careers = lazy(() => import('./pages/Careers'));
 const CookiePolicy = lazy(() => import('./pages/CookiePolicy'));
 const DataProcessing = lazy(() => import('./pages/DataProcessing'));
+const HospitalDashboard = lazy(() => import('./pages/hospital/HospitalDashboard'));
+const ResearcherDashboard = lazy(() => import('./pages/researcher/ResearcherDashboard'));
+const InsurerDashboard = lazy(() => import('./pages/insurer/InsurerDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 export default function App() {
@@ -43,6 +46,9 @@ export default function App() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/cookie-policy" element={<CookiePolicy />} />
         <Route path="/dpa" element={<DataProcessing />} />
+        <Route path="/hospital/*" element={<HospitalDashboard />} />
+        <Route path="/researcher/*" element={<ResearcherDashboard />} />
+        <Route path="/insurer/*" element={<InsurerDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

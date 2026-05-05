@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon, ArrowPathIcon, PhoneIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
+import SEOTitle from '../components/SEOTitle';
 
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
@@ -92,6 +93,7 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-[#0A0B14] text-white selection:bg-primary/30 font-sora">
+      <SEOTitle title="Create Account" />
       {/* Left Side: Image & Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img

@@ -116,3 +116,43 @@ a:hover .btn-arrow-right {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  header, 
+  aside, 
+  nav, 
+  button, 
+  .print-hidden, 
+  .print\:hidden {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .bg-white {
+    background-color: white !important;
+  }
+
+  .shadow-xl, .shadow-sm, .shadow-md {
+    box-shadow: none !important;
+  }
+
+  .border {
+    border-color: #eee !important;
+  }
+
+  .animate-in {
+    animation: none !important;
+  }
+}

@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
 import { useNavigate, NavLink, Routes, Route, useLocation } from 'react-router-dom';
+import SEOTitle from '../components/SEOTitle';
 
 // Tab Components
 import Home from '../components/dashboard/Home';
@@ -119,10 +120,18 @@ export default function Dashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    setTimeout(() => {
+    
+    // For demo: Create a data URL and save to localStorage
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      localStorage.setItem('selorah_demo_upload', base64String);
       setUploading(false);
-      alert('Record uploaded successfully!');
-    }, 1500);
+      alert('Record uploaded successfully! You can now see it in your records list.');
+      // Dispatch storage event to update other tabs
+      window.dispatchEvent(new Event('storage'));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleLogout = async () => {
@@ -156,6 +165,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-[#F8F9FE] overflow-hidden font-sora selection:bg-primary/30">
+      <SEOTitle title={getPageTitle()} />
       <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
 
       {/* Sidebar - Collapsible */}
@@ -248,7 +258,7 @@ export default function Dashboard() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <div className="relative hidden md:block w-[320px]">
               <MagnifyingGlassIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -273,7 +283,7 @@ export default function Dashboard() {
 
               <button
                 onClick={() => navigate('/dashboard/qrcodes')}
-                className="w-fit h-fit hover:scale-105 transition-transform ml-2"
+                className="w-fit h-fit hover:scale-105 transition-transform"
               >
                 <img
                   src="/assets/custom-qr-code-icon.png"
@@ -282,7 +292,7 @@ export default function Dashboard() {
                 />
               </button>
 
-              <button onClick={() => navigate('/dashboard/profile')} className="relative ml-2">
+              <button onClick={() => navigate('/dashboard/profile')} className="relative">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center p-[2px] shadow-sm relative" style={{ backgroundImage: "url('/assets/custom-profile-icon-ring.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
                   <div className={`w-full h-full rounded-full ${avatarGradient}`}></div>
                 </div>
