@@ -9,5 +9,8 @@
   },
   "workspaces": [
     "frontend"
-  ]
+  ],
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
 }

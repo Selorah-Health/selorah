@@ -12,8 +12,13 @@
 /build
 
 # Environment variables
+/backend/.env
 .env
 .env*.local
+
+.github
+.vscode
+/shared
 
 # Logs
 npm-debug.log*

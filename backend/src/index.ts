@@ -8,28 +8,34 @@ import authRoutes from './routes/auth';
 
 dotenv.config();
 
+// Validate environment variables
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error("❌ Missing Supabase environment variables!");
+  console.error("Please check your .env file");
+  process.exit(1); // Stop the server
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 const app = express();
 const server = createServer(app);
 
 app.use(cors());
 app.use(express.json());
 
-// Initialize WebSocket
-initSocket(server);
-
-// Supabase Init Check
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 // Mount Routes
 app.use('/api/auth', authRoutes);
 
-app.get('/health', (req: express.Request, res: express.Response) => {
-  res.json({ status: 'ok', time: new Date() });
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
+
 server.listen(PORT, () => {
-  console.log(`Backend attached via Express & Socket.io running on port ${PORT}`);
+  console.log(`🚀 Backend running on http://localhost:${PORT}`);
+  console.log(`✅ Supabase connected successfully`);
 });

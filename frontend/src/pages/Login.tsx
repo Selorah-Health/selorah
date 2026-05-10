@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon, ArrowPathIcon, PhoneIcon } from '@heroicons/react/24/outline';
-import { createClient } from '../lib/supabase/client';
 import SEOTitle from '../components/SEOTitle';
 
 export default function Login() {
@@ -9,61 +8,58 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const supabase = createClient();
 
   const [formData, setFormData] = useState({
-    identifier: '',
+    email: '',
     password: '',
-    role: 'patient',
-    remember: false
   });
-
-  const validateIdentifier = (val: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^\+?[\d\s-]{10,}$/;
-    
-    if (emailRegex.test(val)) return 'email';
-    if (phoneRegex.test(val)) return 'phone';
-    return null;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    const type = validateIdentifier(formData.identifier);
-    if (!type) {
-      setError('Please enter a valid email address or phone number');
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // In a real app, we would use the identifier for authentication
-      setTimeout(() => {
-        const savedUser = localStorage.getItem('selorah_user');
-        const userData = savedUser ? JSON.parse(savedUser) : { first_name: 'Returning', last_name: 'User' };
-        
-        localStorage.setItem('selorah_user', JSON.stringify({
-          ...userData,
-          email: validateIdentifier(formData.identifier) === 'email' ? formData.identifier : userData.email,
-          phone: validateIdentifier(formData.identifier) === 'phone' ? formData.identifier : userData.phone,
-          role: formData.role
-        }));
+      const response = await fetch('http://localhost:3001/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-        if (formData.role === 'provider' || formData.role === 'hospital') {
-          navigate('/hospital');
-        } else if (formData.role === 'researcher') {
-          navigate('/researcher');
-        } else if (formData.role === 'insurer') {
-          navigate('/insurer');
-        } else {
-          navigate('/dashboard');
-        }
-      }, 1500);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Store user info
+      localStorage.setItem('selorah_user', JSON.stringify({
+        id: data.user?.id,
+        email: data.user?.email,
+        ...data.userDetails
+      }));
+
+      alert('Login successful!');
+
+      // Redirect based on role
+      const role = data.userDetails?.role || 'patient';
+      
+      if (role === 'provider') {
+        navigate('/hospital');
+      } else if (role === 'researcher') {
+        navigate('/researcher');
+      } else if (role === 'insurer') {
+        navigate('/insurer');
+      } else {
+        navigate('/dashboard');
+      }
+
     } catch (err: any) {
-      setError(err.message || 'An error occurred during login');
+      setError(err.message || 'Invalid email or password');
+    } finally {
       setLoading(false);
     }
   };
@@ -71,7 +67,8 @@ export default function Login() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-[#0A0B14] text-white selection:bg-primary/30 font-sora">
       <SEOTitle title="Login" />
-      {/* Left Side: Image & Branding */}
+
+      {/* Left Side - Keep your existing design */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
           src="/assets/hero-bg-image-1.jpg"
@@ -100,7 +97,7 @@ export default function Login() {
       </div>
 
       {/* Right Side: Login Form */}
-      <div className="flex-1 flex flex-col justify-center px-12 py-12">
+      <div className="flex-1 flex flex-col justify-center px-4 py-12">
         <div className="max-w-md w-full mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-white tracking-tight">Log in</h2>
@@ -122,61 +119,43 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="relative">
               <input
-                type="text" required placeholder="Email or Phone Number"
-                autoComplete="off"
+                type="email"
+                required
+                placeholder="Email address"
                 className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-4 pl-12 focus:outline-none focus:border-[#4262FF] transition-all text-white placeholder:text-gray-500"
-                value={formData.identifier} onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
               <PhoneIcon className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
             </div>
 
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"} required placeholder="Password"
-                autoComplete="current-password"
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Password"
                 className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-4 focus:outline-none focus:border-[#4262FF] transition-all text-white placeholder:text-gray-500"
-                value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
               <button
-                type="button" onClick={() => setShowPassword(!showPassword)}
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
               >
                 {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </button>
             </div>
 
-            <div className="relative">
-              <select
-                className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-4 focus:outline-none focus:border-[#4262FF] transition-all text-white appearance-none"
-                value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              >
-                <option value="patient">Login as Patient</option>
-                <option value="provider">Login as Hospital / Provider</option>
-                <option value="researcher">Login as Researcher</option>
-                <option value="insurer">Login as Insurer</option>
-              </select>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox" id="remember" className="accent-[#4262FF] w-4 h-4 cursor-pointer"
-                  checked={formData.remember} onChange={(e) => setFormData({ ...formData, remember: e.target.checked })}
-                />
-                <label htmlFor="remember" className="text-sm text-white/60 select-none cursor-pointer">Remember me</label>
-              </div>
-              <Link to="/forgot-password" title="Coming soon" className="text-sm text-white/40 hover:text-[#4262FF] transition-colors">
-                Forgot password?
-              </Link>
-            </div>
-
             <button
-              type="submit" disabled={loading}
-              className="w-full bg-[#4262FF] py-4 rounded-xl font-bold hover:bg-[#3250E6] transition-all flex items-center justify-center gap-2 text-white shadow-lg shadow-blue-500/20"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#4262FF] py-4 rounded-xl font-bold hover:bg-[#3250E6] transition-all flex items-center justify-center gap-2 text-white shadow-lg shadow-blue-500/20 disabled:opacity-50"
             >
               {loading ? <ArrowPathIcon className="w-5 h-5 animate-spin" /> : 'Log In'}
             </button>
 
+            {/* Social Logins (Optional for now) */}
             <div className="relative py-8 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/10"></div>
@@ -187,26 +166,12 @@ export default function Login() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setLoading(true);
-                  setTimeout(() => navigate('/dashboard'), 1500);
-                }}
-                className="flex items-center justify-center gap-3 bg-transparent border border-white/10 py-3 rounded-xl hover:bg-white/5 transition-all text-white group"
-              >
-                <img src="/assets/google-logo.png" alt="Google" className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <button type="button" className="flex items-center justify-center gap-3 bg-transparent border border-white/10 py-3 rounded-xl hover:bg-white/5 transition-all text-white">
+                <img src="/assets/google-logo.png" alt="Google" className="w-5 h-5" />
                 <span className="font-medium text-sm">Google</span>
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setLoading(true);
-                  setTimeout(() => navigate('/dashboard'), 1500);
-                }}
-                className="flex items-center justify-center gap-3 bg-transparent border border-white/10 py-3 rounded-xl hover:bg-white/5 transition-all text-white group"
-              >
-                <img src="/assets/apple-logo.png" alt="Apple" className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <button type="button" className="flex items-center justify-center gap-3 bg-transparent border border-white/10 py-3 rounded-xl hover:bg-white/5 transition-all text-white">
+                <img src="/assets/apple-logo.png" alt="Apple" className="w-5 h-5" />
                 <span className="font-medium text-sm">Apple</span>
               </button>
             </div>
