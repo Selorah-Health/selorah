@@ -66,20 +66,20 @@ export default function Dashboard() {
               is_pro: parsed.is_pro
             }
           });
-          fetchRecords(parsed.first_name);
+          fetchRecords();
         } else {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) {
             setUser({ email: 'user@selorah.com', user_metadata: { first_name: 'Guest', is_pro: false } });
-            fetchRecords('Guest');
+            fetchRecords();
           } else {
             setUser(user);
-            fetchRecords(user.user_metadata?.first_name || 'User');
+            fetchRecords();
           }
         }
       } catch (err) {
         setUser({ email: 'user@selorah.com', user_metadata: { first_name: 'User', is_pro: false } });
-        fetchRecords('User');
+        fetchRecords();
       }
     }
 
@@ -101,17 +101,51 @@ export default function Dashboard() {
     return `${weekday}, ${day}${suffix} ${month} ${year}`;
   };
 
-  const fetchRecords = async (name: string) => {
+  const fetchRecords = async () => {
     setLoading(true);
     try {
-      setRecords([
-        { id: '1', name: `${name}'s Health Checkup`, date: 'Today • Selorah Medical Center', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-        { id: '2', name: 'SNH Lab Result', date: 'Yesterday • St. Nicholas Hospital • Lagos Island', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-        { id: '3', name: 'Metformin 500mg Prescription', date: '03/15/2026 • Igando General Hospital', status: 'Encrypted', icon: '/assets/custom-prescription-icon.png' },
-        { id: '4', name: 'YFB Vaccination', date: '03/16/2026 • Self-reported', status: 'Shared Once', icon: '/assets/custom-vaccination-icon.png' },
-        { id: '5', name: 'HSH Lab Result', date: '01/10/2026 • Havana Specialist Hospital', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-      ]);
-    } catch (err) { } finally { setLoading(false); }
+      const { data: { user } } = await supabase.auth.getUser();
+      const userName = user?.user_metadata?.first_name || 'User';
+
+      const hardcodedRecords = [
+        { id: 'hc1', name: `${userName}'s Health Checkup`, date: 'Today • Selorah Medical Center', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
+        { id: 'hc2', name: 'SNH Lab Result', date: 'Yesterday • St. Nicholas Hospital • Lagos Island', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
+        { id: 'hc3', name: 'Metformin 500mg Prescription', date: '03/15/2026 • Igando General Hospital', status: 'Encrypted', icon: '/assets/custom-prescription-icon.png' },
+        { id: 'hc4', name: 'YFB Vaccination', date: '03/16/2026 • Self-reported', status: 'Shared Once', icon: '/assets/custom-vaccination-icon.png' },
+        { id: 'hc5', name: 'HSH Lab Result', date: '01/10/2026 • Havana Specialist Hospital', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
+      ];
+
+      if (!user) {
+        setRecords(hardcodedRecords as any);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('medical_records')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      let dbRecords: any[] = [];
+      if (data) {
+        dbRecords = data.map((record: any) => ({
+          id: record.id,
+          name: record.name,
+          date: new Date(record.date).toLocaleDateString(),
+          status: record.status,
+          icon: '/assets/total-records-card-icon.png',
+          document_url: record.document_url
+        }));
+      }
+      
+      setRecords([...dbRecords, ...hardcodedRecords] as any);
+    } catch (err) { 
+      console.error("Failed to fetch records:", err);
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const handleUploadClick = () => fileInputRef.current?.click();
@@ -121,17 +155,49 @@ export default function Dashboard() {
     if (!file) return;
     setUploading(true);
     
-    // For demo: Create a data URL and save to localStorage
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      localStorage.setItem('selorah_demo_upload', base64String);
+    const saveRecordToDb = async (name: string, url: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase.from('medical_records').insert({
+        user_id: user.id,
+        name: name,
+        record_type: 'Uploaded Document',
+        date: new Date().toISOString().split('T')[0],
+        document_url: url,
+        status: 'Private'
+      });
+
+      if (error) {
+        alert('Failed to save record to database: ' + error.message);
+      } else {
+        alert('Record uploaded successfully!');
+        fetchRecords();
+      }
       setUploading(false);
-      alert('Record uploaded successfully! You can now see it in your records list.');
-      // Dispatch storage event to update other tabs
-      window.dispatchEvent(new Event('storage'));
     };
-    reader.readAsDataURL(file);
+
+    try {
+      const fileName = `${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('records')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.warn("Storage upload failed, attempting fallback to base64 data URL", uploadError);
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          await saveRecordToDb(file.name, reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const { data: urlData } = supabase.storage.from('records').getPublicUrl(fileName);
+        await saveRecordToDb(file.name, urlData.publicUrl);
+      }
+    } catch (err: any) {
+      alert("Error uploading file: " + err.message);
+      setUploading(false);
+    }
   };
 
   const handleLogout = async () => {

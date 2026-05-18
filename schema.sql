@@ -99,3 +99,12 @@ CREATE POLICY "Anyone can view active shared links by token" ON shared_links
     FOR SELECT USING (is_active = true AND expires_at > NOW());
 CREATE POLICY "Users can manage their own shared links" ON shared_links
     FOR ALL USING (auth.uid() = user_id);
+
+-- WAITLIST TABLE
+CREATE TABLE waitlist (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT UNIQUE NOT NULL,
+    full_name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+

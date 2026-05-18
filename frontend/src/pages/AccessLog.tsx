@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ShieldExclamationIcon, ListBulletIcon, TrashIcon, NoSymbolIcon, DevicePhoneMobileIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { createClient } from '../lib/supabase/client';
 
 export default function AccessLog() {
   const [staticLogs] = useState([
@@ -10,10 +11,59 @@ export default function AccessLog() {
   ]);
 
   const [dynamicLogs, setDynamicLogs] = useState<any[]>([]);
+  const [dbLogs, setDbLogs] = useState<any[]>([]);
   const [revokedIds, setRevokedIds] = useState<string[]>([]);
   const navigate = useNavigate();
+  const supabase = createClient();
 
   useEffect(() => {
+    // 1. Fetch real access logs from Supabase
+    const fetchRealLogs = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Note: provider_id relationship might need custom query if foreign key isn't named correctly in postgrest
+      // For safety, we fetch the log and optionally a provider name
+      const { data, error } = await supabase
+        .from('access_logs')
+        .select(`
+          id,
+          action,
+          created_at,
+          profiles:provider_id(first_name, last_name, organization_name)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (data && !error) {
+        const formatted = data.map((log: any) => {
+          let providerTitle = 'Verified Healthcare Provider';
+          if (log.profiles) {
+            // handle arrays or objects depending on postgrest return
+            const profile = Array.isArray(log.profiles) ? log.profiles[0] : log.profiles;
+            if (profile) {
+              providerTitle = profile.organization_name || `${profile.first_name} ${profile.last_name}`;
+            }
+          }
+
+          return {
+            id: log.id,
+            title: providerTitle,
+            action: log.action,
+            time: new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            date: new Date(log.created_at).toLocaleDateString(),
+            color: 'bg-[#6183FF]',
+            status: 'Active',
+            device: 'Hospital Portal',
+            verified: true,
+          };
+        });
+        setDbLogs(formatted);
+      }
+    };
+    fetchRealLogs();
+
+    // 2. Local storage mocked logs
     const savedRevoked = localStorage.getItem('selorah_revoked_logs');
     if (savedRevoked) {
       setRevokedIds(JSON.parse(savedRevoked));
@@ -25,24 +75,33 @@ export default function AccessLog() {
     }
   }, []);
 
-  const handleRevoke = (e: React.MouseEvent, id: string, title: string) => {
+  const handleRevoke = async (e: React.MouseEvent, id: string, title: string) => {
     e.stopPropagation();
     if (window.confirm(`Are you sure you want to REVOKE all access for ${title}?`)) {
       const newRevoked = [...revokedIds, id];
       setRevokedIds(newRevoked);
       localStorage.setItem('selorah_revoked_logs', JSON.stringify(newRevoked));
-      alert(`Access for ${title} has been permanently revoked.`);
+      
+      // Real DB Revoke: invalidate all active tokens for this user to actively block future scans
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('shared_links').update({ is_active: false }).eq('user_id', user.id);
+      }
+
+      alert(`Access for ${title} has been permanently revoked and tokens have been invalidated.`);
     }
   };
 
-  const allLogs = [...dynamicLogs.map(l => ({
+  const localDynamicFormatted = dynamicLogs.map(l => ({
     ...l,
     title: l.verified ? l.title : 'Unverified Device',
     action: 'viewed medical history via shared link',
     time: 'Just now',
     date: new Date(l.timestamp).toLocaleDateString(),
     color: 'bg-orange-500'
-  })), ...staticLogs];
+  }));
+
+  const allLogs = [...dbLogs, ...localDynamicFormatted, ...staticLogs];
 
   return (
     <div className="bg-white rounded-[40px] border border-gray-50 shadow-xl shadow-blue-500/5 p-10 min-h-[500px] font-sora">

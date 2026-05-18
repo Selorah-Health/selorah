@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { createClient } from '../lib/supabase/client';
 import { 
   ArrowLeftIcon, 
   EllipsisVerticalIcon, 
@@ -16,13 +17,37 @@ export default function RecordDetails() {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [patient, setPatient] = useState<any>(null);
+  const [record, setRecord] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
-    const saved = localStorage.getItem('selorah_user');
-    if (saved) {
-      setPatient(JSON.parse(saved));
-    }
-  }, []);
+    const fetchRecordData = async () => {
+      // Load user profile
+      const saved = localStorage.getItem('selorah_user');
+      if (saved) setPatient(JSON.parse(saved));
+
+      // Check if it's a mock record or a real one
+      if (id && id.startsWith('hc')) {
+        // It's a mock record, we don't need to fetch
+        setLoading(false);
+      } else if (id) {
+        // Fetch from Supabase
+        const { data, error } = await supabase
+          .from('medical_records')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (data) setRecord(data);
+        setLoading(false);
+      }
+    };
+
+    fetchRecordData();
+  }, [id]);
+
+  const isMockRecord = id?.startsWith('hc') || !record;
 
   const handleUpdate = () => {
     setShowMenu(false);
@@ -36,13 +61,20 @@ export default function RecordDetails() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setShowMenu(false);
     if (window.confirm('Are you sure you want to permanently delete this record? This action cannot be undone.')) {
+      if (!isMockRecord) {
+        await supabase.from('medical_records').delete().eq('id', id);
+      }
       alert('Record deleted.');
       navigate('/dashboard/records');
     }
   };
+
+  if (loading) {
+    return <div className="p-10 flex justify-center text-gray-400">Loading record details...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -106,14 +138,14 @@ export default function RecordDetails() {
             </div>
             
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-sm">
-              <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                 <div>
                   <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-0.5">Patient ID</p>
                   <p className="font-bold text-sm">SEL-{id?.substring(0, 6).toUpperCase()}</p>
                 </div>
                 <div>
                   <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-0.5">DOB / Age</p>
-                  <p className="font-bold text-sm">Jan 15, 1990 (36Y)</p>
+                  <p className="font-bold text-sm">{patient?.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString() : 'Jan 15, 1990'}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-0.5">Patient Name</p>
@@ -126,95 +158,142 @@ export default function RecordDetails() {
 
         {/* EMR Body */}
         <div className="p-10 md:p-14 space-y-12">
-          {/* Clinical Context */}
-          <div className="grid md:grid-cols-3 gap-8 pb-10 border-b border-gray-50">
-            <div>
-              <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Facility</h4>
-              <p className="font-bold text-[#101217]">St. Nicholas Hospital</p>
-              <p className="text-xs text-gray-400 font-medium mt-1">Lagos Island, Nigeria</p>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Ordering Physician</h4>
-              <p className="font-bold text-[#101217]">Dr. Adeyemi O. (HCP-992)</p>
-              <p className="text-xs text-gray-400 font-medium mt-1">Consultant Hematologist</p>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Date of Service</h4>
-              <p className="font-bold text-[#101217]">April 15, 2026</p>
-              <p className="text-xs text-gray-400 font-medium mt-1">Collected at 08:30 AM</p>
-            </div>
-          </div>
-
-          {/* Laboratory Analysis */}
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-black text-[#101217] tracking-tight">Laboratory Analysis</h3>
-              <span className="bg-green-50 text-green-600 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-green-100 flex items-center gap-1.5">
-                <ShieldCheckIcon className="w-3 h-3" /> Fully Verified
-              </span>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="pb-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Test Description</th>
-                    <th className="pb-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Result</th>
-                    <th className="pb-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Units</th>
-                    <th className="pb-4 text-[10px] font-black text-gray-300 uppercase tracking-widest text-right">Reference Range</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {[
-                    { name: 'Hemoglobin (Hb)', result: '14.2', unit: 'g/dL', range: '13.5 - 17.5' },
-                    { name: 'White Blood Cells (WBC)', result: '6.4', unit: 'x10³/μL', range: '4.5 - 11.0' },
-                    { name: 'Platelet Count', result: '245', unit: 'x10³/μL', range: '150 - 450' },
-                    { name: 'Fasting Blood Sugar', result: '92', unit: 'mg/dL', range: '70 - 99', highlight: true },
-                  ].map((test, i) => (
-                    <tr key={i} className="group">
-                      <td className="py-5 font-bold text-[#101217] text-sm">{test.name}</td>
-                      <td className={`py-5 font-black text-sm ${test.highlight ? 'text-[#6183FF]' : 'text-[#101217]'}`}>{test.result}</td>
-                      <td className="py-5 font-medium text-gray-400 text-sm">{test.unit}</td>
-                      <td className="py-5 font-bold text-gray-400 text-sm text-right">{test.range}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Clinical Impressions */}
-          <div className="bg-[#F8F9FE] rounded-3xl p-8 border border-gray-100">
-            <h3 className="text-sm font-black text-[#101217] uppercase tracking-widest mb-4">Clinical Impressions</h3>
-            <p className="text-gray-600 font-medium leading-relaxed italic">
-              "Patient presents with stable metabolic profile. All hematological markers are within normal limits. 
-              Fasting blood sugar is optimal. No clinical intervention required at this stage. Recommend annual follow-up."
-            </p>
-          </div>
-
-          {/* Digital Signature */}
-          <div className="pt-8 border-t border-gray-50 flex flex-col md:flex-row justify-between items-end gap-8">
-            <div className="max-w-xs">
-              <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-6">Digital Verification Stamp</p>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-[#EEF2FF] rounded-2xl flex items-center justify-center p-3">
-                  <ShieldCheckIcon className="w-full h-full text-[#6183FF]" />
+          
+          {isMockRecord ? (
+            <>
+              {/* Clinical Context */}
+              <div className="grid md:grid-cols-3 gap-8 pb-10 border-b border-gray-50">
+                <div>
+                  <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Facility</h4>
+                  <p className="font-bold text-[#101217]">St. Nicholas Hospital</p>
+                  <p className="text-xs text-gray-400 font-medium mt-1">Lagos Island, Nigeria</p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-black text-[#101217] leading-tight mb-1">ST. NICHOLAS HOSPITAL</p>
-                  <p className="text-[10px] font-bold text-gray-400">Blockchain Hash ID:</p>
-                  <p className="text-[9px] font-mono text-[#6183FF] break-all uppercase">0x8a2f...3b1d9c2e</p>
+                  <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Ordering Physician</h4>
+                  <p className="font-bold text-[#101217]">Dr. Adeyemi O. (HCP-992)</p>
+                  <p className="text-xs text-gray-400 font-medium mt-1">Consultant Hematologist</p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Date of Service</h4>
+                  <p className="font-bold text-[#101217]">April 15, 2026</p>
+                  <p className="text-xs text-gray-400 font-medium mt-1">Collected at 08:30 AM</p>
                 </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="h-12 flex items-end justify-end mb-2">
-                <span className="font-serif italic text-2xl text-[#050038] opacity-60">Dr. Adeyemi</span>
+
+              {/* Laboratory Analysis */}
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-black text-[#101217] tracking-tight">Laboratory Analysis</h3>
+                  <span className="bg-green-50 text-green-600 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-green-100 flex items-center gap-1.5">
+                    <ShieldCheckIcon className="w-3 h-3" /> Fully Verified
+                  </span>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="pb-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Test Description</th>
+                        <th className="pb-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Result</th>
+                        <th className="pb-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Units</th>
+                        <th className="pb-4 text-[10px] font-black text-gray-300 uppercase tracking-widest text-right">Reference Range</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {[
+                        { name: 'Hemoglobin (Hb)', result: '14.2', unit: 'g/dL', range: '13.5 - 17.5' },
+                        { name: 'White Blood Cells (WBC)', result: '6.4', unit: 'x10³/μL', range: '4.5 - 11.0' },
+                        { name: 'Platelet Count', result: '245', unit: 'x10³/μL', range: '150 - 450' },
+                        { name: 'Fasting Blood Sugar', result: '92', unit: 'mg/dL', range: '70 - 99', highlight: true },
+                      ].map((test, i) => (
+                        <tr key={i} className="group">
+                          <td className="py-5 font-bold text-[#101217] text-sm">{test.name}</td>
+                          <td className={`py-5 font-black text-sm ${test.highlight ? 'text-[#6183FF]' : 'text-[#101217]'}`}>{test.result}</td>
+                          <td className="py-5 font-medium text-gray-400 text-sm">{test.unit}</td>
+                          <td className="py-5 font-bold text-gray-400 text-sm text-right">{test.range}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <div className="w-48 h-0.5 bg-gray-100 ml-auto"></div>
-              <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mt-2">Authorized Signatory</p>
-            </div>
-          </div>
+
+              {/* Clinical Impressions */}
+              <div className="bg-[#F8F9FE] rounded-3xl p-8 border border-gray-100">
+                <h3 className="text-sm font-black text-[#101217] uppercase tracking-widest mb-4">Clinical Impressions</h3>
+                <p className="text-gray-600 font-medium leading-relaxed italic">
+                  "Patient presents with stable metabolic profile. All hematological markers are within normal limits. 
+                  Fasting blood sugar is optimal. No clinical intervention required at this stage. Recommend annual follow-up."
+                </p>
+              </div>
+
+              {/* Digital Signature */}
+              <div className="pt-8 border-t border-gray-50 flex flex-col md:flex-row justify-between items-end gap-8">
+                <div className="max-w-xs">
+                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-6">Digital Verification Stamp</p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-[#EEF2FF] rounded-2xl flex items-center justify-center p-3">
+                      <ShieldCheckIcon className="w-full h-full text-[#6183FF]" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black text-[#101217] leading-tight mb-1">ST. NICHOLAS HOSPITAL</p>
+                      <p className="text-[10px] font-bold text-gray-400">Blockchain Hash ID:</p>
+                      <p className="text-[9px] font-mono text-[#6183FF] break-all uppercase">0x8a2f...3b1d9c2e</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="h-12 flex items-end justify-end mb-2">
+                    <span className="font-serif italic text-2xl text-[#050038] opacity-60">Dr. Adeyemi</span>
+                  </div>
+                  <div className="w-48 h-0.5 bg-gray-100 ml-auto"></div>
+                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mt-2">Authorized Signatory</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Real Uploaded Record View */}
+              <div className="grid md:grid-cols-3 gap-8 pb-10 border-b border-gray-50">
+                <div>
+                  <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Record Name</h4>
+                  <p className="font-bold text-[#101217] text-lg">{record.name}</p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Record Type</h4>
+                  <p className="font-bold text-[#101217]">{record.record_type}</p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3">Upload Date</h4>
+                  <p className="font-bold text-[#101217]">{new Date(record.date).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-black text-[#101217] tracking-tight">Attached Document</h3>
+                </div>
+                
+                {record.document_url ? (
+                  <div className="bg-gray-50 rounded-2xl p-4 flex justify-center border border-gray-100 overflow-hidden">
+                    {record.document_url.startsWith('data:image') || /\.(jpeg|jpg|gif|png)$/i.test(record.document_url) ? (
+                      <img src={record.document_url} alt={record.name} className="max-w-full rounded-xl object-contain" style={{ maxHeight: '600px' }} />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-12 text-center">
+                        <DocumentArrowDownIcon className="w-16 h-16 text-gray-300 mb-4" />
+                        <p className="text-gray-500 font-bold mb-4">Document available for download</p>
+                        <a href={record.document_url} download target="_blank" rel="noreferrer" className="bg-[#6183FF] text-white px-6 py-3 rounded-xl font-bold shadow-md shadow-blue-500/20 hover:opacity-90">
+                          Download Document
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 italic">No document attached to this record.</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

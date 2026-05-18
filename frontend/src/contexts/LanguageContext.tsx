@@ -27,19 +27,26 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem('selorah_lang', language);
     
+    let retryCount = 0;
+    const MAX_RETRIES = 10;
+
     const triggerTranslate = () => {
       const googleCombo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
       if (googleCombo) {
+        // Only trigger if the value is different to avoid loops
         if (googleCombo.value !== language) {
           googleCombo.value = language;
           googleCombo.dispatchEvent(new Event('change'));
         }
-      } else {
+      } else if (retryCount < MAX_RETRIES) {
+        retryCount++;
         setTimeout(triggerTranslate, 1000);
       }
     };
     
-    setTimeout(triggerTranslate, 500);
+    // Small delay to ensure Google script has initialized
+    const timer = setTimeout(triggerTranslate, 1000);
+    return () => clearTimeout(timer);
   }, [language]);
 
   // Fallback for manual t() calls - just return the key or the English version if it exists

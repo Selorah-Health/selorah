@@ -18,6 +18,8 @@ import { createClient } from '../../lib/supabase/client';
 import PortalSidebar from '../../components/PortalSidebar';
 import SEOTitle from '../../components/SEOTitle';
 import NewPatientModal from '../../components/NewPatientModal';
+import ScanQRModal from '../../components/ScanQRModal';
+import { QrCodeIcon } from '@heroicons/react/24/outline';
 
 export default function HospitalDashboard() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -26,19 +28,75 @@ export default function HospitalDashboard() {
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const location = useLocation();
   const supabase = createClient();
-  const [patients, setPatients] = useState([
-    { id: 'SH-94827', name: 'John Olusegun Doe', lastVisit: 'Today, 10:45 AM', status: 'Checked In' },
-    { id: 'SH-11029', name: 'Chioma Eze', lastVisit: 'May 1, 2026', status: 'Discharged' },
-    { id: 'SH-22918', name: 'Musa Ibrahim', lastVisit: 'April 28, 2026', status: 'Discharged' },
+  const [dbPatients, setDbPatients] = useState<any[]>([]);
+  const [mockPatients, setMockPatients] = useState<any[]>([
+    { id: 'SH-94827', name: 'John Olusegun Doe', lastVisit: 'Today, 10:45 AM', status: 'Checked In', fetchedRecords: null },
+    { id: 'SH-11029', name: 'Chioma Eze', lastVisit: 'May 1, 2026', status: 'Discharged', fetchedRecords: null },
+    { id: 'SH-22918', name: 'Musa Ibrahim', lastVisit: 'April 28, 2026', status: 'Discharged', fetchedRecords: null },
   ]);
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+
+  const handleScanSuccess = (patientId: string, records: any[], recordId: string | null) => {
+    // Re-fetch patients to include the newly scanned one
+    fetchHospitalPatients();
+    
+    // Auto-open chart with temporary mock object if not immediately loaded
+    // We pass the full profile data we got from the modal so the chart is instantly populated!
+    setSelectedPatient({
+      id: patientId,
+      name: records.length > 0 ? 'Scanned Patient' : 'Scanned Patient', 
+      lastVisit: 'Just now',
+      status: 'Checked In',
+      fetchedRecords: records
+    });
+  };
 
   const handleCheckIn = (id: string) => {
-    setPatients(prev => prev.map(p => p.id === id ? { ...p, status: 'Checked In', lastVisit: 'Just now' } : p));
+    setMockPatients(prev => prev.map(p => p.id === id ? { ...p, status: 'Checked In', lastVisit: 'Just now' } : p));
+    setDbPatients(prev => prev.map(p => p.id === id ? { ...p, status: 'Checked In', lastVisit: 'Just now' } : p));
   };
 
   const handleCheckOut = (id: string) => {
-    setPatients(prev => prev.map(p => p.id === id ? { ...p, status: 'Discharged', lastVisit: 'Just now' } : p));
+    setMockPatients(prev => prev.map(p => p.id === id ? { ...p, status: 'Discharged', lastVisit: 'Just now' } : p));
+    setDbPatients(prev => prev.map(p => p.id === id ? { ...p, status: 'Discharged', lastVisit: 'Just now' } : p));
+  };
+
+  const fetchHospitalPatients = async () => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) return;
+
+    // Fetch patients that this hospital has accessed
+    const { data, error } = await supabase
+      .from('access_logs')
+      .select(`
+        created_at,
+        patient:user_id (id, first_name, last_name, date_of_birth, vitals, allergies, emergency_medical_info)
+      `)
+      .eq('provider_id', currentUser.id)
+      .order('created_at', { ascending: false });
+
+    if (data && !error) {
+      // Deduplicate patients since multiple scans create multiple logs
+      const uniquePatients = new Map();
+      data.forEach((log: any) => {
+        const p = Array.isArray(log.patient) ? log.patient[0] : log.patient;
+        if (p && !uniquePatients.has(p.id)) {
+          uniquePatients.set(p.id, {
+            id: p.id,
+            name: `${p.first_name} ${p.last_name}`,
+            date_of_birth: p.date_of_birth,
+            vitals: p.vitals,
+            allergies: p.allergies,
+            medicalConditions: p.emergency_medical_info,
+            lastVisit: new Date(log.created_at).toLocaleDateString(),
+            status: 'Checked In', // Or whatever logic you want
+            fetchedRecords: null, // We could fetch this or wait for click
+          });
+        }
+      });
+      setDbPatients(Array.from(uniquePatients.values()));
+    }
   };
 
   useEffect(() => {
@@ -54,6 +112,8 @@ export default function HospitalDashboard() {
         }
       });
     }
+    
+    fetchHospitalPatients();
   }, []);
 
   const handleLogout = async () => {
@@ -103,6 +163,8 @@ export default function HospitalDashboard() {
 
   const avatarGradient = "bg-gradient-to-tr from-[#6183FF] to-[#14F1D9]";
 
+  const allPatients = [...dbPatients, ...mockPatients];
+
   return (
     <div className="flex h-screen bg-[#F8F9FE] overflow-hidden font-sora selection:bg-primary/30">
       <SEOTitle title={`${getPageTitle()} | Hospital Portal`} />
@@ -134,6 +196,13 @@ export default function HospitalDashboard() {
                 className="w-full bg-white border border-gray-200 rounded-full py-2.5 pl-12 pr-6 text-sm focus:outline-none focus:border-[#6183FF] transition-all placeholder:text-gray-400 font-medium shadow-sm"
               />
             </div>
+            <button
+              onClick={() => setIsScanModalOpen(true)}
+              className="bg-white text-[#6183FF] border border-gray-100 px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm"
+            >
+              <QrCodeIcon className="w-4 h-4" />
+              Scan QR Token
+            </button>
             <button
               onClick={() => setIsNewPatientModalOpen(true)}
               className="bg-[#6183FF] text-white px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-[#4E6EEF] transition-all shadow-lg shadow-blue-500/20"
@@ -172,7 +241,7 @@ export default function HospitalDashboard() {
                           <h2 className="text-4xl font-black text-[#101217] tracking-tight mb-2">{selectedPatient.name}</h2>
                           <div className="flex flex-wrap gap-3">
                             <span className="bg-blue-50 text-[#6183FF] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">Patient ID: {selectedPatient.id}</span>
-                            <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">DOB: Jan 15, 1990</span>
+                            <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">DOB: {selectedPatient.date_of_birth ? new Date(selectedPatient.date_of_birth).toLocaleDateString() : 'Jan 15, 1990'}</span>
                           </div>
                         </div>
                       </div>
@@ -196,7 +265,7 @@ export default function HospitalDashboard() {
                             <div className="grid grid-cols-2 gap-4">
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Blood Group</p>
-                                <p className="text-xl font-black text-[#6183FF]">O+</p>
+                                <p className="text-xl font-black text-[#6183FF]">{selectedPatient.vitals?.bloodType || 'O+'}</p>
                               </div>
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Genotype</p>
@@ -204,11 +273,11 @@ export default function HospitalDashboard() {
                               </div>
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Height</p>
-                                <p className="text-xl font-bold text-gray-900">182cm</p>
+                                <p className="text-xl font-bold text-gray-900">{selectedPatient.vitals?.height ? `${selectedPatient.vitals.height}cm` : '182cm'}</p>
                               </div>
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Weight</p>
-                                <p className="text-xl font-bold text-gray-900">78kg</p>
+                                <p className="text-xl font-bold text-gray-900">{selectedPatient.vitals?.weight ? `${selectedPatient.vitals.weight}kg` : '78kg'}</p>
                               </div>
                             </div>
                           </section>
@@ -218,7 +287,7 @@ export default function HospitalDashboard() {
                               <ShieldCheckIcon className="w-4 h-4" /> Active Allergies
                             </h3>
                             <div className="flex flex-wrap gap-2">
-                              {['Penicillin', 'Peanuts', 'Latex'].map(a => (
+                              {(selectedPatient.allergies?.length > 0 ? selectedPatient.allergies : ['Penicillin', 'Peanuts', 'Latex']).map((a: string) => (
                                 <span key={a} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-bold border border-red-100">{a}</span>
                               ))}
                             </div>
@@ -237,8 +306,8 @@ export default function HospitalDashboard() {
                                 <p className="text-sm text-gray-600 leading-relaxed font-medium">Father: Hypertension, Mother: Type 2 Diabetes. No history of cardiovascular disease in immediate family.</p>
                               </div>
                               <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
-                                <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-3">Recent Visit Notes</h4>
-                                <p className="text-sm text-gray-600 leading-relaxed font-medium italic">"Patient presents with mild fatigue. Blood sugar levels slightly elevated but within manageable range. Recommended lifestyle adjustments and follow-up in 2 weeks." — Dr. Admin</p>
+                                <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-3">{selectedPatient.medicalConditions ? 'Medical Conditions' : 'Recent Visit Notes'}</h4>
+                                <p className="text-sm text-gray-600 leading-relaxed font-medium italic">{selectedPatient.medicalConditions || '"Patient presents with mild fatigue. Blood sugar levels slightly elevated but within manageable range. Recommended lifestyle adjustments and follow-up in 2 weeks." — Dr. Admin'}</p>
                               </div>
                             </div>
                           </section>
@@ -291,10 +360,10 @@ export default function HospitalDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {patients.map((patient) => (
+                        {allPatients.map((patient) => (
                           <tr key={patient.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                             <td className="px-6 py-4 font-bold text-gray-900">{patient.name}</td>
-                            <td className="px-6 py-4 font-mono text-xs">{patient.id}</td>
+                            <td className="px-6 py-4 font-mono text-xs">{patient.id.length > 10 ? patient.id.substring(0, 8) + '...' : patient.id}</td>
                             <td className="px-6 py-4">{patient.lastVisit}</td>
                             <td className="px-6 py-4">
                               <span className={`px-3 py-1 rounded-full text-xs font-bold ${patient.status === 'Checked In' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
@@ -338,7 +407,7 @@ export default function HospitalDashboard() {
               <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
                 <h2 className="text-xl font-bold mb-6">Active Admissions</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {patients.filter(p => p.status === 'Checked In').map(patient => (
+                  {allPatients.filter(p => p.status === 'Checked In').map(patient => (
                     <div key={patient.id} className="p-6 border border-gray-100 rounded-3xl bg-gray-50/50">
                       <div className="flex items-center gap-4 mb-4">
                         <div className="w-12 h-12 rounded-2xl bg-[#6183FF] flex items-center justify-center font-bold text-white">
@@ -365,7 +434,7 @@ export default function HospitalDashboard() {
                       </div>
                     </div>
                   ))}
-                  {patients.filter(p => p.status === 'Checked In').length === 0 && (
+                  {allPatients.filter(p => p.status === 'Checked In').length === 0 && (
                     <div className="col-span-full py-12 text-center text-gray-400 font-medium">No active admissions.</div>
                   )}
                 </div>
@@ -434,7 +503,12 @@ export default function HospitalDashboard() {
       <NewPatientModal
         isOpen={isNewPatientModalOpen}
         onClose={() => setIsNewPatientModalOpen(false)}
-        onAdd={(newPatient) => setPatients(prev => [newPatient, ...prev])}
+        onAdd={(newPatient) => setMockPatients(prev => [newPatient, ...prev])}
+      />
+      <ScanQRModal
+        isOpen={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
+        onSuccess={handleScanSuccess}
       />
     </div>
   );

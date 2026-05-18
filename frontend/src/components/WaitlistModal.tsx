@@ -6,14 +6,18 @@ interface WaitlistModalProps {
 }
 
 export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       setStatus('idle');
+      setFullName('');
       setEmail('');
+      setErrorMsg(null);
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -24,15 +28,31 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !fullName) return;
     setStatus('loading');
-    
-    // Simulate API call
-    setTimeout(() => {
+    setErrorMsg(null);
+    try {
+
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, fullName }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to join waitlist');
+      }
+
       setStatus('success');
-    }, 1000);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'An error occurred. Please try again.');
+      setStatus('idle');
+    }
+
   };
 
   return (
@@ -63,7 +83,7 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
             </div>
             <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">You are in!</h3>
             <p className="text-[#A0A4C8] text-lg leading-relaxed">
-              Congratulations <span className="text-white font-medium">{email}</span>, you are on the list. We will notify you as soon as early access opens.
+              Congratulations <span className="text-white font-medium">{fullName}</span>, you are on the list. We will notify you as soon as early access opens.
             </p>
             <button 
               onClick={onClose}
@@ -80,6 +100,25 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
             </p>
             
             <form onSubmit={handleSubmit} className="space-y-4">
+              {errorMsg && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">
+                  {errorMsg}
+                </div>
+              )}
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-[#A0A4C8] mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  id="fullName"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="John Doe"
+                  className="w-full bg-[#0A0B14] border border-[#6183FF]/20 rounded-xl px-4 py-3 text-white placeholder-[#6B6F8E] focus:outline-none focus:border-[#6183FF] focus:ring-1 focus:ring-[#6183FF] transition-all"
+                />
+              </div>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-[#A0A4C8] mb-1.5">
                   Email Address

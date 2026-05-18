@@ -2,8 +2,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon, ArrowPathIcon, PhoneIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import SEOTitle from '../components/SEOTitle';
+import { createClient } from '../lib/supabase/client';
 
 export default function Signup() {
+  const supabase = createClient();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,21 +56,18 @@ export default function Signup() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.identifier,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          dob: "2000-01-01" // TODO: Add DOB picker later
-        }),
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.identifier,
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+          }
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || 'Signup failed');
+      if (authError) throw authError;
 
       localStorage.setItem('selorah_user', JSON.stringify({
         first_name: formData.firstName,

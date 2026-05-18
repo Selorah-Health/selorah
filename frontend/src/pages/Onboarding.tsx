@@ -11,8 +11,10 @@ import {
   PhoneIcon,
   PlusIcon,
   TrashIcon,
-  CloudArrowUpIcon,        // ← Added proper import
+  CloudArrowUpIcon,
 } from '@heroicons/react/24/outline';
+import { createClient } from '../lib/supabase/client';
+import { useRef } from 'react';
 
 interface EmergencyContact {
   name: string;
@@ -23,6 +25,9 @@ interface EmergencyContact {
 export default function Onboarding() {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
+  const supabase = createClient();
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     role: '',
@@ -40,30 +45,100 @@ export default function Onboarding() {
     taxId: '',
     officialEmail: '',
     officialPhone: '',
+    uploadedDocs: {} as Record<string, boolean>,
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentUploadDoc, setCurrentUploadDoc] = useState<string | null>(null);
+
+  const handleUploadClick = (docType: string) => {
+    setCurrentUploadDoc(docType);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && currentUploadDoc) {
+      // Simulate an upload or you could actually upload to Supabase storage here.
+      // For now, we'll just mark it as uploaded in the UI.
+      setFormData(prev => ({
+        ...prev,
+        uploadedDocs: {
+          ...prev.uploadedDocs,
+          [currentUploadDoc]: true
+        }
+      }));
+      alert(`${currentUploadDoc} uploaded successfully!`);
+    }
+    // reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    setCurrentUploadDoc(null);
+  };
 
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
-  const handleFinish = () => {
-    // Save user profile state
-    const savedUserStr = localStorage.getItem('selorah_user');
-    const savedUser = savedUserStr ? JSON.parse(savedUserStr) : {};
-    localStorage.setItem('selorah_user', JSON.stringify({
-      ...savedUser,
-      first_name: formData.firstName || formData.orgName,
-      last_name: formData.lastName || '',
-      role: formData.role
-    }));
+  const handleFinish = async () => {
+    setSaving(true);
+    setErrorMsg(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // If user exists, save to Supabase
+      if (user) {
+        const profileData: any = {
+          id: user.id,
+          role: formData.role,
+          first_name: formData.firstName || formData.orgName,
+          last_name: formData.lastName || '',
+        };
 
-    if (formData.role === 'provider' || formData.role === 'hospital') {
-      navigate('/hospital');
-    } else if (formData.role === 'researcher') {
-      navigate('/researcher');
-    } else if (formData.role === 'insurer') {
-      navigate('/insurer');
-    } else {
-      navigate('/dashboard');
+        if (formData.role === 'patient') {
+          profileData.date_of_birth = formData.dateOfBirth || null;
+          profileData.gender = formData.gender || null;
+          profileData.phone_number = formData.whatsappNumber || null;
+          profileData.vitals = formData.vitals;
+          profileData.allergies = formData.allergies ? [formData.allergies] : [];
+          profileData.emergency_medical_info = formData.medicalConditions;
+          profileData.emergency_contacts = formData.emergencyContacts;
+        } else {
+          profileData.organization_name = formData.orgName;
+          profileData.official_email = formData.officialEmail;
+          profileData.phone_number = formData.whatsappNumber || null;
+        }
+
+        const { error } = await supabase.from('profiles').upsert(profileData);
+        if (error) {
+          console.error("Supabase upsert error:", error);
+          throw error;
+        }
+      } else {
+        console.warn("No authenticated user found. Saving locally only.");
+      }
+
+      // Save user profile state locally as fallback
+      const savedUserStr = localStorage.getItem('selorah_user');
+      const savedUser = savedUserStr ? JSON.parse(savedUserStr) : {};
+      localStorage.setItem('selorah_user', JSON.stringify({
+        ...savedUser,
+        first_name: formData.firstName || formData.orgName,
+        last_name: formData.lastName || '',
+        role: formData.role
+      }));
+
+      if (formData.role === 'provider' || formData.role === 'hospital') {
+        navigate('/hospital');
+      } else if (formData.role === 'researcher') {
+        navigate('/researcher');
+      } else if (formData.role === 'insurer') {
+        navigate('/insurer');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to save profile. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -112,7 +187,8 @@ export default function Onboarding() {
 
       <main className="flex-1 overflow-y-auto px-12 py-12 scrollbar-hide">
         <div className="w-full max-w-[850px] mx-auto">
-          
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+
           {/* Step 1: Role Selection */}
           {step === 1 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -302,15 +378,32 @@ export default function Onboarding() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {['Org ID', 'Medical License', 'Official ID'].map((doc) => (
-                    <div
-                      key={doc}
-                      className="bg-gray-50/50 p-6 rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 hover:bg-[#EEF2FF]/30 transition-all cursor-pointer"
-                    >
-                      <CloudArrowUpIcon className="w-6 h-6 text-gray-300" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{doc}</p>
-                    </div>
-                  ))}
+                  {['Org ID', 'Medical License', 'Official ID'].map((doc) => {
+                    const isUploaded = formData.uploadedDocs[doc];
+                    return (
+                      <div
+                        key={doc}
+                        onClick={() => handleUploadClick(doc)}
+                        className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+                          isUploaded 
+                            ? 'bg-green-50 border-green-200' 
+                            : 'bg-gray-50/50 border-gray-100 hover:bg-[#EEF2FF]/30'
+                        }`}
+                      >
+                        {isUploaded ? (
+                          <>
+                            <CheckCircleIcon className="w-6 h-6 text-green-500" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-green-600">{doc} Uploaded</p>
+                          </>
+                        ) : (
+                          <>
+                            <CloudArrowUpIcon className="w-6 h-6 text-gray-300" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Upload {doc}</p>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -391,11 +484,17 @@ export default function Onboarding() {
                   <p className="text-gray-500 text-sm mb-10 leading-relaxed px-4">
                     Our team is reviewing your documents. You can explore the dashboard in the meantime.
                   </p>
+                  {errorMsg && (
+                    <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-4">
+                      {errorMsg}
+                    </div>
+                  )}
                   <button
                     onClick={handleFinish}
-                    className="w-full bg-[#4262FF] text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-blue-500/20 hover:opacity-90 transition-all"
+                    disabled={saving}
+                    className="w-full bg-[#4262FF] text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-blue-500/20 hover:opacity-90 transition-all disabled:opacity-50"
                   >
-                    Go to Dashboard
+                    {saving ? 'Saving Profile...' : 'Go to Dashboard'}
                   </button>
                 </div>
               )}
@@ -426,11 +525,17 @@ export default function Onboarding() {
               <p className="text-gray-500 text-sm mb-10">
                 Welcome to Selorah Health, {formData.firstName || 'User'}.
               </p>
+              {errorMsg && (
+                <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-4">
+                  {errorMsg}
+                </div>
+              )}
               <button
                 onClick={handleFinish}
-                className="w-full bg-[#4262FF] text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-blue-500/20 hover:opacity-90 transition-all"
+                disabled={saving}
+                className="w-full bg-[#4262FF] text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-blue-500/20 hover:opacity-90 transition-all disabled:opacity-50"
               >
-                Launch Dashboard
+                {saving ? 'Saving Profile...' : 'Launch Dashboard'}
               </button>
             </div>
           )}
