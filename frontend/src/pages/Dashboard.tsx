@@ -57,15 +57,19 @@ export default function Dashboard() {
       try {
         const savedUser = localStorage.getItem('selorah_user');
         if (savedUser) {
-          const parsed = JSON.parse(savedUser);
-          setUser({
-            email: parsed.email || parsed.phone,
-            user_metadata: {
-              first_name: parsed.first_name,
-              last_name: parsed.last_name,
-              is_pro: parsed.is_pro
-            }
-          });
+          try {
+            const parsed = JSON.parse(savedUser);
+            setUser({
+              email: parsed.email || parsed.phone,
+              user_metadata: {
+                first_name: parsed.first_name,
+                last_name: parsed.last_name,
+                is_pro: parsed.is_pro
+              }
+            });
+          } catch (e) {
+            setUser({ email: 'user@selorah.com', user_metadata: { first_name: 'Guest', is_pro: false } });
+          }
           fetchRecords();
         } else {
           const { data: { user } } = await supabase.auth.getUser();

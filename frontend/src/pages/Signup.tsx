@@ -205,6 +205,12 @@ export default function Signup() {
                 We've sent a 6-digit code to <span className="font-bold">{formData.identifier}</span>
               </p>
 
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl mb-6 text-sm">
+                  {error}
+                </div>
+              )}
+
               {/* OTP Inputs */}
               <div className="flex justify-between gap-3 mb-10">
                 {otp.map((digit, idx) => (

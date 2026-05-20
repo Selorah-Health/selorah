@@ -59,15 +59,19 @@ export default function ResearcherDashboard() {
     fetchGlobalStats();
     const savedUser = localStorage.getItem('selorah_user');
     if (savedUser) {
-      const parsed = JSON.parse(savedUser);
-      setUser({
-        email: parsed.email || parsed.phone,
-        user_metadata: {
-          first_name: parsed.first_name,
-          last_name: parsed.last_name,
-          role: parsed.role
-        }
-      });
+      try {
+        const parsed = JSON.parse(savedUser);
+        setUser({
+          email: parsed.email || parsed.phone,
+          user_metadata: {
+            first_name: parsed.first_name,
+            last_name: parsed.last_name,
+            organization_name: parsed.organization_name
+          }
+        });
+      } catch (e) {
+        setUser({ email: 'researcher@selorah.com', user_metadata: { first_name: 'Researcher', organization_name: 'NIMR' } });
+      }
     }
   }, []);
 

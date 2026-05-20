@@ -64,16 +64,15 @@ export const signUp = async (
   dob: string
 ) => {
   try {
-    // 1. Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 1. Create user in Supabase Auth via Admin SDK to auto-confirm email
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-        },
-      },
+      email_confirm: true,
+      user_metadata: {
+        first_name: firstName,
+        last_name: lastName,
+      }
     });
 
     if (authError) throw authError;

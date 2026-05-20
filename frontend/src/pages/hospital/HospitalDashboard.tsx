@@ -101,17 +101,21 @@ export default function HospitalDashboard() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem('selorah_user');
-    if (savedUser) {
-      const parsed = JSON.parse(savedUser);
-      setUser({
-        email: parsed.email || parsed.phone,
-        user_metadata: {
-          first_name: parsed.first_name,
-          last_name: parsed.last_name,
-          role: parsed.role
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          setUser({
+            email: parsed.email || parsed.phone,
+            user_metadata: {
+              first_name: parsed.first_name,
+              last_name: parsed.last_name,
+              organization_name: parsed.organization_name
+            }
+          });
+        } catch (e) {
+          setUser({ email: 'provider@selorah.com', user_metadata: { first_name: 'Provider', organization_name: 'St. Nicholas Hospital' } });
         }
-      });
-    }
+      }
     
     fetchHospitalPatients();
   }, []);

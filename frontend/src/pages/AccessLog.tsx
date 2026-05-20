@@ -66,12 +66,16 @@ export default function AccessLog() {
     // 2. Local storage mocked logs
     const savedRevoked = localStorage.getItem('selorah_revoked_logs');
     if (savedRevoked) {
-      setRevokedIds(JSON.parse(savedRevoked));
+      try {
+        setRevokedIds(JSON.parse(savedRevoked));
+      } catch (e) {}
     }
 
     const savedLogs = localStorage.getItem('selorah_access_log');
     if (savedLogs) {
-      setDynamicLogs(JSON.parse(savedLogs));
+      try {
+        setDynamicLogs(JSON.parse(savedLogs));
+      } catch (e) {}
     }
   }, []);
 

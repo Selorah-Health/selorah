@@ -12,7 +12,13 @@ CREATE TABLE profiles (
     date_of_birth DATE,
     gender TEXT,
     is_pro BOOLEAN DEFAULT false,
+    uid TEXT UNIQUE,
+    onboarding_completed BOOLEAN DEFAULT false,
     -- Patient Specific
+    address TEXT,
+    blood_type TEXT,
+    height TEXT,
+    weight TEXT,
     vitals JSONB,
     allergies JSONB,
     emergency_medical_info TEXT,
@@ -22,6 +28,8 @@ CREATE TABLE profiles (
     license_number TEXT,
     tax_id TEXT,
     official_email TEXT,
+    hospital_affiliation TEXT,
+    specialty TEXT,
     kyc_status TEXT DEFAULT 'pending', -- pending, verified, rejected
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL

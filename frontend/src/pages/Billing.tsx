@@ -9,19 +9,23 @@ export default function Billing() {
   useEffect(() => {
     const saved = localStorage.getItem('selorah_user');
     if (saved) {
-      setIsPro(JSON.parse(saved).is_pro);
+      try {
+        setIsPro(JSON.parse(saved).is_pro);
+      } catch (e) {}
     }
   }, []);
 
   const togglePlan = () => {
     const saved = localStorage.getItem('selorah_user');
     if (saved) {
-      const user = JSON.parse(saved);
-      user.is_pro = !user.is_pro;
-      localStorage.setItem('selorah_user', JSON.stringify(user));
-      setIsPro(user.is_pro);
-      window.dispatchEvent(new Event('storage')); // Notify other components
-      alert(`Plan updated to ${user.is_pro ? 'PRO' : 'FREE'}! This change is now active across your dashboard.`);
+      try {
+        const user = JSON.parse(saved);
+        user.is_pro = !user.is_pro;
+        localStorage.setItem('selorah_user', JSON.stringify(user));
+        setIsPro(user.is_pro);
+        window.dispatchEvent(new Event('storage')); // Notify other components
+        alert(`Plan updated to ${user.is_pro ? 'PRO' : 'FREE'}! This change is now active across your dashboard.`);
+      } catch (e) {}
     }
   };
 
