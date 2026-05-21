@@ -1,14 +1,21 @@
+// Updated Header.tsx - with profile icon support
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import LanguageSelector from './LanguageSelector';
 import WaitlistModal from './WaitlistModal';
 
 interface HeaderProps {
   theme?: 'dark' | 'light';
+  isLoggedIn?: boolean; // New prop
+  userAvatar?: string;   // Optional avatar URL
 }
 
-export default function Header({ theme = 'dark' }: HeaderProps) {
+export default function Header({ 
+  theme = 'dark', 
+  isLoggedIn = false, 
+  userAvatar 
+}: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -29,13 +36,14 @@ export default function Header({ theme = 'dark' }: HeaderProps) {
     <>
       <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       {/* NAVIGATION BAR */}
-      <nav className={`fixed top-0 w-full z-50 backdrop-blur-md border-b ${theme === 'dark' ? 'bg-black/20 border-white/10' : 'bg-white/80 border-gray-100'}`}>
-        <div className="max-w-7xl mx-auto px-12 h-20 flex items-center justify-between">
+      <nav className={`fixed top-0 w-full z-50 backdrop-blur-md border-b ${theme === 'dark' ? 'bg-black/70 border-white/10' : 'bg-white/80 border-gray-100'}`}>
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">
             <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px] group-hover:scale-105 transition-transform" />
             <span className={`font-bold text-xl tracking-tight ${theme === 'dark' ? 'text-white' : 'text-[#4262FF]'}`}>Selorah Health</span>
           </Link>
 
+          {/* Desktop Nav */}
           <div className={`hidden lg:flex items-center gap-8 text-sm font-medium ${theme === 'dark' ? 'text-white/80' : 'text-gray-600'}`}>
             <button onClick={() => scrollToSection('how-it-works')} className={`transition-colors ${theme === 'dark' ? 'hover:text-white' : 'hover:text-[#4262FF]'}`}>How It Works</button>
             <button onClick={() => scrollToSection('hospitals')} className={`transition-colors ${theme === 'dark' ? 'hover:text-white' : 'hover:text-[#4262FF]'}`}>For Hospitals</button>
@@ -43,30 +51,42 @@ export default function Header({ theme = 'dark' }: HeaderProps) {
             <button onClick={() => scrollToSection('insurers')} className={`transition-colors ${theme === 'dark' ? 'hover:text-white' : 'hover:text-[#4262FF]'}`}>For Insurers</button>
             <Link to="/pricing" className={`transition-colors ${theme === 'dark' ? 'hover:text-white' : 'hover:text-[#4262FF]'}`}>Pricing</Link>
 
-            <Link to="/login" className={`px-6 py-2 rounded-full border transition-colors ${theme === 'dark' ? 'border-white/20 hover:bg-white/10' : 'border-gray-200 hover:bg-gray-50'}`}>Log in</Link>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-primary text-white px-6 py-2 rounded-full font-bold hover:bg-primary-hover transition-colors"
-            >
-              Join Waitlist
-            </button>
+            {isLoggedIn ? (
+              <div className="flex items-center gap-4">
+                <Link to="/dashboard" className={`transition-colors ${theme === 'dark' ? 'hover:text-white' : 'hover:text-[#4262FF]'}`}>Dashboard</Link>
+                <div className="w-9 h-9 rounded-full overflow-hidden border border-white/30 cursor-pointer">
+                  {userAvatar ? (
+                    <img src={userAvatar} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <UserCircleIcon className="w-full h-full text-white/70" />
+                  )}
+                </div>
+              </div>
+            ) : (
+              <>
+                <Link to="/login" className={`px-6 py-2 rounded-full border transition-colors ${theme === 'dark' ? 'border-white/20 hover:bg-white/10' : 'border-gray-200 hover:bg-gray-50'}`}>Log in</Link>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-primary text-white px-6 py-2 rounded-full font-bold hover:bg-primary-hover transition-colors"
+                >
+                  Join Waitlist
+                </button>
+              </>
+            )}
           </div>
 
+          {/* Mobile Menu Button */}
           <button
             className={`lg:hidden relative w-4 h-4 flex flex-col justify-center items-center gap-1.5 z-50`}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <span
-              className={`w-4 h-0.5 transition-all duration-300 origin-center ${theme === 'dark' ? 'bg-white' : 'bg-gray-900'} ${isMenuOpen ? 'rotate-45 translate-y-[4px]' : ''}`}
-            />
-            <span
-              className={`w-4 h-0.5 transition-all duration-300 origin-center ${theme === 'dark' ? 'bg-white' : 'bg-gray-900'} ${isMenuOpen ? '-rotate-45 -translate-y-[4px]' : ''}`}
-            />
+            <span className={`w-4 h-0.5 transition-all duration-300 origin-center ${theme === 'dark' ? 'bg-white' : 'bg-gray-900'} ${isMenuOpen ? 'rotate-45 translate-y-[4px]' : ''}`} />
+            <span className={`w-4 h-0.5 transition-all duration-300 origin-center ${theme === 'dark' ? 'bg-white' : 'bg-gray-900'} ${isMenuOpen ? '-rotate-45 -translate-y-[4px]' : ''}`} />
           </button>
         </div>
       </nav>
 
-      {/* MOBILE MENU */}
+      {/* MOBILE MENU - Simplified for new design */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-40 bg-[#0A0B14] pt-24 px-12 lg:hidden">
           <div className="flex flex-col gap-6 text-xl font-medium text-white/80">
@@ -75,13 +95,15 @@ export default function Header({ theme = 'dark' }: HeaderProps) {
             <button onClick={() => scrollToSection('researchers')} className="text-left">For Researchers</button>
             <button onClick={() => scrollToSection('insurers')} className="text-left">For Insurers</button>
             <Link to="/pricing" onClick={() => setIsMenuOpen(false)}>Pricing</Link>
-            <Link to="/login" className="text-primary" onClick={() => setIsMenuOpen(false)}>Log in</Link>
-            <button
-              onClick={() => { setIsModalOpen(true); setIsMenuOpen(false); }}
-              className="bg-primary text-white py-4 rounded-xl font-bold"
-            >
-              Join Waitlist
-            </button>
+            
+            {isLoggedIn ? (
+              <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="text-primary">Dashboard</Link>
+            ) : (
+              <>
+                <Link to="/login" className="text-primary" onClick={() => setIsMenuOpen(false)}>Log in</Link>
+                <button onClick={() => { setIsModalOpen(true); setIsMenuOpen(false); }} className="bg-primary text-white py-4 rounded-xl font-bold">Join Waitlist</button>
+              </>
+            )}
           </div>
         </div>
       )}
