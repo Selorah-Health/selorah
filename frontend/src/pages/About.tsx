@@ -1,7 +1,7 @@
 import { ShieldCheckIcon, GlobeAltIcon, UserGroupIcon, RocketLaunchIcon, ArrowRightIcon, BeakerIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
 import SEOTitle from '../components/SEOTitle';
 
 export default function About() {

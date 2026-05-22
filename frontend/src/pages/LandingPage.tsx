@@ -19,8 +19,8 @@ import {
 import WaitlistModal from '../components/WaitlistModal';
 import LanguageSelector from '../components/LanguageSelector';
 import { useLanguage } from '../contexts/LanguageContext';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
 import SEOTitle from '../components/SEOTitle';
 
 const HERO_SLIDES = [

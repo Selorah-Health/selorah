@@ -9,13 +9,15 @@
 ## Table of Contents
 
 1. [High-Level System Design](#high-level-system-design)
-2. [Detailed Component Architecture](#detailed-component-architecture)
-3. [Data Architecture](#data-architecture)
-4. [Security Architecture](#security-architecture)
-5. [Deployment Architecture](#deployment-architecture)
-6. [Scaling & Performance](#scaling--performance)
-7. [Disaster Recovery & Backup](#disaster-recovery--backup)
-8. [Monitoring & Observability](#monitoring--observability)
+2. [Site Map](#site-map)
+3. [Primary Concerns to Address Now](#primary-concerns-to-address-now)
+4. [Detailed Component Architecture](#detailed-component-architecture)
+5. [Data Architecture](#data-architecture)
+6. [Security Architecture](#security-architecture)
+7. [Deployment Architecture](#deployment-architecture)
+8. [Scaling & Performance](#scaling--performance)
+9. [Disaster Recovery & Backup](#disaster-recovery--backup)
+10. [Monitoring & Observability](#monitoring--observability)
 
 ---
 
@@ -81,6 +83,79 @@
 3. **Blockchain Verification**: Smart contracts enforce time-bound access control
 4. **Row-Level Security**: Database policies prevent unauthorized data access
 5. **Role-Based Access Control (RBAC)**: Six distinct user roles with tailored permissions
+
+## Site Map
+
+### Product Sitemap
+
+```mermaid
+flowchart TD
+   A[Selorah Health] --> B[Public Experience]
+   A --> C[Authenticated Patient Portal]
+   A --> D[Provider Portal]
+   A --> E[Researcher Portal]
+   A --> F[Insurer Portal]
+   A --> G[System / Legal Pages]
+
+   B --> B1[Landing Page]
+   B --> B2[Pricing]
+   B --> B3[About]
+   B --> B4[Careers]
+   B --> B5[Login]
+   B --> B6[Signup]
+   B --> B7[Onboarding]
+   B --> B8[Shared Record View]
+
+   C --> C1[Dashboard Home]
+   C --> C2[Medical Records]
+   C --> C3[Record Details]
+   C --> C4[Research]
+   C --> C5[Earnings]
+   C --> C6[Profile]
+   C --> C7[Notifications]
+   C --> C8[Access Log]
+   C --> C9[Access Log Details]
+   C --> C10[QR Codes]
+   C --> C11[Security]
+   C --> C12[Billing]
+   C --> C13[Family]
+
+   D --> D1[Hospital Dashboard]
+   D --> D2[Admissions]
+   D --> D3[Reports]
+   D --> D4[Settings]
+
+   E --> E1[Researcher Dashboard]
+   E --> E2[Studies / Cohorts]
+   E --> E3[Participant Access]
+   E --> E4[Checkout / Funding]
+   E --> E5[Settings]
+
+   F --> F1[Insurer Dashboard]
+   F --> F2[Policyholders]
+   F --> F3[Claims]
+   F --> F4[Analytics]
+   F --> F5[Settings]
+
+   G --> G1[Terms]
+   G --> G2[Privacy]
+   G --> G3[Cookie Policy]
+   G --> G4[Data Processing Agreement]
+   G --> G5[Not Found]
+```
+
+### Primary Concerns to Address Now
+
+If the goal is responsiveness and fewer user-facing failures, the first problems to fix are:
+
+1. **Mobile layout debt**: the current experience leans hard on full-height desktop shells, sidebars, and wide content blocks. That will break down fast on smaller screens unless every major route gets a mobile-first review.
+2. **Hero and media weight**: the landing page uses background video, large imagery, and multiple visual layers. Without aggressive fallbacks and size controls, the first paint will be slow on low-bandwidth devices.
+3. **Dashboard routing complexity**: the patient portal and provider portals both rely on nested routes and dense navigation. That needs a cleaner responsive navigation pattern before the UI becomes unmanageable.
+4. **Inconsistent loading states**: lazy routes exist, but the app still needs more explicit skeletons and transition states so users do not feel jank when changing pages or fetching records.
+5. **Data-heavy screens**: records, access logs, QR flows, and portal views will degrade on mobile if tables, cards, and filters are not collapsed intentionally.
+6. **Performance budget**: too many icons, videos, large assets, and client-side renders can hurt responsiveness before the backend is even the bottleneck.
+
+The short version: ship a mobile-first navigation model, reduce initial asset cost, and standardize loading/fallback behavior before adding more features.
 
 ---
 

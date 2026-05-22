@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import Header from './Header';
-import Footer from './Footer';
+import Header from './layout/Header';
+import Footer from './layout/Footer';
 
 interface LegalLayoutProps {
   children: ReactNode;
