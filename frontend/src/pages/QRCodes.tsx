@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { QrCodeIcon, ClockIcon, ArrowLeftIcon, XMarkIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 import { QRCodeCanvas } from 'qrcode.react';
+import { createClient } from '../lib/supabase/client';
 
 export default function QRCodes() {
+  const supabase = createClient();
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [expiryType, setExpiryType] = useState<'preset' | 'custom'>('preset');
   const [expiry, setExpiry] = useState<string>('none');
@@ -10,27 +12,68 @@ export default function QRCodes() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isRevoked, setIsRevoked] = useState(false);
 
-  const generateCode = () => {
+  const generateCode = async () => {
     setIsRevoked(false);
-    const randomPart = Math.random().toString(36).substring(2, 10);
-    const timestamp = Date.now();
-    const duration = expiryType === 'custom' ? customExpiry : expiry;
-    const token = `${randomPart}_${duration}_${timestamp}`;
-    setQrToken(token);
     
-    if (duration !== 'none') {
-      const minutes = parseInt(duration);
-      setTimeLeft(minutes * 60);
+    let expiresAt;
+    let durationMins = 0;
+    
+    if (expiryType === 'preset' && expiry === 'none') {
+      // Set expiry far into the future (10 years)
+      expiresAt = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString();
     } else {
-      setTimeLeft(null);
+      durationMins = expiryType === 'custom' ? parseInt(customExpiry) : parseInt(expiry);
+      if (isNaN(durationMins) || durationMins <= 0) {
+        alert("Invalid duration");
+        return;
+      }
+      expiresAt = new Date(Date.now() + durationMins * 60000).toISOString();
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from('shared_links')
+        .insert({
+          user_id: user.id,
+          expires_at: expiresAt,
+          is_active: true
+        })
+        .select('token')
+        .single();
+
+      if (error) throw error;
+
+      setQrToken(data.token);
+      
+      if (expiry !== 'none' || expiryType === 'custom') {
+        setTimeLeft(durationMins * 60);
+      } else {
+        setTimeLeft(null);
+      }
+    } catch (err: any) {
+      alert("Failed to generate code: " + err.message);
     }
   };
 
-  const revokeAccess = () => {
-    setIsRevoked(true);
-    setTimeLeft(0);
-    // In a real app, we would invalidate the token in the database
-    alert('Access revoked successfully. This QR code will no longer grant access.');
+  const revokeAccess = async () => {
+    try {
+      if (!qrToken) return;
+      const { error } = await supabase
+        .from('shared_links')
+        .update({ is_active: false })
+        .eq('token', qrToken);
+        
+      if (error) throw error;
+
+      setIsRevoked(true);
+      setTimeLeft(0);
+      alert('Access revoked successfully. This QR code will no longer grant access.');
+    } catch (err: any) {
+      alert("Failed to revoke: " + err.message);
+    }
   };
 
   useEffect(() => {

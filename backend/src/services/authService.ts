@@ -51,18 +51,8 @@ export const generateUID = async (
 };
 
 const checkAvailability = async (uid: string): Promise<boolean> => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('id')
-    .eq('uid', uid)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Error checking UID availability:', error);
-    return false;
-  }
-
-  return data === null;
+  // UID generation is deprecated since we use UUIDs from auth.users
+  return true;
 };
 
 // ====================== SIGN UP ======================
@@ -74,16 +64,15 @@ export const signUp = async (
   dob: string
 ) => {
   try {
-    // 1. Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 1. Create user in Supabase Auth via Admin SDK to auto-confirm email
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-        },
-      },
+      email_confirm: true,
+      user_metadata: {
+        first_name: firstName,
+        last_name: lastName,
+      }
     });
 
     if (authError) throw authError;
@@ -92,28 +81,12 @@ export const signUp = async (
       throw new Error('Failed to create user');
     }
 
-    // 2. Generate custom Selorah UID
-    const uid = await generateUID(firstName, lastName, dob);
-
-    // 3. Insert into public users table
-    const { error: userError } = await supabase
-      .from('users')
-      .insert({
-        id: authData.user.id,
-        uid: uid,
-        email: email,
-        first_name: firstName,
-        last_name: lastName,
-        dob: dob,
-        role: null,                    // Will be set during onboarding
-        onboarding_completed: false,
-      });
-
-    if (userError) throw userError;
+    // We no longer insert into 'users' table here because the profile
+    // is fully created during the Onboarding step in the frontend.
 
     return {
       user: authData.user,
-      uid: uid,
+      uid: authData.user.id, // Just return auth id
       error: null,
     };
   } catch (error: any) {
@@ -136,15 +109,15 @@ export const signIn = async (email: string, password: string) => {
 
     if (authError) throw authError;
 
-    // Get additional user details
+    // Get additional user details from profiles instead of users
     const { data: userDetails, error: detailsError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('id', authData.user.id)
       .single();
 
     if (detailsError) {
-      console.warn('Could not fetch user details:', detailsError);
+      console.warn('Could not fetch user profile:', detailsError);
     }
 
     return {

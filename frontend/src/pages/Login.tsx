@@ -2,12 +2,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon, ArrowPathIcon, PhoneIcon } from '@heroicons/react/24/outline';
 import SEOTitle from '../components/SEOTitle';
+import { createClient } from '../lib/supabase/client';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const supabase = createClient();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -20,32 +22,32 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
       });
 
-      const data = await response.json();
+      if (authError) throw authError;
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
+      // Fetch user profile to know their role
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
 
-      // Store user info
+      // Store user info in localStorage as a fallback/cache
       localStorage.setItem('selorah_user', JSON.stringify({
-        id: data.user?.id,
-        email: data.user?.email,
-        ...data.userDetails
+        id: authData.user.id,
+        email: authData.user.email,
+        first_name: profileData?.first_name || authData.user.user_metadata?.first_name,
+        last_name: profileData?.last_name || authData.user.user_metadata?.last_name,
+        role: profileData?.role || 'patient',
+        is_pro: profileData?.is_pro || false
       }));
 
-      alert('Login successful!');
-
       // Redirect based on role
-      const role = data.userDetails?.role || 'patient';
+      const role = profileData?.role || 'patient';
       
       if (role === 'provider') {
         navigate('/hospital');

@@ -1,0 +1,191 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e.spec.ts >> Selorah E2E Workflows >> Patient Flow: Login -> Upload -> Share -> Upgrade
+- Location: tests\e2e.spec.ts:16:7
+
+# Error details
+
+```
+Test timeout of 30000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - img "Logo" [ref=e8]
+          - generic [ref=e9]: Selorah
+        - button "M" [ref=e10]:
+          - img "M" [ref=e11]
+      - button "Upload Record" [active] [ref=e13]:
+        - img [ref=e14]
+        - generic [ref=e16]: Upload Record
+      - navigation [ref=e17]:
+        - link "Home" [ref=e18] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e19]
+          - generic [ref=e21]: Home
+        - link "Records" [ref=e22] [cursor=pointer]:
+          - /url: /dashboard/records
+          - img [ref=e23]
+          - generic [ref=e25]: Records
+        - link "Research" [ref=e26] [cursor=pointer]:
+          - /url: /dashboard/research
+          - img [ref=e27]
+          - generic [ref=e29]: Research
+        - link "Earnings" [ref=e30] [cursor=pointer]:
+          - /url: /dashboard/earnings
+          - img [ref=e31]
+          - generic [ref=e33]: Earnings
+      - generic [ref=e34]:
+        - link "PRO E2E e2e_patient@example.com" [ref=e35] [cursor=pointer]:
+          - /url: /dashboard/profile
+          - generic [ref=e38]: PRO
+          - generic [ref=e39]:
+            - paragraph [ref=e40]: E2E
+            - paragraph [ref=e41]: e2e_patient@example.com
+        - button "Logout" [ref=e43]:
+          - img [ref=e44]
+          - generic [ref=e46]: Logout
+    - main [ref=e47]:
+      - generic [ref=e48]:
+        - heading "Dashboard" [level=1] [ref=e50]
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - img [ref=e53]
+            - textbox "Search for records..." [ref=e55]
+          - generic [ref=e56]:
+            - button "N" [ref=e57]:
+              - img "N" [ref=e58]
+            - button "Q" [ref=e60]:
+              - img "Q" [ref=e61]
+            - button [ref=e62]
+      - generic [ref=e65]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - heading "Welcome back, E2E" [level=2] [ref=e68]
+            - img "H" [ref=e69]
+          - paragraph [ref=e70]: Wednesday, 20th May 2026
+        - generic [ref=e71]:
+          - generic [ref=e72] [cursor=pointer]:
+            - generic [ref=e73]:
+              - paragraph [ref=e74]: Health Score
+              - text: 60/100
+            - generic [ref=e75]:
+              - paragraph [ref=e76]: ↑ +5 this month
+              - img "I" [ref=e77]
+          - generic [ref=e78] [cursor=pointer]:
+            - generic [ref=e79]:
+              - paragraph [ref=e80]: Total Records
+              - text: "12"
+            - generic [ref=e81]:
+              - paragraph [ref=e82]: 8 verified • 4 self-reported
+              - img "I" [ref=e83]
+          - generic [ref=e84] [cursor=pointer]:
+            - generic [ref=e85]:
+              - paragraph [ref=e86]: This Month Earnings
+              - text: ₦3,000
+            - generic [ref=e87]:
+              - paragraph [ref=e88]: ₦10,000 projected
+              - img "I" [ref=e89]
+          - generic [ref=e90] [cursor=pointer]:
+            - generic [ref=e91]:
+              - paragraph [ref=e92]: Active Access Grants
+              - text: "2"
+            - generic [ref=e93]:
+              - paragraph [ref=e94]: 1 expiring soon
+              - img "I" [ref=e95]
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]:
+              - heading "Recent Records" [level=3] [ref=e99]
+              - button "See all" [ref=e100]:
+                - text: See all
+                - img [ref=e101]
+            - generic [ref=e103]:
+              - generic [ref=e104] [cursor=pointer]:
+                - generic [ref=e105]:
+                  - img "R" [ref=e107]
+                  - generic [ref=e108]:
+                    - paragraph [ref=e109]: E2E's Health Checkup
+                    - paragraph [ref=e110]: Today • Selorah Medical Center
+                - generic [ref=e111]: Encrypted
+              - generic [ref=e112] [cursor=pointer]:
+                - generic [ref=e113]:
+                  - img "R" [ref=e115]
+                  - generic [ref=e116]:
+                    - paragraph [ref=e117]: SNH Lab Result
+                    - paragraph [ref=e118]: Yesterday • St. Nicholas Hospital • Lagos Island
+                - generic [ref=e119]: Encrypted
+              - generic [ref=e120] [cursor=pointer]:
+                - generic [ref=e121]:
+                  - img "R" [ref=e123]
+                  - generic [ref=e124]:
+                    - paragraph [ref=e125]: Metformin 500mg Prescription
+                    - paragraph [ref=e126]: 03/15/2026 • Igando General Hospital
+                - generic [ref=e127]: Encrypted
+              - generic [ref=e128] [cursor=pointer]:
+                - generic [ref=e129]:
+                  - img "R" [ref=e131]
+                  - generic [ref=e132]:
+                    - paragraph [ref=e133]: YFB Vaccination
+                    - paragraph [ref=e134]: 03/16/2026 • Self-reported
+                - generic [ref=e135]: Shared Once
+              - generic [ref=e136] [cursor=pointer]:
+                - generic [ref=e137]:
+                  - img "R" [ref=e139]
+                  - generic [ref=e140]:
+                    - paragraph [ref=e141]: HSH Lab Result
+                    - paragraph [ref=e142]: 01/10/2026 • Havana Specialist Hospital
+                - generic [ref=e143]: Encrypted
+          - generic [ref=e144]:
+            - generic [ref=e145]:
+              - generic [ref=e146]:
+                - heading "Access Log" [level=3] [ref=e147]
+                - button "View Full Audit" [ref=e148]:
+                  - text: View Full Audit
+                  - img [ref=e149]
+              - generic [ref=e151]:
+                - generic [ref=e152]:
+                  - paragraph [ref=e155]: Reddington Hospital viewed SNH Lab Result
+                  - generic [ref=e156]: 2hr ago
+                - generic [ref=e157]:
+                  - paragraph [ref=e160]: St. Nicholas Hospital gained access to your medical history
+                  - generic [ref=e161]: Yesterday
+                - generic [ref=e162]:
+                  - paragraph [ref=e165]: Igandon General Hospital viewed YFB Vaccination
+                  - generic [ref=e166]: 2 days ago
+            - generic [ref=e167] [cursor=pointer]:
+              - generic [ref=e169]:
+                - heading "Earnings (Last 6 months)" [level=3] [ref=e170]
+                - img [ref=e171]
+              - application [ref=e176]:
+                - generic [ref=e200]:
+                  - generic [ref=e201]:
+                    - generic [ref=e203]: Nov
+                    - generic [ref=e205]: Dec
+                    - generic [ref=e207]: Jan
+                    - generic [ref=e209]: Feb
+                    - generic [ref=e211]: Mar
+                    - generic [ref=e213]: Apr
+                  - generic [ref=e214]:
+                    - generic [ref=e216]: "0"
+                    - generic [ref=e218]: 3k
+                    - generic [ref=e220]: 6k
+                    - generic [ref=e222]: 9k
+                    - generic [ref=e224]: 12k
+              - paragraph [ref=e226]: Nov 2025 - Apr 2026
+        - paragraph [ref=e228]: Copyright (c) 2026, Selorah Health Limited. All rights reserved.
+  - img [ref=e231]
+  - generic [ref=e233]: "0"
+```

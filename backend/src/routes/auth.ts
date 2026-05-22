@@ -33,45 +33,38 @@ router.post('/onboarding', async (req: Request, res: Response) => {
 
     const generatedUID = await generateUID(firstName, lastName, dob);
 
-    // Update core users table
-    const { error: userError } = await supabase
-      .from('users')
-      .update({
+    // Upsert into unified profiles table
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: userId,
         uid: generatedUID,
         role: role,
-        onboarding_completed: true
-      })
-      .eq('id', userId);
-
-    if (userError) throw userError;
-
-    // Insert role-specific data
-    if (role === 'patient') {
-      const { error: patientError } = await supabase
-        .from('patients')
-        .insert({
-          id: userId,
+        onboarding_completed: true,
+        first_name: firstName,
+        last_name: lastName,
+        date_of_birth: dob,
+        
+        // Patient specifics
+        ...(role === 'patient' && {
           address,
-          whatsapp,
+          phone_number: whatsapp, // phone_number in DB maps to whatsapp
           blood_type: bloodType,
           height,
           weight,
-          allergies
-        });
-      if (patientError) throw patientError;
-      
-    } else if (role === 'provider') {
-      const { error: providerError } = await supabase
-        .from('providers')
-        .insert({
-          id: userId,
+          allergies: allergies ? JSON.stringify({ notes: allergies }) : null
+        }),
+
+        // Provider specifics
+        ...(role === 'provider' && {
           license_number: licenseNumber,
           hospital_affiliation: hospitalAffiliation,
-          specialty,
-          is_verified: false
-        });
-      if (providerError) throw providerError;
-    }
+          specialty: specialty,
+          kyc_status: 'pending'
+        })
+      });
+
+    if (profileError) throw profileError;
 
     res.status(200).json({ 
       success: true, 

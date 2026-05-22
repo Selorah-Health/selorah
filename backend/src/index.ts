@@ -5,8 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 import { createServer } from 'http';
 import { initSocket } from './socket';
 import authRoutes from './routes/auth';
+import waitlistRoutes from './routes/waitlist';
 
 dotenv.config();
+
 
 // Validate environment variables
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -28,6 +30,8 @@ app.use(express.json());
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/waitlist', waitlistRoutes);
+
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });

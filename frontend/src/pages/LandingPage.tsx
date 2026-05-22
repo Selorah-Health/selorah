@@ -15,6 +15,7 @@ import {
   XCircleIcon,
   ArrowRightIcon
 } from '@heroicons/react/24/outline';
+
 import WaitlistModal from '../components/WaitlistModal';
 import LanguageSelector from '../components/LanguageSelector';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -50,30 +51,28 @@ export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [stepVideoEnded, setStepVideoEnded] = useState<boolean[]>([false, false, false, false]);
+
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const stepVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const scrollLocked = useRef(false);
 
-  const nextSlide = (currentSlide + 1) % HERO_SLIDES.length;
-
   useEffect(() => {
     setIsLoaded(true);
-
-    // Auto-advance slides every 10 seconds
+    // Auto-advance slides every 10 seconds (if you re-enable carousel)
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
     }, 10000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // IntersectionObserver to trigger video autoplay and auto‑scroll after 5 s
+  // IntersectionObserver for step videos
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
     const timers: (number | undefined)[] = [];
 
     stepRefs.current.forEach((ref, i) => {
       if (!ref) return;
+
       const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !stepVideoEnded[i]) {
@@ -93,7 +92,9 @@ export default function LandingPage() {
                       scrollLocked.current = false;
                     }
                   }, 5000);
+
                   timers[i] = timer;
+
                   video.onpause = () => {
                     if (timers[i]) clearTimeout(timers[i]);
                   };
@@ -102,7 +103,8 @@ export default function LandingPage() {
             }
           }
         });
-      }, { threshold: 0.3 }); // Lowered threshold for better reliability
+      }, { threshold: 0.3 });
+
       observer.observe(ref);
       observers.push(observer);
     });
@@ -123,7 +125,7 @@ export default function LandingPage() {
   };
 
   const handleNextSlide = () => {
-    setCurrentSlide(nextSlide);
+    setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
   };
 
   const scrollToSection = (id: string) => {
@@ -138,61 +140,62 @@ export default function LandingPage() {
       <SEOTitle title="The OS for Health Records" />
       <Header />
 
-      {/* HERO SECTION */}
-      <section className="relative w-full overflow-hidden bg-black" style={{ height: '100svh', minHeight: '700px' }}>
-        {/* Background Video Carousel — full width */}
-        {HERO_SLIDES.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-          >
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover opacity-40"
-            >
-              <source src={slide.video} type="video/mp4" />
-            </video>
+      {/* HERO SECTION - Static (carousel logic kept but not used) */}
+      <section className="relative w-full overflow-hidden bg-black min-h-[100svh] flex items-center pt-20">
+        {/* Background Video */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-40"
+        >
+          <source src="/assets/hero-bg-video-1.mp4" type="video/mp4" />
+        </video>
 
-            {/* Hero content: vertically centered in left ~60% of screen, stopping above card */}
-            <div className="relative z-10 h-full flex flex-col">
-              {/* Spacer for nav (80px) */}
-              <div className="h-20 shrink-0" />
+        {/* Content Overlay */}
+        <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-12 pt-12 pb-24">
+          <div className="max-w-3xl">
+            {/* Tag */}
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium text-white mb-6">
+              <span className="text-primary">🌍</span>
+              Building the future of health records in Africa
+            </div>
 
-              {/* Content area above card — takes remaining height minus card (~384px) */}
-              <div
-                className="flex flex-col justify-center px-12 flex-1"
-                style={{ paddingBottom: 'clamp(120px, 25vh, 400px)' }}
+            {/* Main Heading */}
+            <h1 className="text-6xl lg:text-7xl font-medium leading-[1.05] tracking-tighter text-white mb-8">
+              Tired of chasing<br />your own records?
+            </h1>
+
+            {/* Description */}
+            <p className="text-xl text-white/80 max-w-xl leading-relaxed mb-12">
+              Selorah Health gives you full ownership — encrypted, portable, and private.
+              Access your data anytime, anywhere, with anyone you trust.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <a
+                href="#how-it-works"
+                className="inline-flex items-center justify-center px-8 py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full text-lg transition-all active:scale-[0.985]"
               >
-                <div className="max-w-4xl space-y-6 w-full mx-auto text-center flex flex-col items-center">
-                  <h1 className="text-5xl lg:text-6xl xl:text-7xl font-medium leading-[1.05] tracking-tight text-white">
-                    {slide.title} {slide.subtitle && (
-                      <span className="italic font-light">{slide.subtitle}</span>
-                    )}
-                  </h1>
-
-                  <p className="text-base lg:text-lg text-white/80 max-w-2xl leading-relaxed mx-auto">
-                    {slide.description}
-                  </p>
-
-                  <div className="pt-6 flex flex-col items-center gap-8">
-                    <a href={slide.buttonLink} className="inline-flex items-center justify-center gap-3 bg-primary text-white font-bold px-8 py-4 rounded-full shadow-lg hover:shadow-primary/30 hover:-translate-y-1 transition-all group">
-                      {slide.buttonText}
-                      <ChevronRightIcon className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                    </a>
-                  </div>
-                </div>
-              </div>
+                Get Started
+              </a>
+              <button
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                className="inline-flex items-center justify-center px-8 py-4 border border-white/60 hover:bg-white/10 text-white font-semibold rounded-full text-lg transition-all backdrop-blur-sm"
+              >
+                Here's How It Works →
+              </button>
             </div>
           </div>
-        ))}
+        </div>
 
-
-
+        {/* Subtle gradient overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent pointer-events-none" />
       </section>
 
+      {/* Rest of your sections remain the same */}
       {/* AVATAR BADGE SECTION */}
       <section className="bg-white py-24 text-center px-12">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
@@ -409,11 +412,14 @@ export default function LandingPage() {
       </section>
 
       <Footer />
+
+      {/* Waitlist Modal */}
+      {isModalOpen && <WaitlistModal onClose={() => setIsModalOpen(false)} />}
     </div>
   );
 }
 
-// Sub-components
+/* ====================== Sub-components ====================== */
 function UserCircleIcon(props: any) {
   return (
     <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>

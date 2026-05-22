@@ -2,8 +2,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { EyeIcon, EyeSlashIcon, ArrowPathIcon, PhoneIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import SEOTitle from '../components/SEOTitle';
+import { createClient } from '../lib/supabase/client';
 
 export default function Signup() {
+  const supabase = createClient();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,21 +56,18 @@ export default function Signup() {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.identifier,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          dob: "2000-01-01" // TODO: Add DOB picker later
-        }),
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.identifier,
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+          }
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || 'Signup failed');
+      if (authError) throw authError;
 
       localStorage.setItem('selorah_user', JSON.stringify({
         first_name: formData.firstName,
@@ -205,6 +204,12 @@ export default function Signup() {
               <p className="text-white/60 mb-10">
                 We've sent a 6-digit code to <span className="font-bold">{formData.identifier}</span>
               </p>
+
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl mb-6 text-sm">
+                  {error}
+                </div>
+              )}
 
               {/* OTP Inputs */}
               <div className="flex justify-between gap-3 mb-10">
