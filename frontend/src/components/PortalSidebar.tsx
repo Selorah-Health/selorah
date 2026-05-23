@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   ArrowRightOnRectangleIcon, 
@@ -7,7 +7,7 @@ import { createClient } from '../lib/supabase/client';
 
 interface MenuItem {
   name: string;
-  icon: any;
+  icon: ReactNode;
   path: string;
 }
 
@@ -15,7 +15,7 @@ interface PortalSidebarProps {
   role: 'hospital' | 'researcher' | 'insurer' | 'patient';
   roleTag: string;
   menuItems: MenuItem[];
-  user: any;
+  user: string;
   sidebarBg: string;
   logoutBg: string;
   avatarGradient: string;
@@ -43,7 +43,7 @@ export default function PortalSidebar({
   };
 
   return (
-    <aside className={`hidden md:flex transition-all duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[260px]'} ${sidebarBg} text-white flex-col shrink-0 h-full relative z-50`}>
+    <aside className={`hidden md:flex transition-all duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[260px]'} ${sidebarBg} text-white flex-col shrink-0 h-full relative z-40 md:mt-0`}>
       {/* Brand & Toggle */}
       <div className={`p-6 pb-4 border-b border-white/10 ${isCollapsed ? 'px-4' : ''}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'}`}>

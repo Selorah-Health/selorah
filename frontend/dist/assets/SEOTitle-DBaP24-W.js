@@ -1,0 +1,1 @@
+import{c as e,f as t,h as n}from"./index-CQnFztsK.js";var r=n(t());function i({title:t}){return(0,r.useEffect)(()=>{document.title=`${t} | Selorah Health`},[t,e()]),null}export{i as t};

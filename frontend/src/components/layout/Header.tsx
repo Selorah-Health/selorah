@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { Plus } from "lucide-react";
@@ -7,8 +7,8 @@ import WaitlistModal from "../WaitlistModal";
 
 interface HeaderProps {
   theme?: "dark" | "light";
-  isLoggedIn?: boolean; // New prop
-  userAvatar?: string; // Optional avatar URL
+  isLoggedIn?: boolean;
+  userAvatar?: string;
 }
 
 export default function Header({
@@ -19,18 +19,16 @@ export default function Header({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [lastScrollPos, setLastScrollPos] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
-  const [lastScrollPos, setLastScrollPos] = useState(0);
+  const firstLinkRef = useRef<HTMLAnchorElement | null>(null);
 
   const scrollToSection = (id: string) => {
     if (window.location.pathname !== "/") {
       navigate("/#" + id);
     } else {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     }
     setIsMenuOpen(false);
   };
@@ -40,11 +38,8 @@ export default function Header({
       const currentScrollPos = window.scrollY;
       const shouldShow =
         currentScrollPos < 100 || currentScrollPos < lastScrollPos;
-
       setIsNavVisible(shouldShow);
-      if (!shouldShow) {
-        setIsMenuOpen(false);
-      }
+      if (!shouldShow) setIsMenuOpen(false);
       setLastScrollPos(currentScrollPos);
     };
 
@@ -52,22 +47,28 @@ export default function Header({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollPos]);
 
+  useEffect(() => {
+    if (isMenuOpen) {
+      setTimeout(() => firstLinkRef.current?.focus(), 50);
+    }
+  }, [isMenuOpen]);
+
   const isSectionActive = (id: string) =>
     location.pathname === "/" && location.hash === `#${id}`;
 
   const desktopLinkClass = (isActive: boolean) =>
-    `transition-colors ${theme === "dark" ? "hover:text-white" : "hover:text-[#4262FF]"} ${
-      isActive ? (theme === "dark" ? "text-white" : "text-[#4262FF]") : ""
-    }`;
+    `transition-colors text-sm ${
+      theme === "dark" ? "hover:text-white" : "hover:text-primary"
+    } ${isActive ? (theme === "dark" ? "text-white" : "text-primary") : ""}`;
 
   const sectionLinkClass = (id: string) =>
-    `transition-colors ${
-      theme === "dark" ? "hover:text-white" : "hover:text-[#4262FF]"
+    `transition-colors text-sm ${
+      theme === "dark" ? "hover:text-white" : "hover:text-primary"
     } ${
       isSectionActive(id)
         ? theme === "dark"
           ? "text-white"
-          : "text-[#4262FF]"
+          : "text-primary"
         : ""
     }`;
 
@@ -80,32 +81,34 @@ export default function Header({
 
       <header
         id="header"
-        className={`fixed top-0 left-0 right-0 z-50 rounded p-2 bg-zinc-900/50 amber-100 fade-in delay-3  transition-transform duration-300 backdrop-blur-md border-b $
+        className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 backdrop-blur-md ${
           theme === "dark"
-            ? "bg-black/70 border-white/10"
-            : "bg-white/80 border-gray-100"
+            ? "bg-black/70 border-b border-white/10"
+            : "bg-white/80 border-b border-gray-100"
         } ${isNavVisible ? "translate-y-0" : "-translate-y-full"}`}
       >
-        <div className="container mx-auto px-4 py-3  bg-zinc-900/10 max-w-9xl rounded-xl flex items-center justify-between lg:px-12 h-20">
+        <div className="max-w-screen-2xl mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
+          {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0"
           >
-            <img
-              src="/logo.svg"
-              alt="Selorah Logo"
-              className="w-8 h-8 group-hover:scale-105 transition-transform"
-            />
+            <img src="/logo.svg" alt="Selorah Logo" className="w-8 h-8" />
             <span
               className={`text-sm font-bold tracking-tight hidden sm:inline ${
-                theme === "dark" ? "text-white" : "text-[#4262FF]"
+                theme === "dark" ? "text-white" : "text-primary"
               }`}
             >
               Selorah Health
             </span>
           </Link>
 
-          <nav className={`hidden lg:flex items-center justify-center gap-8 text-sm font-medium ${theme === "dark" ? "text-white/80" : "text-gray-600"}`}>
+          {/* Desktop Nav — only at xl (1280px+) */}
+          <nav
+            className={`hidden xl:flex items-center gap-7 font-medium ${
+              theme === "dark" ? "text-white/70" : "text-gray-600"
+            }`}
+          >
             <Link
               to="/#how-it-works"
               onClick={() => scrollToSection("how-it-works")}
@@ -142,7 +145,8 @@ export default function Header({
             </NavLink>
           </nav>
 
-          <div className="hidden lg:flex items-center gap-4">
+          {/* Desktop CTAs — only at xl (1280px+) */}
+          <div className="hidden xl:flex items-center gap-3 shrink-0">
             {isLoggedIn ? (
               <div className="flex items-center gap-4">
                 <NavLink
@@ -164,158 +168,167 @@ export default function Header({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <>
                 <NavLink
                   to="/login"
                   className={({ isActive }) =>
-                    `px-6 py-2 rounded-full border transition-colors ${
+                    `px-5 py-2 rounded-full border text-sm font-medium transition-colors ${
                       theme === "dark"
-                        ? "border-white/20 hover:bg-white/10 hover:text-white"
-                        : "border-gray-200 hover:bg-gray-50 hover:text-[#4262FF]"
+                        ? "border-white/20 text-white hover:bg-white/10"
+                        : "border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-primary"
                     } ${
                       isActive
                         ? theme === "dark"
-                          ? "bg-white/10 text-white"
-                          : "bg-gray-50 text-[#4262FF]"
+                          ? "bg-white/10"
+                          : "bg-gray-50 text-primary"
                         : ""
                     }`
                   }
                 >
                   Log in
                 </NavLink>
-
                 <Button
                   onClick={() => setIsModalOpen(true)}
                   icon={<Plus className="w-4 h-4" />}
-                  className={
-                    theme === "dark"
-                      ? "border-white/20 hover:bg-white/10 hover:text-white"
-                      : "border-gray-200 hover:bg-gray-50 hover:text-[#4262FF]"
-                  }
-                >
-                  Join Waitlist
-                </Button>
-              </div>
+                  text="Join Waitlist"
+                  size="md"
+                />
+              </>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Hamburger — shows below xl */}
           <button
-            className={`lg:hidden relative w-4 h-4 flex flex-col justify-center items-center gap-1.5 z-50`}
+            aria-label="Toggle navigation"
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
+            className={`xl:hidden relative flex flex-col items-center justify-center gap-1.5 w-10 h-10 rounded-full z-50 ${
+              theme === "dark" ? "bg-white/10" : "bg-gray-100"
+            }`}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <span
-              className={`w-4 h-0.5 transition-all duration-300 origin-center ${
+              className={`block w-5 h-0.5 transition-all duration-300 origin-center ${
                 theme === "dark" ? "bg-white" : "bg-gray-900"
-              } ${isMenuOpen ? "rotate-45 translate-y-1" : ""}`}
+              } ${isMenuOpen ? "rotate-45 translate-y-2" : ""}`}
             />
             <span
-              className={`w-4 h-0.5 transition-all duration-300 origin-center ${
+              className={`block w-5 h-0.5 transition-all duration-300 ${
                 theme === "dark" ? "bg-white" : "bg-gray-900"
-              } ${isMenuOpen ? "-rotate-45 -translate-y-1" : ""}`}
+              } ${isMenuOpen ? "opacity-0" : ""}`}
+            />
+            <span
+              className={`block w-5 h-0.5 transition-all duration-300 origin-center ${
+                theme === "dark" ? "bg-white" : "bg-gray-900"
+              } ${isMenuOpen ? "-rotate-45 -translate-y-2" : ""}`}
             />
           </button>
         </div>
       </header>
 
+      {/* Mobile drawer */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 xl:hidden">
           <button
             aria-label="Close navigation overlay"
             className="absolute inset-0 bg-black/50"
             onClick={() => setIsMenuOpen(false)}
           />
           <div
-            className={`absolute right-0 top-0 h-full w-64 border-l p-6 transform transition-transform duration-300 ${
+            id="mobile-menu"
+            className={`absolute right-0 top-0 h-full w-80 max-w-[86vw] border-l p-6 ${
               theme === "dark"
-                ? "bg-black/70 border-white/10"
-                : "bg-white/80 border-gray-100"
-            } ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}
+                ? "bg-black/95 border-white/10"
+                : "bg-white border-gray-100"
+            }`}
           >
-            <div className="flex justify-end">
+            <div className="flex justify-end mb-6">
               <button
                 aria-label="Close navigation menu"
-                className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center"
+                className={`w-10 h-10 rounded-full border flex items-center justify-center text-lg ${
+                  theme === "dark"
+                    ? "border-white/10 text-white"
+                    : "border-gray-200 text-gray-900"
+                }`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                <span
-                  className={theme === "dark" ? "text-white" : "text-gray-900"}
-                >
-                  ×
-                </span>
+                ×
               </button>
             </div>
+
             <nav
-              className={`mt-10 flex flex-col gap-5 text-base font-medium ${
-                theme === "dark" ? "text-white/80" : "text-gray-600"
+              className={`flex flex-col gap-1 text-base font-medium ${
+                theme === "dark" ? "text-white/80" : "text-gray-700"
               }`}
             >
-              <Link
-                to="/#how-it-works"
-                onClick={() => scrollToSection("how-it-works")}
-                className={sectionLinkClass("how-it-works")}
-              >
-                How It Works
-              </Link>
-              <Link
-                to="/#hospitals"
-                onClick={() => scrollToSection("hospitals")}
-                className={sectionLinkClass("hospitals")}
-              >
-                For Hospitals
-              </Link>
-              <Link
-                to="/#researchers"
-                onClick={() => scrollToSection("researchers")}
-                className={sectionLinkClass("researchers")}
-              >
-                For Researchers
-              </Link>
-              <Link
-                to="/#insurers"
-                onClick={() => scrollToSection("insurers")}
-                className={sectionLinkClass("insurers")}
-              >
-                For Insurers
-              </Link>
+              {[
+                { label: "How It Works", id: "how-it-works" },
+                { label: "For Hospitals", id: "hospitals" },
+                { label: "For Researchers", id: "researchers" },
+                { label: "For Insurers", id: "insurers" },
+              ].map(({ label, id }) => (
+                <Link
+                  key={id}
+                  to={`/#${id}`}
+                  ref={id === "how-it-works" ? firstLinkRef : undefined}
+                  onClick={() => scrollToSection(id)}
+                  className={`${sectionLinkClass(id)} block py-3 px-3 rounded-xl hover:bg-white/5`}
+                >
+                  {label}
+                </Link>
+              ))}
               <NavLink
                 to="/pricing"
                 onClick={() => setIsMenuOpen(false)}
-                className={({ isActive }) => desktopLinkClass(isActive)}
+                className={({ isActive }) =>
+                  `${desktopLinkClass(isActive)} block py-3 px-3 rounded-xl hover:bg-white/5`
+                }
               >
                 Pricing
               </NavLink>
+            </nav>
 
+            <div
+              className={`mt-6 pt-6 border-t ${
+                theme === "dark" ? "border-white/10" : "border-gray-100"
+              }`}
+            >
               {isLoggedIn ? (
                 <NavLink
                   to="/dashboard"
                   onClick={() => setIsMenuOpen(false)}
-                  className={({ isActive }) => desktopLinkClass(isActive)}
+                  className={({ isActive }) =>
+                    `${desktopLinkClass(isActive)} block py-3 px-3 rounded-xl text-center`
+                  }
                 >
                   Dashboard
                 </NavLink>
               ) : (
-                <NavLink
-                  to="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `px-6 py-2 rounded-full border transition-colors inline-flex justify-center mt-4 ${
+                <div className="flex flex-col gap-3">
+                  <NavLink
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`w-full inline-flex items-center justify-center px-5 py-3 rounded-xl border text-sm font-medium ${
                       theme === "dark"
-                        ? "border-white/20 hover:bg-white/10"
-                        : "border-gray-200 hover:bg-gray-50"
-                    } ${
-                      isActive
-                        ? theme === "dark"
-                          ? "bg-white/10"
-                          : "bg-gray-50"
-                        : ""
-                    }`
-                  }
-                >
-                  Log in
-                </NavLink>
+                        ? "border-white/20 text-white"
+                        : "border-gray-200 text-gray-900"
+                    }`}
+                  >
+                    Log in
+                  </NavLink>
+                  <Button
+                    onClick={() => {
+                      setIsModalOpen(true);
+                      setIsMenuOpen(false);
+                    }}
+                    icon={<Plus className="w-4 h-4" />}
+                    text="Join Waitlist"
+                    size="md"
+                    className="w-full"
+                  />
+                </div>
               )}
-            </nav>
+            </div>
           </div>
         </div>
       )}
