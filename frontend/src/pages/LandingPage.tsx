@@ -50,11 +50,8 @@ export default function LandingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [stepVideoEnded, setStepVideoEnded] = useState<boolean[]>([false, false, false, false]);
-
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const stepVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  const scrollLocked = useRef(false);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -65,45 +62,27 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // IntersectionObserver for step videos
+  // Auto-play step videos when they enter the viewport (no force-stop / no forced scroll)
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
-    const timers: (number | undefined)[] = [];
 
     stepRefs.current.forEach((ref, i) => {
       if (!ref) return;
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !stepVideoEnded[i]) {
-            scrollLocked.current = true;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
             const video = stepVideoRefs.current[i];
-            if (video) {
-              video.currentTime = 0;
-              video.play()
-                .then(() => {
-                  const timer = window.setTimeout(() => {
-                    video.pause();
-                    handleStepVideoEnd(i);
-                    const nextIndex = i + 1;
-                    if (stepRefs.current[nextIndex]) {
-                      stepRefs.current[nextIndex]!.scrollIntoView({ behavior: 'smooth' });
-                    } else {
-                      scrollLocked.current = false;
-                    }
-                  }, 5000);
-
-                  timers[i] = timer;
-
-                  video.onpause = () => {
-                    if (timers[i]) clearTimeout(timers[i]);
-                  };
-                })
-                .catch(() => {});
+            if (!video) return;
+            if (entry.isIntersecting) {
+              video.play().catch(() => {});
+            } else {
+              video.pause();
             }
-          }
-        });
-      }, { threshold: 0.3 });
+          });
+        },
+        { threshold: 0.35 }
+      );
 
       observer.observe(ref);
       observers.push(observer);
@@ -111,18 +90,8 @@ export default function LandingPage() {
 
     return () => {
       observers.forEach((o) => o.disconnect());
-      timers.forEach((t) => t && clearTimeout(t));
     };
-  }, [stepVideoEnded]);
-
-  const handleStepVideoEnd = (i: number) => {
-    setStepVideoEnded((prev) => {
-      const next = [...prev];
-      next[i] = true;
-      return next;
-    });
-    scrollLocked.current = false;
-  };
+  }, []);
 
   const handleNextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
@@ -155,9 +124,9 @@ export default function LandingPage() {
           <source src="/assets/hero-bg-video-1.mp4" type="video/mp4" />
         </video>
 
-        {/* Content Overlay */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12 pb-16 sm:pb-24">
-          <div className="max-w-3xl">
+        {/* Content Overlay — centered */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12 pb-16 sm:pb-24 text-center flex flex-col items-center">
+          <div className="max-w-3xl w-full flex flex-col items-center">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white mb-5 sm:mb-6">
               <span className="text-primary" aria-hidden="true">●</span>
               Building the future of health records in Africa
@@ -167,23 +136,16 @@ export default function LandingPage() {
               Tired of chasing<br className="hidden sm:block" /> your own records?
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-xl leading-relaxed mb-8 sm:mb-12">
+            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-xl leading-relaxed mb-8 sm:mb-12 mx-auto">
               Selorah Health gives you full ownership — encrypted, portable, and private.
               Access your data anytime, anywhere, with anyone you trust.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
-              >
-                Join the Waitlist
-              </button>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <button
                 type="button"
                 onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 border border-white/60 hover:bg-white/10 text-white font-semibold rounded-full text-base sm:text-lg transition-all backdrop-blur-sm min-h-[48px]"
+                className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
               >
                 Here&apos;s How It Works →
               </button>
@@ -298,12 +260,7 @@ export default function LandingPage() {
                   <div className="text-primary/20 text-4xl sm:text-5xl md:text-6xl font-bold mb-1 sm:mb-2">{stepper.step}</div>
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#101217] tracking-tight">{stepper.title}</h2>
                   <p className="text-base sm:text-lg text-gray-500 font-medium leading-relaxed">{stepper.desc}</p>
-                  {!stepVideoEnded[i] && (
-                    <div className="flex items-center gap-3 py-3 px-5 bg-primary/5 rounded-2xl w-fit">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-xs font-bold text-primary uppercase tracking-widest">Watch to continue</span>
-                    </div>
-                  )}
+
                 </div>
                 <div className="flex-1 w-full relative">
                   <div className="aspect-[4/3] bg-gray-900 rounded-[40px] border border-gray-100 overflow-hidden shadow-2xl relative">
@@ -311,20 +268,13 @@ export default function LandingPage() {
                       ref={(el: HTMLVideoElement | null) => { stepVideoRefs.current[i] = el; }}
                       muted
                       playsInline
+                      loop
                       preload="metadata"
                       poster={stepper.poster}
-                      onEnded={() => handleStepVideoEnd(i)}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
                     >
                       <source src={stepper.video} type="video/mp4" />
                     </video>
-                    {!stepVideoEnded[i] && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20 transition-all">
-                        <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-2xl transform transition-transform">
-                          <PlayIcon className="w-10 h-10 text-white ml-1" />
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -408,6 +358,25 @@ export default function LandingPage() {
               <p className="text-white/60 leading-relaxed text-sm sm:text-base">When you revoke access, it is recorded on the blockchain immediately and irreversibly.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Final CTA — just before footer */}
+      <section className="bg-white py-16 sm:py-20 border-t border-[var(--border)] px-4 sm:px-6 lg:px-12">
+        <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 tracking-tight">
+            Ready to own your health records?
+          </h2>
+          <p className="text-base sm:text-lg text-muted mb-8 max-w-xl">
+            Join the early wave building the future of health records across Africa.
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="bg-primary text-white px-8 sm:px-12 py-4 sm:py-5 rounded-full text-lg sm:text-xl font-bold hover:bg-primary-hover transition-all shadow-xl shadow-primary/25 hover:scale-[1.02] active:scale-95 min-h-[48px]"
+          >
+            Join the Waitlist
+          </button>
         </div>
       </section>
 
