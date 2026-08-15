@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import WaitlistModal from './WaitlistModal';
 
 export default function Footer() {
