@@ -97,12 +97,29 @@ export default function Onboarding() {
         }
       } catch { /* ignore */ }
 
+      let orgName = '';
+      let phone = '';
+      let officialEmail = '';
+      try {
+        const saved = localStorage.getItem('selorah_user');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          orgName = parsed.org_name || '';
+          phone = parsed.phone || '';
+          officialEmail = parsed.email || '';
+          if (!first && parsed.org_name) first = parsed.org_name;
+        }
+      } catch { /* ignore */ }
+
       if (!cancelled) {
         setFormData((prev) => ({
           ...prev,
           firstName: prev.firstName || first,
           lastName: prev.lastName || last,
           role: prev.role || roleFromSignup || '',
+          orgName: prev.orgName || orgName,
+          whatsappNumber: prev.whatsappNumber || phone,
+          officialEmail: prev.officialEmail || officialEmail,
         }));
         // Skip role selection if already chosen at signup
         if (roleFromSignup) {
