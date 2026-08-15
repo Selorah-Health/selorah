@@ -152,16 +152,49 @@ export default function Dashboard() {
     }
   };
 
-  const handleUploadClick = () => fileInputRef.current?.click();
+  /** Require a real authenticated session before any privileged action. */
+  const requireAuth = async (): Promise<boolean> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) return true;
+    // Also reject placeholder/guest localStorage-only sessions
+    const saved = localStorage.getItem('selorah_user');
+    if (!saved) {
+      alert('Please log in to continue.');
+      navigate('/login');
+      return false;
+    }
+    // localStorage alone is not enough for uploads / writes
+    alert('Please log in to continue.');
+    navigate('/login');
+    return false;
+  };
+
+  const handleUploadClick = async () => {
+    const ok = await requireAuth();
+    if (!ok) return;
+    fileInputRef.current?.click();
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const ok = await requireAuth();
+    if (!ok) {
+      e.target.value = '';
+      return;
+    }
+
     setUploading(true);
-    
+
     const saveRecordToDb = async (name: string, url: string) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        alert('Please log in to upload records.');
+        navigate('/login');
+        setUploading(false);
+        return;
+      }
 
       const { error } = await supabase.from('medical_records').insert({
         user_id: user.id,
@@ -182,13 +215,29 @@ export default function Dashboard() {
     };
 
     try {
-      const fileName = `${Date.now()}_${file.name}`;
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        alert('Please log in to upload records.');
+        navigate('/login');
+        setUploading(false);
+        return;
+      }
+      // Path must start with user id for storage RLS policies
+      const fileName = `${authUser.id}/${Date.now()}_${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('records')
         .upload(fileName, file);
 
       if (uploadError) {
         console.warn("Storage upload failed, attempting fallback to base64 data URL", uploadError);
+        // Still require auth for fallback path
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          alert('Please log in to upload records.');
+          navigate('/login');
+          setUploading(false);
+          return;
+        }
         const reader = new FileReader();
         reader.onloadend = async () => {
           await saveRecordToDb(file.name, reader.result as string);
