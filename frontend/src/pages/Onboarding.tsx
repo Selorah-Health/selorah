@@ -127,35 +127,79 @@ export default function Onboarding() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // If user exists, save to Supabase
+      // If user exists, save to real schema tables
       if (user) {
-        const profileData: any = {
+        const role = formData.role === 'hospital' ? 'provider' : (formData.role || 'patient');
+
+        await supabase.from('users').upsert({
           id: user.id,
-          role: formData.role,
-          first_name: formData.firstName || formData.orgName,
-          last_name: formData.lastName || '',
-        };
+          email: user.email,
+          role,
+        });
 
-        if (formData.role === 'patient') {
-          profileData.date_of_birth = formData.dateOfBirth || null;
-          profileData.gender = formData.gender || null;
-          profileData.phone_number = formData.whatsappNumber || null;
-          if (formData.nin) profileData.nin = formData.nin;
-          profileData.vitals = formData.vitals;
-          profileData.allergies = formData.allergies ? [formData.allergies] : [];
-          profileData.emergency_medical_info = formData.medicalConditions;
-          profileData.emergency_contacts = formData.emergencyContacts;
-        } else {
-          profileData.organization_name = formData.orgName;
-          profileData.official_email = formData.officialEmail;
-          profileData.phone_number = formData.whatsappNumber || null;
-          if (formData.nin) profileData.nin = formData.nin;
-        }
-
-        const { error } = await supabase.from('profiles').upsert(profileData);
-        if (error) {
-          console.error("Supabase upsert error:", error);
-          throw error;
+        if (role === 'patient') {
+          const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ').trim();
+          const payload = {
+            user_id: user.id,
+            full_name: fullName || null,
+            date_of_birth: formData.dateOfBirth || null,
+            phone: formData.whatsappNumber || null,
+            nin: formData.nin || null,
+            blood_group: formData.vitals?.bloodType || null,
+          };
+          const { data: existing } = await supabase
+            .from('patient_profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (existing) {
+            const { error } = await supabase.from('patient_profiles').update(payload).eq('user_id', user.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from('patient_profiles').insert(payload);
+            if (error) throw error;
+          }
+        } else if (role === 'provider') {
+          const orgId = `ORG-${user.id.replace(/-/g, '').slice(0, 10).toUpperCase()}`;
+          const payload = {
+            user_id: user.id,
+            hospital_name: formData.orgName || null,
+            email: formData.officialEmail || user.email,
+            phone: formData.whatsappNumber || null,
+            org_id: orgId,
+          };
+          const { data: existing } = await supabase
+            .from('hospital_profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (existing) {
+            const { error } = await supabase.from('hospital_profiles').update(payload).eq('user_id', user.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from('hospital_profiles').insert(payload);
+            if (error) throw error;
+          }
+        } else if (role === 'researcher') {
+          const orgId = `RES-${user.id.replace(/-/g, '').slice(0, 10).toUpperCase()}`;
+          const payload = {
+            user_id: user.id,
+            full_name: [formData.firstName, formData.lastName].filter(Boolean).join(' ') || formData.orgName,
+            institution: formData.orgName || null,
+            org_id: orgId,
+          };
+          const { data: existing } = await supabase
+            .from('researcher_profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (existing) {
+            const { error } = await supabase.from('researcher_profiles').update(payload).eq('user_id', user.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from('researcher_profiles').insert(payload);
+            if (error) throw error;
+          }
         }
       } else {
         console.warn("No authenticated user found. Saving locally only.");
