@@ -26,10 +26,15 @@ export default function Signup() {
     role: 'patient' as 'patient' | 'hospital' | 'researcher' | 'insurer',
     firstName: '',
     lastName: '',
+    orgName: '',
+    workEmail: '',
+    phone: '',
     identifier: '',
     password: '',
     agree: false,
   });
+
+  const isOrg = formData.role === 'hospital' || formData.role === 'researcher' || formData.role === 'insurer';
 
   const roleOptions = [
     { id: 'patient' as const, title: 'Patient', desc: 'Personal health records', icon: UserIcon },
@@ -60,10 +65,29 @@ export default function Signup() {
       return;
     }
 
-    const type = validateIdentifier(formData.identifier);
-    if (!type) {
-      setError('Please enter a valid email address or phone number');
-      return;
+    const isOrganization =
+      formData.role === 'hospital' || formData.role === 'researcher' || formData.role === 'insurer';
+
+    if (isOrganization) {
+      if (!formData.orgName.trim()) {
+        setError('Organization name is required');
+        return;
+      }
+      const emailType = validateIdentifier(formData.workEmail.trim());
+      if (emailType !== 'email') {
+        setError('Please enter a valid work / organization email');
+        return;
+      }
+    } else {
+      if (!formData.firstName.trim() || !formData.lastName.trim()) {
+        setError('First and last name are required');
+        return;
+      }
+      const type = validateIdentifier(formData.identifier);
+      if (!type) {
+        setError('Please enter a valid email address or phone number');
+        return;
+      }
     }
 
     if (formData.password.length < 8) {
@@ -76,13 +100,17 @@ export default function Signup() {
     try {
       const existing = localStorage.getItem('selorah_user');
       const prev = existing ? JSON.parse(existing) : {};
+      const isOrganization =
+        formData.role === 'hospital' || formData.role === 'researcher' || formData.role === 'insurer';
       localStorage.setItem(
         'selorah_user',
         JSON.stringify({
           ...prev,
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
-          email: formData.identifier.trim(),
+          first_name: isOrganization ? formData.orgName.trim() : formData.firstName.trim(),
+          last_name: isOrganization ? '' : formData.lastName.trim(),
+          org_name: isOrganization ? formData.orgName.trim() : undefined,
+          email: isOrganization ? formData.workEmail.trim() : formData.identifier.trim(),
+          phone: isOrganization ? formData.phone.trim() : undefined,
           role: formData.role,
         })
       );
@@ -109,20 +137,31 @@ export default function Signup() {
         );
       }
 
-      // Only email signup is supported via Supabase auth in this flow
-      const type = validateIdentifier(formData.identifier);
-      if (type !== 'email') {
-        throw new Error('Phone signup is not yet available. Please use an email address.');
+      const isOrganization =
+        formData.role === 'hospital' || formData.role === 'researcher' || formData.role === 'insurer';
+      const signupEmail = isOrganization
+        ? formData.workEmail.trim()
+        : formData.identifier.trim();
+
+      const idType = validateIdentifier(signupEmail);
+      if (idType !== 'email') {
+        throw new Error(
+          isOrganization
+            ? 'Organization signup requires a work email address.'
+            : 'Phone signup is not yet available. Please use an email address.'
+        );
       }
 
       const { error: authError } = await supabase.auth.signUp({
-        email: formData.identifier.trim(),
+        email: signupEmail,
         password: formData.password,
         options: {
           data: {
-            first_name: formData.firstName.trim(),
-            last_name: formData.lastName.trim(),
+            first_name: isOrganization ? formData.orgName.trim() : formData.firstName.trim(),
+            last_name: isOrganization ? '' : formData.lastName.trim(),
+            org_name: isOrganization ? formData.orgName.trim() : undefined,
             role: formData.role,
+            phone: isOrganization ? formData.phone.trim() : undefined,
           },
         },
       });
@@ -132,9 +171,11 @@ export default function Signup() {
       localStorage.setItem(
         'selorah_user',
         JSON.stringify({
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
-          email: formData.identifier.trim(),
+          first_name: isOrganization ? formData.orgName.trim() : formData.firstName.trim(),
+          last_name: isOrganization ? '' : formData.lastName.trim(),
+          org_name: isOrganization ? formData.orgName.trim() : undefined,
+          email: signupEmail,
+          phone: isOrganization ? formData.phone.trim() : undefined,
           is_pro: false,
           role: formData.role,
         })
@@ -266,36 +307,77 @@ export default function Signup() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    required
-                    autoComplete="given-name"
-                    placeholder="First name"
-                    className="bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    required
-                    autoComplete="family-name"
-                    placeholder="Last name"
-                    className="bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  />
-                </div>
-
-                <input
-                  type="text"
-                  required
-                  autoComplete="email"
-                  placeholder="Email or phone number"
-                  className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                  value={formData.identifier}
-                  onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
-                />
+                {isOrg ? (
+                  <>
+                    <input
+                      type="text"
+                      required
+                      autoComplete="organization"
+                      placeholder={
+                        formData.role === 'hospital'
+                          ? 'Hospital / clinic name'
+                          : formData.role === 'researcher'
+                            ? 'Institution / research org name'
+                            : 'Insurance company name'
+                      }
+                      className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
+                      value={formData.orgName}
+                      onChange={(e) => setFormData({ ...formData, orgName: e.target.value })}
+                    />
+                    <input
+                      type="email"
+                      required
+                      autoComplete="email"
+                      placeholder="Work email (organization domain)"
+                      className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
+                      value={formData.workEmail}
+                      onChange={(e) => setFormData({ ...formData, workEmail: e.target.value })}
+                    />
+                    <input
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="Organization phone (optional)"
+                      className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                    <p className="text-[11px] text-white/40 -mt-2 px-1">
+                      You are registering as an organization. An Organization ID will be issued after onboarding and required at staff login.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        required
+                        autoComplete="given-name"
+                        placeholder="First name"
+                        className="bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      />
+                      <input
+                        type="text"
+                        required
+                        autoComplete="family-name"
+                        placeholder="Last name"
+                        className="bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      autoComplete="email"
+                      placeholder="Email or phone number"
+                      className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
+                      value={isOrg ? formData.workEmail : formData.identifier}
+                      onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
+                    />
+                  </>
+                )}
 
                 <div className="relative">
                   <input
@@ -387,7 +469,7 @@ export default function Signup() {
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Verify your account</h2>
               <p className="text-white/60 mb-8 text-sm sm:text-base">
                 We&apos;ve sent a 6-digit code to{' '}
-                <span className="font-bold text-white break-all">{formData.identifier}</span>
+                <span className="font-bold text-white break-all">{isOrg ? formData.workEmail : formData.identifier}</span>
               </p>
 
               {error && (
