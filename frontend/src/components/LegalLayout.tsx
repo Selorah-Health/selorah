@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -9,6 +9,10 @@ interface LegalLayoutProps {
 }
 
 export default function LegalLayout({ children, title, lastUpdated }: LegalLayoutProps) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' in window ? 'instant' as ScrollBehavior : 'auto' });
+  }, [title]);
+
   return (
     <div className="min-h-screen bg-white text-[#101217] font-sora selection:bg-[#4262FF]/10">
       {/* Header */}
