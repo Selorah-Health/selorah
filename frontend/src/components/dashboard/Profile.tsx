@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { StarIcon, ShieldCheckIcon, CreditCardIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { StarIcon, ShieldCheckIcon, CreditCardIcon, UserGroupIcon, IdentificationIcon } from '@heroicons/react/24/outline';
+import { createClient } from '../../lib/supabase/client';
+import { isValidNin, writeLocalSession, readLocalSession } from '../../lib/auth/session';
 import ProFeaturesModal from './ProFeaturesModal';
 
 interface ProfileProps {
@@ -10,7 +12,46 @@ interface ProfileProps {
 
 export default function Profile({ user, avatarGradient }: ProfileProps) {
   const [showProFeatures, setShowProFeatures] = useState(false);
+  const [nin, setNin] = useState('');
+  const [ninSaving, setNinSaving] = useState(false);
+  const [ninMsg, setNinMsg] = useState<string | null>(null);
   const navigate = useNavigate();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const local = readLocalSession();
+    if (local?.nin) setNin(local.nin);
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from('profiles').select('nin').eq('id', user.id).maybeSingle();
+      if ((data as any)?.nin) setNin((data as any).nin);
+    })();
+  }, []);
+
+  const saveNin = async () => {
+    setNinMsg(null);
+    if (nin && !isValidNin(nin)) {
+      setNinMsg('NIN must be exactly 11 digits.');
+      return;
+    }
+    setNinSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setNinMsg('Please log in to save your NIN.');
+        return;
+      }
+      const { error } = await supabase.from('profiles').update({ nin: nin || null } as any).eq('id', user.id);
+      if (error) throw error;
+      writeLocalSession({ nin });
+      setNinMsg('NIN saved. You can use it to log in.');
+    } catch (e: any) {
+      setNinMsg(e.message || 'Failed to save NIN.');
+    } finally {
+      setNinSaving(false);
+    }
+  };
 
   const proFeatures = [
     "Unlimited Emergency Contacts (Up to 10)",
@@ -58,6 +99,36 @@ export default function Profile({ user, avatarGradient }: ProfileProps) {
             )}
           </div>
         </div>
+      </div>
+
+      <div className="mb-10 p-8 bg-gray-50 rounded-[28px] border border-gray-100">
+        <div className="flex items-center gap-3 mb-4">
+          <IdentificationIcon className="w-6 h-6 text-[#6183FF]" />
+          <h3 className="text-lg font-bold text-[#101217]">National Identification Number (NIN)</h3>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Required for hospital lookup and optional login. 11 digits. You can add this if you skipped it during onboarding.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={11}
+            value={nin}
+            onChange={(e) => setNin(e.target.value.replace(/\D/g, '').slice(0, 11))}
+            placeholder="Enter 11-digit NIN"
+            className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#6183FF]"
+          />
+          <button
+            type="button"
+            onClick={saveNin}
+            disabled={ninSaving}
+            className="bg-[#6183FF] text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-[#4E6EEF] disabled:opacity-50"
+          >
+            {ninSaving ? 'Saving…' : 'Save NIN'}
+          </button>
+        </div>
+        {ninMsg && <p className="text-sm mt-3 text-gray-600">{ninMsg}</p>}
       </div>
 
       {!isPro && (
