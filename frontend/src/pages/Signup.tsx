@@ -5,6 +5,10 @@ import {
   EyeSlashIcon,
   ArrowPathIcon,
   CheckCircleIcon,
+  UserIcon,
+  BuildingOffice2Icon,
+  BeakerIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import SEOTitle from '../components/SEOTitle';
 import { createClient } from '../lib/supabase/client';
@@ -19,12 +23,20 @@ export default function Signup() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    role: 'patient' as 'patient' | 'hospital' | 'researcher' | 'insurer',
     firstName: '',
     lastName: '',
     identifier: '',
     password: '',
     agree: false,
   });
+
+  const roleOptions = [
+    { id: 'patient' as const, title: 'Patient', desc: 'Personal health records', icon: UserIcon },
+    { id: 'hospital' as const, title: 'Hospital', desc: 'Clinic / provider portal', icon: BuildingOffice2Icon },
+    { id: 'researcher' as const, title: 'Researcher', desc: 'Studies & cohorts', icon: BeakerIcon },
+    { id: 'insurer' as const, title: 'Insurer', desc: 'Claims & policies', icon: ShieldCheckIcon },
+  ];
 
   const validateIdentifier = (val: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,6 +49,11 @@ export default function Signup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!formData.role) {
+      setError('Please select whether you are a patient, hospital, researcher, or insurer');
+      return;
+    }
 
     if (!formData.agree) {
       setError('You must agree to the terms and conditions');
@@ -66,6 +83,7 @@ export default function Signup() {
           first_name: formData.firstName.trim(),
           last_name: formData.lastName.trim(),
           email: formData.identifier.trim(),
+          role: formData.role,
         })
       );
     } catch {
@@ -104,6 +122,7 @@ export default function Signup() {
           data: {
             first_name: formData.firstName.trim(),
             last_name: formData.lastName.trim(),
+            role: formData.role,
           },
         },
       });
@@ -117,7 +136,7 @@ export default function Signup() {
           last_name: formData.lastName.trim(),
           email: formData.identifier.trim(),
           is_pro: false,
-          role: 'patient',
+          role: formData.role,
         })
       );
 
@@ -220,6 +239,33 @@ export default function Signup() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+                <div>
+                  <p className="text-xs font-bold text-white/50 uppercase tracking-widest mb-3">I am signing up as</p>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    {roleOptions.map((r) => {
+                      const selected = formData.role === r.id;
+                      return (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, role: r.id })}
+                          className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all ${
+                            selected
+                              ? 'border-[#4262FF] bg-[#4262FF]/15 text-white'
+                              : 'border-white/10 bg-[#1A1B2E] text-white/60 hover:border-white/30'
+                          }`}
+                        >
+                          <r.icon className={`w-5 h-5 shrink-0 mt-0.5 ${selected ? 'text-[#4262FF]' : ''}`} />
+                          <span>
+                            <span className="block text-sm font-bold text-white">{r.title}</span>
+                            <span className="block text-[11px] text-white/40 leading-snug">{r.desc}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <input
                     type="text"
