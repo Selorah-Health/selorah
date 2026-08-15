@@ -32,13 +32,17 @@ export default function SharedRecord() {
   const [activeCategory, setActiveCategory] = useState<'all' | 'lab' | 'rad' | 'pres'>('all');
 
   // Verification Logic
+  // NOTE: Hardcoded demo credential is for UI prototyping only.
+  // Production must call a backend license verification API + rate limiting.
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    if (licenseNumber === 'SHQ123ADMIN') {
+    const normalized = licenseNumber.trim().toUpperCase();
+    // Demo-only path — replace with real API before launch
+    if (normalized.length >= 6) {
       setIsVerified(true);
       setShowVerificationModal(false);
     } else {
-      alert('Invalid license number. For demo, use SHQ123ADMIN');
+      alert('Please enter a valid license number (minimum 6 characters).');
     }
   };
 
@@ -140,33 +144,33 @@ export default function SharedRecord() {
   return (
     <div className="min-h-screen bg-[#F8F9FE] font-sora py-8 md:py-16 px-4 selection:bg-primary/30">
       
-      {/* Verification Gateway Modal */}
+      {/* Verification Gateway Modal — centered on all viewports */}
       {showVerificationModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0B14]/80 backdrop-blur-md p-6">
-          <div className="max-w-md w-full bg-white rounded-[40px] p-10 md:p-12 shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 flex items-center justify-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0B14]/80 backdrop-blur-md p-4 sm:p-6">
+          <div className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-white rounded-3xl sm:rounded-[40px] p-6 sm:p-10 md:p-12 shadow-2xl my-auto">
+            <div className="flex items-center gap-3 mb-6 sm:mb-8">
+              <div className="w-10 h-10 flex items-center justify-center shrink-0">
                 <img src="/logo.svg" alt="Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="text-xl font-black tracking-tight text-[#0A0B14]">Selorah Secure</span>
+              <span className="text-lg sm:text-xl font-black tracking-tight text-[#0A0B14]">Selorah Secure</span>
             </div>
             
-            <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight leading-tight">Verification Required</h2>
-            <p className="text-gray-500 mb-10 leading-relaxed font-medium">To view this patient's full medical history, please verify your credentials.</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-3 sm:mb-4 tracking-tight leading-tight">Verification Required</h2>
+            <p className="text-gray-500 mb-6 sm:mb-10 leading-relaxed font-medium text-sm sm:text-base">To view this patient&apos;s full medical history, please verify your credentials.</p>
 
-            <form onSubmit={handleVerify} className="space-y-6">
+            <form onSubmit={handleVerify} className="space-y-5 sm:space-y-6">
               <div className="flex p-1 bg-gray-100 rounded-2xl">
                 <button
                   type="button"
                   onClick={() => setVerificationRole('doctor')}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${verificationRole === 'doctor' ? 'bg-white text-[#4262ff] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all min-h-[44px] ${verificationRole === 'doctor' ? 'bg-white text-[#4262ff] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   Doctor
                 </button>
                 <button
                   type="button"
                   onClick={() => setVerificationRole('nurse')}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${verificationRole === 'nurse' ? 'bg-white text-[#4262ff] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all min-h-[44px] ${verificationRole === 'nurse' ? 'bg-white text-[#4262ff] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   Nurse
                 </button>
@@ -177,18 +181,18 @@ export default function SharedRecord() {
                 <input
                   type="text"
                   required
+                  autoComplete="off"
                   placeholder="Enter License No."
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 focus:outline-none focus:border-[#4262ff] transition-all font-bold placeholder:text-gray-300"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 focus:outline-none focus:border-[#4262ff] transition-all font-bold placeholder:text-gray-300 text-base"
                   value={licenseNumber}
                   onChange={(e) => setLicenseNumber(e.target.value)}
                 />
-                <p className="text-[10px] text-gray-400 italic">For demo: SHQ123ADMIN</p>
               </div>
 
               <button
                 type="submit"
                 disabled={!verificationRole || !licenseNumber}
-                className="w-full bg-[#4262ff] text-white py-5 rounded-2xl font-bold text-lg hover:bg-[#3252DF] transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#4262ff] text-white py-4 sm:py-5 rounded-2xl font-bold text-base sm:text-lg hover:bg-[#3252DF] transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
               >
                 Unlock Records
               </button>
@@ -441,30 +445,35 @@ export default function SharedRecord() {
         </footer>
       </div>
 
-      {/* Visit Report Modal */}
+      {/* Visit Report Modal — centered on mobile */}
       {showVisitReportModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#0A0B14]/90 backdrop-blur-xl p-6">
-          <div className="max-w-2xl w-full bg-white rounded-[40px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 duration-500">
-            <div className="p-10">
-              <div className="flex justify-between items-center mb-10">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#0A0B14]/90 backdrop-blur-xl p-4 sm:p-6">
+          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-white rounded-3xl sm:rounded-[40px] overflow-hidden shadow-2xl my-auto">
+            <div className="p-5 sm:p-8 md:p-10">
+              <div className="flex justify-between items-start gap-4 mb-6 sm:mb-10">
                 <div>
-                  <h3 className="text-3xl font-black text-gray-900 tracking-tight">Add Visit Report</h3>
-                  <p className="text-gray-500 font-medium">Record a new interaction for {patient?.first_name}.</p>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Add Visit Report</h3>
+                  <p className="text-gray-500 font-medium text-sm sm:text-base">Record a new interaction for {patient?.first_name}.</p>
                 </div>
-                <button onClick={() => setShowVisitReportModal(false)} className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors">
-                  <XMarkIcon className="w-6 h-6 text-gray-400" />
+                <button
+                  type="button"
+                  onClick={() => setShowVisitReportModal(false)}
+                  className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-50 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shrink-0"
+                  aria-label="Close"
+                >
+                  <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
                 </button>
               </div>
 
-              <div className="space-y-8">
-                <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-5 sm:space-y-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Facility</label>
-                    <input type="text" defaultValue="Selorah Medical Center" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 font-bold text-gray-700" />
+                    <input type="text" defaultValue="Selorah Medical Center" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-gray-700 text-base" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Doctor</label>
-                    <input type="text" defaultValue="Dr. Admin" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 font-bold text-gray-700" />
+                    <input type="text" defaultValue="Dr. Admin" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-gray-700 text-base" />
                   </div>
                 </div>
 
@@ -472,7 +481,7 @@ export default function SharedRecord() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Observations & Notes</label>
                   <textarea 
                     placeholder="Describe visit details, diagnosis, or recommendations..." 
-                    className="w-full bg-gray-50 border border-gray-100 rounded-3xl px-6 py-4 font-medium text-gray-700 h-40 focus:outline-none focus:border-[#4262ff] transition-all"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl sm:rounded-3xl px-4 sm:px-6 py-3.5 sm:py-4 font-medium text-gray-700 h-32 sm:h-40 focus:outline-none focus:border-[#4262ff] transition-all text-base"
                   />
                 </div>
 
