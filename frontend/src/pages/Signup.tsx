@@ -55,6 +55,22 @@ export default function Signup() {
     }
 
     setLoading(true);
+    // Cache names early so onboarding can prefill even if the user refreshes mid-flow
+    try {
+      const existing = localStorage.getItem('selorah_user');
+      const prev = existing ? JSON.parse(existing) : {};
+      localStorage.setItem(
+        'selorah_user',
+        JSON.stringify({
+          ...prev,
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          email: formData.identifier.trim(),
+        })
+      );
+    } catch {
+      // ignore storage errors
+    }
     // Simulate OTP send step (real implementation would call Supabase/phone OTP here)
     setTimeout(() => {
       setLoading(false);
@@ -281,7 +297,7 @@ export default function Signup() {
                   className="w-full bg-[#4262FF] hover:bg-[#3250E6] py-3.5 sm:py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 min-h-[48px]"
                 >
                   {loading ? (
-                    <ArrowPathIcon className="w-5 h-5 animate-spin mx-auto" />
+                    <ArrowPathIcon className="w-4 h-4 animate-spin mx-auto shrink-0" aria-hidden="true" />
                   ) : (
                     'Sign Up'
                   )}
@@ -356,10 +372,10 @@ export default function Signup() {
               <button
                 onClick={handleVerifyOtp}
                 disabled={loading || otp.some((d) => !d)}
-                className="w-full bg-[#4262FF] py-3.5 sm:py-4 rounded-xl font-bold text-white disabled:opacity-50 min-h-[48px]"
+                className="w-full bg-[#4262FF] py-3.5 sm:py-4 rounded-xl font-bold text-white disabled:opacity-50 min-h-[48px] text-base"
               >
                 {loading ? (
-                  <ArrowPathIcon className="animate-spin mx-auto w-5 h-5" />
+                  <ArrowPathIcon className="w-4 h-4 animate-spin mx-auto shrink-0" aria-hidden="true" />
                 ) : (
                   'Verify & Create Account'
                 )}
