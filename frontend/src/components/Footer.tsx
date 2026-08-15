@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useNavigate } from 'react-router-dom';
 import WaitlistModal from './WaitlistModal';
 
 export default function Footer() {
@@ -37,10 +37,10 @@ export default function Footer() {
             <div>
               <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Product</h4>
               <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><Link to="/dashboard" className="hover:text-white transition-colors">Patient App</Link></li>
-                <li><Link to="/hospital" className="hover:text-white transition-colors">Hospital Portal</Link></li>
-                <li><Link to="/researcher" className="hover:text-white transition-colors">Research Portal</Link></li>
-                <li><Link to="/insurer" className="hover:text-white transition-colors">Insurer Portal</Link></li>
+                <li><Link to="/login" state={{ from: '/dashboard' }} className="hover:text-white transition-colors">Patient App</Link></li>
+                <li><Link to="/login" state={{ from: '/hospital' }} className="hover:text-white transition-colors">Hospital Portal</Link></li>
+                <li><Link to="/login" state={{ from: '/researcher' }} className="hover:text-white transition-colors">Research Portal</Link></li>
+                <li><Link to="/login" state={{ from: '/insurer' }} className="hover:text-white transition-colors">Insurer Portal</Link></li>
                 <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
               </ul>
             </div>
