@@ -140,76 +140,76 @@ export default function LandingPage() {
       <SEOTitle title="The OS for Health Records" />
       <Header />
 
-      {/* HERO SECTION - Static (carousel logic kept but not used) */}
-      <section className="relative w-full overflow-hidden bg-black min-h-[100svh] flex items-center pt-20">
-        {/* Background Video */}
+      {/* HERO SECTION */}
+      <section className="relative w-full overflow-hidden bg-black min-h-[100svh] flex items-center pt-16 sm:pt-20">
+        {/* Background Video — optimized for fast start */}
         <video
           autoPlay
           muted
           loop
           playsInline
+          preload="metadata"
+          poster="/assets/hero-bg-image-1.jpg"
           className="absolute inset-0 w-full h-full object-cover opacity-40"
         >
           <source src="/assets/hero-bg-video-1.mp4" type="video/mp4" />
         </video>
 
         {/* Content Overlay */}
-        <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-12 pt-12 pb-24">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12 pb-16 sm:pb-24">
           <div className="max-w-3xl">
-            {/* Tag */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium text-white mb-6">
-              <span className="text-primary">🌍</span>
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white mb-5 sm:mb-6">
+              <span className="text-primary" aria-hidden="true">●</span>
               Building the future of health records in Africa
             </div>
 
-            {/* Main Heading */}
-            <h1 className="text-6xl lg:text-7xl font-medium leading-[1.05] tracking-tighter text-white mb-8">
-              Tired of chasing<br />your own records?
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.08] tracking-tighter text-white mb-6 sm:mb-8">
+              Tired of chasing<br className="hidden sm:block" /> your own records?
             </h1>
 
-            {/* Description */}
-            <p className="text-xl text-white/80 max-w-xl leading-relaxed mb-12">
+            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-xl leading-relaxed mb-8 sm:mb-12">
               Selorah Health gives you full ownership — encrypted, portable, and private.
               Access your data anytime, anywhere, with anyone you trust.
             </p>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center justify-center px-8 py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full text-lg transition-all active:scale-[0.985]"
-              >
-                Get Started
-              </a>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
-                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                className="inline-flex items-center justify-center px-8 py-4 border border-white/60 hover:bg-white/10 text-white font-semibold rounded-full text-lg transition-all backdrop-blur-sm"
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
               >
-                Here's How It Works →
+                Join the Waitlist
+              </button>
+              <button
+                type="button"
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 border border-white/60 hover:bg-white/10 text-white font-semibold rounded-full text-base sm:text-lg transition-all backdrop-blur-sm min-h-[48px]"
+              >
+                Here&apos;s How It Works →
               </button>
             </div>
           </div>
         </div>
 
-        {/* Subtle gradient overlay at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 sm:h-48 bg-gradient-to-t from-black to-transparent pointer-events-none" />
       </section>
 
-      {/* Rest of your sections remain the same */}
-      {/* AVATAR BADGE SECTION */}
-      <section className="bg-white py-24 text-center px-12">
+      {/* SOCIAL PROOF / WAITLIST */}
+      <section className="bg-white py-16 sm:py-20 md:py-24 text-center px-4 sm:px-6 lg:px-12">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
           <img
             src="/assets/custom-avatar-badge.png"
-            alt="User Avatars"
-            className="mb-8 w-[400px] md:w-[600px] h-auto"
+            alt="Users building with Selorah across Africa"
+            className="mb-6 sm:mb-8 w-full max-w-[280px] sm:max-w-[400px] md:max-w-[560px] h-auto"
+            loading="lazy"
           />
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 px-2">
             Building across Africa — join the early wave
           </h2>
           <button
+            type="button"
             onClick={() => setIsModalOpen(true)}
-            className="bg-primary text-white px-12 py-5 rounded-full text-xl font-bold hover:bg-primary-hover transition-all shadow-xl shadow-primary/25 hover:scale-105 active:scale-95"
+            className="bg-primary text-white px-8 sm:px-12 py-4 sm:py-5 rounded-full text-lg sm:text-xl font-bold hover:bg-primary-hover transition-all shadow-xl shadow-primary/25 hover:scale-[1.02] active:scale-95 min-h-[48px]"
           >
             Join the Waitlist
           </button>
@@ -217,15 +217,15 @@ export default function LandingPage() {
       </section>
 
       {/* THE PROBLEM */}
-      <section className="py-24 px-12 max-w-7xl mx-auto">
-        <div className="mb-16">
-          <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">The Problem</p>
-          <h2 className="text-4xl md:text-5xl font-bold max-w-3xl leading-tight">
+      <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto">
+        <div className="mb-10 sm:mb-16">
+          <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">The Problem</p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold max-w-3xl leading-tight">
             Nigerian patients carry their health history in their heads — or not at all.
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {[
             {
               quote: "Our friend had an accident, was rushed to the hospital where the nurses insisted that we purchase a card before they can touch her. We lost her between the nurses' reluctance and procuring the money",
@@ -240,9 +240,9 @@ export default function LandingPage() {
               author: "Tunde, 38, Abuja"
             }
           ].map((item, i) => (
-            <div key={i} className="bg-white border border-[var(--border)] p-8 rounded-2xl shadow-sm">
-              <span className="text-primary text-6xl font-serif block mb-4 opacity-20">"</span>
-              <p className="text-lg font-medium mb-6 leading-relaxed mt-[-2rem]">{item.quote}</p>
+            <div key={i} className="bg-white border border-[var(--border)] p-5 sm:p-8 rounded-2xl shadow-sm">
+              <span className="text-primary text-5xl sm:text-6xl font-serif block mb-2 opacity-20" aria-hidden="true">&ldquo;</span>
+              <p className="text-base sm:text-lg font-medium mb-4 sm:mb-6 leading-relaxed -mt-6 sm:-mt-8">{item.quote}</p>
               <p className="text-muted text-sm">— {item.author}</p>
             </div>
           ))}
@@ -250,15 +250,15 @@ export default function LandingPage() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="py-24 bg-gray-50 border-y border-[var(--border)]">
-        <div className="max-w-7xl mx-auto px-12">
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">How It Works</p>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Four steps. One QR. Complete control.</h2>
-            <p className="text-xl text-muted">From uploading your first record to sharing it with a doctor across the country — the whole flow takes minutes.</p>
+      <section id="how-it-works" className="py-16 sm:py-20 md:py-24 bg-gray-50 border-y border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 md:mb-20">
+            <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">How It Works</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">Four steps. One QR. Complete control.</h2>
+            <p className="text-base sm:text-lg md:text-xl text-muted">From uploading your first record to sharing it with a doctor across the country — the whole flow takes minutes.</p>
           </div>
 
-          <div className="space-y-24">
+          <div className="space-y-16 sm:space-y-20 md:space-y-24">
             {[
               {
                 step: "01",
@@ -292,12 +292,12 @@ export default function LandingPage() {
               <div
                 key={i}
                 ref={(el: HTMLDivElement | null) => { stepRefs.current[i] = el; }}
-                className={`flex flex-col ${i % 2 === 1 ? "md:flex-row-reverse" : "md:flex-row"} items-center gap-12`}
+                className={`flex flex-col ${i % 2 === 1 ? "md:flex-row-reverse" : "md:flex-row"} items-center gap-8 md:gap-12`}
               >
-                <div className="flex-1 space-y-6">
-                  <div className="text-primary/20 text-6xl font-bold mb-2">{stepper.step}</div>
-                  <h2 className="text-4xl font-black text-[#101217] tracking-tight">{stepper.title}</h2>
-                  <p className="text-lg text-gray-500 font-medium leading-relaxed">{stepper.desc}</p>
+                <div className="flex-1 space-y-4 sm:space-y-6 w-full">
+                  <div className="text-primary/20 text-4xl sm:text-5xl md:text-6xl font-bold mb-1 sm:mb-2">{stepper.step}</div>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#101217] tracking-tight">{stepper.title}</h2>
+                  <p className="text-base sm:text-lg text-gray-500 font-medium leading-relaxed">{stepper.desc}</p>
                   {!stepVideoEnded[i] && (
                     <div className="flex items-center gap-3 py-3 px-5 bg-primary/5 rounded-2xl w-fit">
                       <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -311,7 +311,7 @@ export default function LandingPage() {
                       ref={(el: HTMLVideoElement | null) => { stepVideoRefs.current[i] = el; }}
                       muted
                       playsInline
-                      preload="auto"
+                      preload="metadata"
                       poster={stepper.poster}
                       onEnded={() => handleStepVideoEnd(i)}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
@@ -334,13 +334,13 @@ export default function LandingPage() {
       </section>
 
       {/* BUILT FOR EVERYONE */}
-      <section className="py-24 px-12 max-w-7xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">Built for Everyone</p>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">One platform. Every stakeholder.</h2>
+      <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
+          <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">Built for Everyone</p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">One platform. Every stakeholder.</h2>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {[
             {
               id: 'patients',
@@ -382,30 +382,30 @@ export default function LandingPage() {
       </section>
 
       {/* PRIVACY ARCHITECTURE */}
-      <section className="bg-[#0A0B14] text-white py-24">
-        <div className="max-w-7xl mx-auto px-12">
-          <div className="mb-16">
-            <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">The Architecture</p>
-            <h2 className="text-4xl md:text-5xl font-bold max-w-3xl leading-tight mb-6">
-              We built it so that even we can't see your data.
+      <section className="bg-[#0A0B14] text-white py-16 sm:py-20 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+          <div className="mb-10 sm:mb-16">
+            <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">The Architecture</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold max-w-3xl leading-tight mb-4 sm:mb-6">
+              We built it so that even we can&apos;t see your data.
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-sm">
               <LockClosedIcon className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-xl font-bold mb-4">Your Key. Your Phone.</h3>
-              <p className="text-white/60 leading-relaxed">Records are encrypted on your device before uploading. Selorah's servers receive a locked file with no key.</p>
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Your Key. Your Phone.</h3>
+              <p className="text-white/60 leading-relaxed text-sm sm:text-base">Records are encrypted on your device before uploading. Selorah&apos;s servers receive a locked file with no key.</p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-sm">
               <XCircleIcon className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-xl font-bold mb-4">Deletion is Real.</h3>
-              <p className="text-white/60 leading-relaxed">When you delete a record, it is permanently removed from our servers and cryptographically erased.</p>
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Deletion is Real.</h3>
+              <p className="text-white/60 leading-relaxed text-sm sm:text-base">When you delete a record, it is permanently removed from our servers and cryptographically erased.</p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-sm">
               <ShieldCheckIcon className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-xl font-bold mb-4">Revocation is Instant.</h3>
-              <p className="text-white/60 leading-relaxed">When you revoke access, it is recorded on the blockchain immediately and irreversibly.</p>
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Revocation is Instant.</h3>
+              <p className="text-white/60 leading-relaxed text-sm sm:text-base">When you revoke access, it is recorded on the blockchain immediately and irreversibly.</p>
             </div>
           </div>
         </div>
@@ -413,8 +413,8 @@ export default function LandingPage() {
 
       <Footer />
 
-      {/* Waitlist Modal */}
-      {isModalOpen && <WaitlistModal onClose={() => setIsModalOpen(false)} />}
+      {/* Waitlist Modal — always pass isOpen so the component can control body scroll */}
+      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }
