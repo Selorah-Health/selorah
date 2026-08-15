@@ -81,12 +81,33 @@ export default function Onboarding() {
         // auth may be unavailable offline
       }
 
-      if (!cancelled && (first || last)) {
+      let roleFromSignup = '';
+      try {
+        const saved = localStorage.getItem('selorah_user');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          roleFromSignup = parsed.role || '';
+        }
+      } catch { /* ignore */ }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.user_metadata?.role) {
+          roleFromSignup = roleFromSignup || user.user_metadata.role;
+        }
+      } catch { /* ignore */ }
+
+      if (!cancelled) {
         setFormData((prev) => ({
           ...prev,
           firstName: prev.firstName || first,
           lastName: prev.lastName || last,
+          role: prev.role || roleFromSignup || '',
         }));
+        // Skip role selection if already chosen at signup
+        if (roleFromSignup) {
+          setStep(2);
+        }
       }
     };
 
@@ -118,8 +139,26 @@ export default function Onboarding() {
     setCurrentUploadDoc(null);
   };
 
-  const nextStep = () => setStep(step + 1);
-  const prevStep = () => setStep(step - 1);
+  const nextStep = () => {
+    if (step === 2 && formData.role === 'patient') {
+      if (!formData.nin || formData.nin.length !== 11) {
+        setErrorMsg('Patients must provide a valid 11-digit NIN.');
+        return;
+      }
+      setErrorMsg(null);
+    }
+    setStep(step + 1);
+  };
+  const prevStep = () => {
+    // If role was chosen at signup, do not return to role picker
+    let roleLocked = false;
+    try {
+      const s = localStorage.getItem('selorah_user');
+      if (s && JSON.parse(s).role) roleLocked = true;
+    } catch { /* ignore */ }
+    if (step <= 2 && roleLocked) return;
+    setStep(Math.max(1, step - 1));
+  };
 
   const handleFinish = async () => {
     setSaving(true);
@@ -331,6 +370,9 @@ export default function Onboarding() {
           {/* Step 2: Basic Info */}
           {step === 2 && (
             <div className="max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {errorMsg && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100">{errorMsg}</div>
+              )}
               <div className="mb-8">
                 <h1 className="text-2xl font-bold text-[#050038] mb-1">
                   {isPatient ? 'Registration' : 'Institutional Setup'}
@@ -370,12 +412,13 @@ export default function Onboarding() {
                         type="text"
                         inputMode="numeric"
                         maxLength={11}
-                        placeholder="NIN (11 digits)"
+                        required
+                        placeholder="NIN (11 digits) *"
                         className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm"
                         value={formData.nin}
                         onChange={(e) => setFormData({ ...formData, nin: e.target.value.replace(/\D/g, '').slice(0, 11) })}
                       />
-                      <p className="text-[11px] text-gray-400 mt-1.5 px-1">Used to log in and for hospital patient lookup. You can add this later in Settings.</p>
+                      <p className="text-[11px] text-gray-400 mt-1.5 px-1">Required for patients. Used to log in and for hospital lookup. You can update it later in Settings.</p>
                     </div>
                   </>
                 ) : (
