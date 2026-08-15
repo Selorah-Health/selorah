@@ -57,9 +57,6 @@ export default function SharedRecord() {
       weight: '78kg',
       bloodGroup: 'O+',
       genotype: 'AA',
-      bloodSugar: '95 mg/dL',
-      bloodPressure: '120/80 mmHg',
-      spO2: '98%',
       allergies: ['Penicillin', 'Peanuts', 'Latex'],
       familyHistory: 'Father: Hypertension, Mother: Type 2 Diabetes',
       medicationHistory: 'Metformin 500mg (Daily), Aspirin 75mg (Daily)',
@@ -310,24 +307,6 @@ export default function SharedRecord() {
                       <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Genotype</p>
                       <p className="text-xl font-bold text-gray-900">{patient?.genotype}</p>
                     </div>
-                  </div>
-                </section>
-
-                <section>
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#4262ff] mb-6 flex items-center gap-2">
-                    <ScaleIcon className="w-4 h-4" /> Clinical Metrics
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { label: 'Blood Sugar', val: patient?.bloodSugar },
-                      { label: 'Blood Pressure', val: patient?.bloodPressure },
-                      { label: 'SpO2 Level', val: patient?.spO2 },
-                    ].map((m, i) => (
-                      <div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
-                        <span className="text-sm font-bold text-gray-500">{m.label}</span>
-                        <span className="text-sm font-black text-gray-900">{m.val}</span>
-                      </div>
-                    ))}
                   </div>
                 </section>
 
