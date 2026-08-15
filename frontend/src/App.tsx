@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import RoleGuard from './components/RoleGuard';
+import ScrollToTop from './components/ScrollToTop';
 
 // Lazy load all pages (this is the "const thingy" you asked for)
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -25,6 +26,7 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 export default function App() {
   return (
     <ErrorBoundary>
+      <ScrollToTop />
       <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
