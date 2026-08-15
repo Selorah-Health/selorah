@@ -24,7 +24,7 @@ export default function Profile({ user, avatarGradient }: ProfileProps) {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from('profiles').select('nin').eq('id', user.id).maybeSingle();
+      const { data } = await supabase.from('patient_profiles').select('nin').eq('user_id', user.id).maybeSingle();
       if ((data as any)?.nin) setNin((data as any).nin);
     })();
   }, []);
@@ -42,7 +42,7 @@ export default function Profile({ user, avatarGradient }: ProfileProps) {
         setNinMsg('Please log in to save your NIN.');
         return;
       }
-      const { error } = await supabase.from('profiles').update({ nin: nin || null } as any).eq('id', user.id);
+      const { error } = await supabase.from('patient_profiles').update({ nin: nin || null }).eq('user_id', user.id);
       if (error) throw error;
       writeLocalSession({ nin });
       setNinMsg('NIN saved. You can use it to log in.');
