@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
+import RoleGuard from './components/RoleGuard';
 
 // Lazy load all pages (this is the "const thingy" you asked for)
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -34,7 +35,7 @@ export default function App() {
     }>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/dashboard/*" element={<Dashboard />} />
+        <Route path="/dashboard/*" element={<RoleGuard><Dashboard /></RoleGuard>} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/pricing" element={<Pricing />} />
@@ -46,9 +47,9 @@ export default function App() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/cookie-policy" element={<CookiePolicy />} />
         <Route path="/dpa" element={<DataProcessing />} />
-        <Route path="/hospital/*" element={<HospitalDashboard />} />
-        <Route path="/researcher/*" element={<ResearcherDashboard />} />
-        <Route path="/insurer/*" element={<InsurerDashboard />} />
+        <Route path="/hospital/*" element={<RoleGuard><HospitalDashboard /></RoleGuard>} />
+        <Route path="/researcher/*" element={<RoleGuard><ResearcherDashboard /></RoleGuard>} />
+        <Route path="/insurer/*" element={<RoleGuard><InsurerDashboard /></RoleGuard>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
