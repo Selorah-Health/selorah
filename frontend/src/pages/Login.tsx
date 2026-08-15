@@ -42,29 +42,30 @@ export default function Login() {
   const resolveEmailForAuth = async (identifier: string, loginMethod: LoginMethod) => {
     if (loginMethod === 'email') return identifier.trim();
 
-    const column = loginMethod === 'phone' ? 'phone_number' : 'nin';
-    const { data, error: qErr } = await supabase
-      .from('profiles')
-      .select('id, email, official_email')
-      .eq(column, identifier.trim())
+    if (loginMethod === 'phone') {
+      const { data: pp, error: qErr } = await supabase
+        .from('patient_profiles')
+        .select('user_id, phone')
+        .eq('phone', identifier.trim())
+        .maybeSingle();
+      if (qErr) throw qErr;
+      if (!pp?.user_id) throw new Error('No account found for this phone number.');
+      const { data: u } = await supabase.from('users').select('email').eq('id', pp.user_id).maybeSingle();
+      if (!u?.email) throw new Error('Account found but no email is linked. Sign in with email once.');
+      return u.email;
+    }
+
+    // NIN
+    const { data: pp, error: qErr } = await supabase
+      .from('patient_profiles')
+      .select('user_id, nin')
+      .eq('nin', identifier.trim())
       .maybeSingle();
-
     if (qErr) throw qErr;
-    if (!data) {
-      throw new Error(
-        loginMethod === 'phone'
-          ? 'No account found for this phone number.'
-          : 'No account found for this NIN.'
-      );
-    }
-
-    const email = (data as any).email || data.official_email;
-    if (!email) {
-      throw new Error(
-        'Account found but no email is linked. Sign in with email once, or contact support.'
-      );
-    }
-    return email as string;
+    if (!pp?.user_id) throw new Error('No account found for this NIN.');
+    const { data: u } = await supabase.from('users').select('email').eq('id', pp.user_id).maybeSingle();
+    if (!u?.email) throw new Error('Account found but no email is linked. Sign in with email once.');
+    return u.email;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,27 +103,49 @@ export default function Login() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Login failed. Please try again.');
 
-      const { data: profileData } = await supabase
-        .from('profiles')
+      const { data: userRow } = await supabase
+        .from('users')
         .select('*')
         .eq('id', authData.user.id)
         .maybeSingle();
 
-      const role = normalizeRole(profileData?.role || 'patient');
+      const { data: patientRow } = await supabase
+        .from('patient_profiles')
+        .select('*')
+        .eq('user_id', authData.user.id)
+        .maybeSingle();
+
+      const { data: hospitalRow } = await supabase
+        .from('hospital_profiles')
+        .select('*')
+        .eq('user_id', authData.user.id)
+        .maybeSingle();
+
+      const role = normalizeRole(userRow?.role || 'patient');
+      const profileData = {
+        ...userRow,
+        ...patientRow,
+        first_name: patientRow?.full_name?.split(' ')?.[0],
+        last_name: patientRow?.full_name?.split(' ')?.slice(1).join(' '),
+        phone_number: patientRow?.phone,
+        nin: patientRow?.nin,
+        org_id: hospitalRow?.org_id,
+        is_pro: patientRow?.tier === 'pro',
+      };
 
       if (portalMode === 'staff') {
         if (!['provider', 'researcher', 'insurer'].includes(role)) {
           throw new Error('This account is not registered as hospital, researcher, or insurer staff.');
         }
-        const profileOrg = (profileData as any)?.org_id;
+        const profileOrg = hospitalRow?.org_id;
         if (profileOrg && formData.orgId.trim() && profileOrg !== formData.orgId.trim()) {
           throw new Error('Organization ID does not match this account.');
         }
-        if (!profileOrg && formData.orgId.trim()) {
+        if (!profileOrg && formData.orgId.trim() && hospitalRow) {
           await supabase
-            .from('profiles')
-            .update({ org_id: formData.orgId.trim() } as any)
-            .eq('id', authData.user.id);
+            .from('hospital_profiles')
+            .update({ org_id: formData.orgId.trim() })
+            .eq('user_id', authData.user.id);
         }
       }
 
