@@ -127,7 +127,7 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from('medical_records')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('patient_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -136,11 +136,11 @@ export default function Dashboard() {
       if (data) {
         dbRecords = data.map((record: any) => ({
           id: record.id,
-          name: record.name,
-          date: new Date(record.date).toLocaleDateString(),
-          status: record.status,
+          name: record.title || record.name,
+          date: record.created_at ? new Date(record.created_at).toLocaleDateString() : '',
+          status: record.status || 'Private',
           icon: '/assets/total-records-card-icon.png',
-          document_url: record.document_url
+          document_url: record.file_url || record.document_url
         }));
       }
       
@@ -197,12 +197,12 @@ export default function Dashboard() {
       }
 
       const { error } = await supabase.from('medical_records').insert({
-        user_id: user.id,
-        name: name,
+        patient_id: user.id,
+        title: name,
         record_type: 'Uploaded Document',
-        date: new Date().toISOString().split('T')[0],
-        document_url: url,
-        status: 'Private'
+        file_url: url,
+        status: 'Private',
+        encrypted: true
       });
 
       if (error) {
