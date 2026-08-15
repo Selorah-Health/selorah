@@ -33,6 +33,7 @@ export default function Onboarding() {
     role: '',
     firstName: '',
     lastName: '',
+    nin: '',
     dateOfBirth: '',
     gender: '',
     whatsappNumber: '',
@@ -139,6 +140,7 @@ export default function Onboarding() {
           profileData.date_of_birth = formData.dateOfBirth || null;
           profileData.gender = formData.gender || null;
           profileData.phone_number = formData.whatsappNumber || null;
+          if (formData.nin) profileData.nin = formData.nin;
           profileData.vitals = formData.vitals;
           profileData.allergies = formData.allergies ? [formData.allergies] : [];
           profileData.emergency_medical_info = formData.medicalConditions;
@@ -147,6 +149,7 @@ export default function Onboarding() {
           profileData.organization_name = formData.orgName;
           profileData.official_email = formData.officialEmail;
           profileData.phone_number = formData.whatsappNumber || null;
+          if (formData.nin) profileData.nin = formData.nin;
         }
 
         const { error } = await supabase.from('profiles').upsert(profileData);
@@ -165,7 +168,9 @@ export default function Onboarding() {
         ...savedUser,
         first_name: formData.firstName || formData.orgName,
         last_name: formData.lastName || '',
-        role: formData.role
+        role: formData.role,
+        nin: formData.nin || (savedUser as any).nin,
+        phone: formData.whatsappNumber || (savedUser as any).phone,
       }));
 
       if (formData.role === 'provider' || formData.role === 'hospital') {
@@ -316,6 +321,18 @@ export default function Onboarding() {
                       value={formData.dateOfBirth}
                       onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                     />
+                    <div>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={11}
+                        placeholder="NIN (11 digits)"
+                        className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#4262FF] text-sm"
+                        value={formData.nin}
+                        onChange={(e) => setFormData({ ...formData, nin: e.target.value.replace(/\D/g, '').slice(0, 11) })}
+                      />
+                      <p className="text-[11px] text-gray-400 mt-1.5 px-1">Used to log in and for hospital patient lookup. You can add this later in Settings.</p>
+                    </div>
                   </>
                 ) : (
                   <>
