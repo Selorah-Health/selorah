@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   UserIcon,
@@ -50,6 +50,48 @@ export default function Onboarding() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentUploadDoc, setCurrentUploadDoc] = useState<string | null>(null);
+
+  // Prefill first/last name from signup (localStorage) and Supabase user metadata
+  useEffect(() => {
+    let cancelled = false;
+
+    const prefill = async () => {
+      let first = '';
+      let last = '';
+
+      try {
+        const saved = localStorage.getItem('selorah_user');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          first = parsed.first_name || parsed.firstName || '';
+          last = parsed.last_name || parsed.lastName || '';
+        }
+      } catch {
+        // ignore bad localStorage
+      }
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.user_metadata) {
+          first = first || user.user_metadata.first_name || user.user_metadata.firstName || '';
+          last = last || user.user_metadata.last_name || user.user_metadata.lastName || '';
+        }
+      } catch {
+        // auth may be unavailable offline
+      }
+
+      if (!cancelled && (first || last)) {
+        setFormData((prev) => ({
+          ...prev,
+          firstName: prev.firstName || first,
+          lastName: prev.lastName || last,
+        }));
+      }
+    };
+
+    prefill();
+    return () => { cancelled = true; };
+  }, []); // run once on mount
 
   const handleUploadClick = (docType: string) => {
     setCurrentUploadDoc(docType);
