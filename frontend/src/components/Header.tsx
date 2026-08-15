@@ -37,10 +37,10 @@ export default function Header({
       <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       {/* NAVIGATION BAR */}
       <nav className={`fixed top-0 w-full z-50 backdrop-blur-md border-b ${theme === 'dark' ? 'bg-black/70 border-white/10' : 'bg-white/80 border-gray-100'}`}>
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">
-            <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px] group-hover:scale-105 transition-transform" />
-            <span className={`font-bold text-xl tracking-tight ${theme === 'dark' ? 'text-white' : 'text-[#4262FF]'}`}>Selorah Health</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 h-16 sm:h-20 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity min-w-0">
+            <img src="/logo.svg" alt="Selorah Logo" className="w-9 h-9 sm:w-[45px] sm:h-[45px] group-hover:scale-105 transition-transform shrink-0" />
+            <span className={`font-bold text-base sm:text-xl tracking-tight truncate ${theme === 'dark' ? 'text-white' : 'text-[#4262FF]'}`}>Selorah Health</span>
           </Link>
 
           {/* Desktop Nav */}
