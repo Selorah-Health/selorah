@@ -4,7 +4,7 @@ import { createClient } from '../lib/supabase/client';
 interface WaitlistModalProps {
   isOpen: boolean;
   onClose: () => void;
-}
+};
 
 export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
   const [fullName, setFullName] = useState('');
