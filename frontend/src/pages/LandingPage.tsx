@@ -141,13 +141,20 @@ export default function LandingPage() {
               Access your data anytime, anywhere, with anyone you trust.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
                 className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
               >
                 Here&apos;s How It Works →
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-transparent border-2 border-white/80 hover:border-white hover:bg-white/10 text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
+              >
+                Join the Waitlist
               </button>
             </div>
           </div>
