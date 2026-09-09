@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createClient } from '../lib/supabase/client';
 
 interface WaitlistModalProps {
   isOpen: boolean;
@@ -30,46 +31,78 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !fullName) return;
+    if (!email.trim() || !fullName.trim()) return;
+
     setStatus('loading');
     setErrorMsg(null);
-    try {
 
-      const response = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, fullName }),
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (
+        !supabaseUrl ||
+        !supabaseKey ||
+        String(supabaseUrl).includes('placeholder')
+      ) {
+        throw new Error(
+          'Waitlist is not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+        );
+      }
+
+      const supabase = createClient();
+      const { error } = await supabase.from('waitlist').insert({
+        email: email.trim().toLowerCase(),
+        full_name: fullName.trim(),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to join waitlist');
+      if (error) {
+        if (error.code === '23505' || /duplicate|unique/i.test(error.message)) {
+          throw new Error('This email is already on the waitlist.');
+        }
+        if (error.code === '42P01' || /does not exist/i.test(error.message)) {
+          throw new Error(
+            'Waitlist table missing. Run the waitlist SQL in Supabase.'
+          );
+        }
+        if (
+          error.code === '42501' ||
+          /row-level security|permission denied/i.test(error.message)
+        ) {
+          throw new Error(
+            'Insert blocked by security policy. Add anon INSERT on waitlist.'
+          );
+        }
+        throw new Error(error.message || 'Failed to join waitlist');
       }
 
       setStatus('success');
-    } catch (err: any) {
-      setErrorMsg(err.message || 'An error occurred. Please try again.');
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'An error occurred. Please try again.';
+      setErrorMsg(message);
       setStatus('idle');
     }
-
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
-      <div 
-        className="absolute inset-0" 
-        onClick={onClose}
-      ></div>
+      <div className="absolute inset-0" onClick={onClose}></div>
       <div className="relative bg-[#111224] border border-[#6183FF]/20 rounded-3xl p-8 max-w-md w-full shadow-2xl overflow-hidden">
-        {/* Glow effect */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-[#6183FF] opacity-10 blur-3xl rounded-full pointer-events-none"></div>
-        
-        <button 
+
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 text-[#A0A4C8] hover:text-white transition-colors p-2"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="w-5 h-5"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -77,15 +110,30 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
         {status === 'success' ? (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-[#5DFFAD]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="#5DFFAD" className="w-8 h-8">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={3}
+                stroke="#5DFFAD"
+                className="w-8 h-8"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.5 12.75l6 6 9-13.5"
+                />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">You are in!</h3>
+            <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">
+              You are in!
+            </h3>
             <p className="text-[#A0A4C8] text-lg leading-relaxed">
-              Congratulations <span className="text-white font-medium">{fullName}</span>, you are on the list. We will notify you as soon as early access opens.
+              Congratulations{' '}
+              <span className="text-white font-medium">{fullName}</span>, you are
+              on the list. We will notify you as soon as early access opens.
             </p>
-            <button 
+            <button
               onClick={onClose}
               className="mt-8 w-full bg-[#6183FF] text-white font-medium py-3 rounded-full hover:bg-[#4D6ED6] transition-colors"
             >
@@ -94,11 +142,14 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
           </div>
         ) : (
           <div>
-            <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">Join the early wave</h3>
+            <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">
+              Join the early wave
+            </h3>
             <p className="text-[#A0A4C8] mb-8">
-              Be among the first to experience true ownership of your medical records.
+              Be among the first to experience true ownership of your medical
+              records.
             </p>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {errorMsg && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">
@@ -106,7 +157,10 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                 </div>
               )}
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-[#A0A4C8] mb-1.5">
+                <label
+                  htmlFor="fullName"
+                  className="block text-sm font-medium text-[#A0A4C8] mb-1.5"
+                >
                   Full Name
                 </label>
                 <input
@@ -120,7 +174,10 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                 />
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-[#A0A4C8] mb-1.5">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-[#A0A4C8] mb-1.5"
+                >
                   Email Address
                 </label>
                 <input
