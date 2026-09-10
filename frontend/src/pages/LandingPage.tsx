@@ -1,117 +1,77 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import {
-  Bars3Icon,
-  XMarkIcon,
   ShieldCheckIcon,
-  ArrowPathIcon,
-  GlobeAltIcon,
-  ChevronRightIcon,
-  ChevronLeftIcon,
-  ArrowUpRightIcon,
-  PlayIcon,
   CheckCircleIcon,
   LockClosedIcon,
   XCircleIcon,
-  ArrowRightIcon
+  DocumentTextIcon,
+  QrCodeIcon,
+  HandRaisedIcon,
 } from '@heroicons/react/24/outline';
-
-import WaitlistModal from '../components/WaitlistModal';
-import LanguageSelector from '../components/LanguageSelector';
-import { useLanguage } from '../contexts/LanguageContext';
+import WaitlistModal, { type WaitlistRole } from '../components/WaitlistModal';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SEOTitle from '../components/SEOTitle';
 
-const HERO_SLIDES = [
-  {
-    id: 1,
-    video: "/assets/hero-bg-video-1.mp4",
-    title: "Securing Health Records",
-    subtitle: "from Patient to Provider",
-    description: "At Selorah Health, we transform how your medical history travels with you — putting ownership where it has always belonged: in your hands.",
-    buttonText: "HERE'S HOW IT WORKS",
-    buttonLink: "#how-it-works"
-  },
-  {
-    id: 2,
-    video: "/assets/hero-bg-video-2.mp4",
-    title: "Tired of Chasing Your Own Records?",
-    subtitle: "",
-    description: "Selorah Health gives you full ownership — encrypted, portable, private. Access your data anytime, anywhere, with anyone you trust.",
-    buttonText: "HERE'S HOW IT WORKS",
-    buttonLink: "#how-it-works"
-  }
-];
-
 export default function LandingPage() {
-  const { t } = useLanguage();
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [modalRole, setModalRole] = useState<WaitlistRole>('patient');
+  const [modalSource, setModalSource] = useState('hero');
+  const [showStickyCta, setShowStickyCta] = useState(false);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const stepVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const heroRef = useRef<HTMLElement | null>(null);
+  const footerSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  const openWaitlist = (role: WaitlistRole = 'patient', source = 'unknown') => {
+    setModalRole(role);
+    setModalSource(source);
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
-    setIsLoaded(true);
-    // Auto-advance slides every 10 seconds (if you re-enable carousel)
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 10000);
-    return () => clearInterval(interval);
+    const onScroll = () => {
+      const heroBottom = heroRef.current?.getBoundingClientRect().bottom ?? 0;
+      const nearFooter =
+        (footerSentinelRef.current?.getBoundingClientRect().top ?? 9999) < window.innerHeight + 80;
+      setShowStickyCta(heroBottom < 0 && !nearFooter);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Auto-play step videos when they enter the viewport (no force-stop / no forced scroll)
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
-
     stepRefs.current.forEach((ref, i) => {
       if (!ref) return;
-
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             const video = stepVideoRefs.current[i];
             if (!video) return;
-            if (entry.isIntersecting) {
-              video.play().catch(() => {});
-            } else {
-              video.pause();
-            }
+            if (entry.isIntersecting) video.play().catch(() => {});
+            else video.pause();
           });
         },
         { threshold: 0.35 }
       );
-
       observer.observe(ref);
       observers.push(observer);
     });
-
-    return () => {
-      observers.forEach((o) => o.disconnect());
-    };
+    return () => observers.forEach((o) => o.disconnect());
   }, []);
-
-  const handleNextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-  };
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans overflow-x-hidden selection:bg-primary/30 selection:text-primary">
       <SEOTitle title="The OS for Health Records" />
       <Header />
 
-      {/* HERO SECTION */}
-      <section className="relative w-full overflow-hidden bg-black min-h-[100svh] flex items-center pt-16 sm:pt-20">
-        {/* Background Video — optimized for fast start */}
+      {/* HERO */}
+      <section
+        ref={heroRef}
+        className="relative w-full overflow-hidden bg-black min-h-[100svh] flex items-center pt-16 sm:pt-20"
+      >
         <video
           autoPlay
           muted
@@ -124,298 +84,370 @@ export default function LandingPage() {
           <source src="/assets/hero-bg-video-1.mp4" type="video/mp4" />
         </video>
 
-        {/* Content Overlay — centered */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12 pb-16 sm:pb-24 text-center flex flex-col items-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12 pb-20 sm:pb-24 text-center flex flex-col items-center">
           <div className="max-w-3xl w-full flex flex-col items-center">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white mb-5 sm:mb-6">
-              <span className="text-primary" aria-hidden="true">●</span>
+              <span className="text-primary" aria-hidden="true">
+                ●
+              </span>
               Building the future of health records in Africa
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.08] tracking-tighter text-white mb-6 sm:mb-8">
-              Tired of chasing<br className="hidden sm:block" /> your own records?
+              Tired of chasing
+              <br className="hidden sm:block" /> your own records?
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-xl leading-relaxed mb-8 sm:mb-12 mx-auto">
-              Selorah Health gives you full ownership — encrypted, portable, and private.
-              Access your data anytime, anywhere, with anyone you trust.
+              Selorah keeps your health history in your hands — share with a clinic when you need
+              to, not forever.
             </p>
 
+            {/* Mobile: Waitlist first (filled). Desktop: How it works primary, Waitlist outline */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-primary hover:bg-primary-hover text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
+                onClick={() => openWaitlist('patient', 'hero')}
+                className="order-1 sm:order-2 inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-primary sm:bg-transparent hover:bg-primary-hover sm:hover:bg-white/10 border-2 border-primary sm:border-white/80 text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
               >
-                Here&apos;s How It Works →
+                <span className="sm:hidden">Join waitlist</span>
+                <span className="hidden sm:inline">Join the Waitlist</span>
               </button>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-transparent border-2 border-white/80 hover:border-white hover:bg-white/10 text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
+                onClick={() =>
+                  document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })
+                }
+                className="order-2 sm:order-1 inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-transparent sm:bg-primary border-2 border-white/50 sm:border-transparent hover:bg-white/10 sm:hover:bg-primary-hover text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
               >
-                Join the Waitlist
+                <span className="sm:hidden">How it works</span>
+                <span className="hidden sm:inline">Here&apos;s How It Works →</span>
               </button>
             </div>
           </div>
         </div>
-
-        <div className="absolute bottom-0 left-0 right-0 h-32 sm:h-48 bg-gradient-to-t from-black to-transparent pointer-events-none" />
       </section>
 
-      {/* SOCIAL PROOF / WAITLIST */}
-      <section className="bg-white py-16 sm:py-20 md:py-24 text-center px-4 sm:px-6 lg:px-12">
-        <div className="max-w-4xl mx-auto flex flex-col items-center">
+      {/* Social proof strip */}
+      <section className="bg-white py-12 sm:py-16 text-center px-4 sm:px-6 border-b border-[var(--border)]">
+        <div className="max-w-3xl mx-auto flex flex-col items-center">
           <img
             src="/assets/custom-avatar-badge.png"
-            alt="Users building with Selorah across Africa"
-            className="mb-6 sm:mb-8 w-full max-w-[280px] sm:max-w-[400px] md:max-w-[560px] h-auto"
+            alt="People joining Selorah across Africa"
+            className="mb-5 w-full max-w-[240px] sm:max-w-[360px] h-auto"
             loading="lazy"
           />
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 px-2">
-            Building across Africa — join the early wave
-          </h2>
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="bg-primary text-white px-8 sm:px-12 py-4 sm:py-5 rounded-full text-lg sm:text-xl font-bold hover:bg-primary-hover transition-all shadow-xl shadow-primary/25 hover:scale-[1.02] active:scale-95 min-h-[48px]"
-          >
-            Join the Waitlist
-          </button>
+          <p className="text-base sm:text-lg text-gray-700 font-medium max-w-lg">
+            Early interest from patients and clinics across Africa — join the waitlist to get access
+            first.
+          </p>
         </div>
       </section>
 
       {/* THE PROBLEM */}
       <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto">
         <div className="mb-10 sm:mb-16">
-          <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">The Problem</p>
+          <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">
+            The Problem
+          </p>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold max-w-3xl leading-tight">
-            Nigerian patients carry their health history in their heads — or not at all.
+            Patients still carry their health history in their heads — or not at all.
           </h2>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {[
             {
-              quote: "Our friend had an accident, was rushed to the hospital where the nurses insisted that we purchase a card before they can touch her. We lost her between the nurses' reluctance and procuring the money",
-              author: "Chisom, 34, Lagos"
+              title: 'Lost files, repeated stories',
+              body: 'Every new hospital means starting over — tests, history, and time you already spent.',
             },
             {
-              quote: "I wanted to have my baby in a different environment. Changing locations now seemed like a life-changing decision, because you would have to start over with a new doctor. New tests, injections, trying to connect or 'trust' the doctor. And I hated injections.",
-              author: "Precious, 41, Ibadan"
+              title: 'Clinics work in the dark',
+              body: 'Without a portable record, providers guess, re-test, or delay care when it matters most.',
             },
             {
-              quote: "I travelled for surgery abroad. I spent two weeks gathering records from four hospitals before they would operate.",
-              author: "Tunde, 38, Abuja"
-            }
-          ].map((item, i) => (
-            <div key={i} className="bg-white border border-[var(--border)] p-5 sm:p-8 rounded-2xl shadow-sm">
-              <span className="text-primary text-5xl sm:text-6xl font-serif block mb-2 opacity-20" aria-hidden="true">&ldquo;</span>
-              <p className="text-base sm:text-lg font-medium mb-4 sm:mb-6 leading-relaxed -mt-6 sm:-mt-8">{item.quote}</p>
-              <p className="text-muted text-sm">— {item.author}</p>
+              title: 'No one owns the trail',
+              body: 'Folders move; you don’t control who keeps a copy or for how long.',
+            },
+          ].map((item) => (
+            <div
+              key={item.title}
+              className="bg-gray-50 border border-[var(--border)] rounded-2xl p-6 sm:p-8"
+            >
+              <h3 className="text-lg sm:text-xl font-bold mb-3">{item.title}</h3>
+              <p className="text-muted text-sm sm:text-base leading-relaxed">{item.body}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="py-16 sm:py-20 md:py-24 bg-gray-50 border-y border-[var(--border)]">
+      <section
+        id="how-it-works"
+        className="py-16 sm:py-20 md:py-24 bg-gray-50 border-y border-[var(--border)] scroll-mt-24"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 md:mb-20">
-            <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">How It Works</p>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">Four steps. One QR. Complete control.</h2>
-            <p className="text-base sm:text-lg md:text-xl text-muted">From uploading your first record to sharing it with a doctor across the country — the whole flow takes minutes.</p>
+          <div className="text-center mb-12 sm:mb-16">
+            <p className="text-primary font-bold tracking-wider text-sm mb-3 uppercase">
+              How it works
+            </p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+              Three steps. You stay in control.
+            </h2>
           </div>
-
-          <div className="space-y-16 sm:space-y-20 md:space-y-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {[
               {
-                step: "01",
-                title: "Add Your Records",
-                desc: "Scan a paper document, upload a file, or connect directly to a hospital on the Selorah network. Records are encrypted on your device before they leave it.",
-                video: "/assets/video/video-1.mp4",
-                poster: "/how_it_works_step1_poster_1777556796073.png"
+                n: '1',
+                icon: DocumentTextIcon,
+                title: 'Save your records',
+                body: 'Keep key history in one place on your phone — not scattered across hospital counters.',
               },
               {
-                step: "02",
-                title: "Your QR is Always Ready",
-                desc: "Open Selorah. Tap Share. One QR. Any doctor, any hospital, any city. You set how long they have access — one hour, one day, one week.",
-                video: "/assets/video/video-2.mp4",
-                poster: "/how_it_works_step2_poster_1777556815064.png"
+                n: '2',
+                icon: QrCodeIcon,
+                title: 'Share with a code',
+                body: 'When a clinic needs access, you show a time-limited code or link. Only what you allow.',
               },
               {
-                step: "03",
-                title: "Doctors See Your History",
-                desc: "Lab results. Prescriptions. Diagnoses. Each record labelled by its source. Verified records carry a green badge. Your doctor always knows what they're looking at.",
-                video: "/assets/video/video-3.mp4",
-                poster: "/how_it_works_step3_poster_1777557133852.png"
+                n: '3',
+                icon: HandRaisedIcon,
+                title: 'You stay in control',
+                body: 'Access ends when you say so. Revoke anytime. Your story doesn’t live on their desk forever.',
               },
-              {
-                step: "04",
-                title: "You See Who Looked",
-                desc: "Every scan, every access — logged permanently. You can audit your own history at any time. You decide. You revoke. You're in control.",
-                video: "/assets/video/video-4.mp4",
-                poster: "/how_it_works_step4_poster_1777557231636.png"
-              },
-                ].map((stepper, i) => (
+            ].map((step) => (
               <div
-                key={i}
-                ref={(el: HTMLDivElement | null) => { stepRefs.current[i] = el; }}
-                className={`flex flex-col ${i % 2 === 1 ? "md:flex-row-reverse" : "md:flex-row"} items-center gap-8 md:gap-12`}
+                key={step.n}
+                className="bg-white rounded-3xl border border-[var(--border)] p-6 sm:p-8 flex flex-col"
               >
-                <div className="flex-1 space-y-4 sm:space-y-6 w-full">
-                  <div className="text-primary/20 text-4xl sm:text-5xl md:text-6xl font-bold mb-1 sm:mb-2">{stepper.step}</div>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#101217] tracking-tight">{stepper.title}</h2>
-                  <p className="text-base sm:text-lg text-gray-500 font-medium leading-relaxed">{stepper.desc}</p>
-
+                <div className="flex items-center gap-3 mb-5">
+                  <span className="w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center text-lg">
+                    {step.n}
+                  </span>
+                  <step.icon className="w-8 h-8 text-primary" />
                 </div>
-                <div className="flex-1 w-full relative">
-                  <div className="aspect-[4/3] bg-gray-900 rounded-[40px] border border-gray-100 overflow-hidden shadow-2xl relative">
-                    <video
-                      ref={(el: HTMLVideoElement | null) => { stepVideoRefs.current[i] = el; }}
-                      muted
-                      playsInline
-                      loop
-                      preload="metadata"
-                      poster={stepper.poster}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
-                    >
-                      <source src={stepper.video} type="video/mp4" />
-                    </video>
-                  </div>
-                </div>
+                <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                <p className="text-muted text-sm sm:text-base leading-relaxed">{step.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* BUILT FOR EVERYONE */}
+      {/* AUDIENCES */}
       <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-          <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">Built for Everyone</p>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">One platform. Every stakeholder.</h2>
+        <div className="mb-10 sm:mb-14 text-center max-w-2xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Built for everyone in the care journey</h2>
+          <p className="text-muted text-base sm:text-lg">
+            Same platform — clear outcomes for patients, clinics, and partners.
+          </p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
               id: 'patients',
-              icon: <UserCircleIcon className="w-12 h-12 text-primary" />,
-              title: "For Patients",
-              desc: "Take full ownership of your medical history. Share it instantly. Revoke access immediately. Earn from contributing your anonymised data to research.",
-              features: ["Encrypted records on your device", "QR-based sharing with any provider", "Emergency profile always accessible", "Family health vault (up to 6 members)", "Monthly research earnings"]
+              role: 'patient' as WaitlistRole,
+              title: 'For Patients',
+              desc: 'Stop retelling your history at every hospital. Share when you need to — revoke when you don’t.',
+              features: [
+                'Records in your hands',
+                'Share with a code at the clinic',
+                'Emergency info when it counts',
+              ],
             },
             {
               id: 'hospitals',
-              icon: <BuildingOffice2Icon className="w-12 h-12 text-primary" />,
-              title: "For Hospitals & Clinics",
-              desc: "Stop asking patients for records they don't have. Scan a QR and see their verified history instantly — on any device, no installation required.",
-              features: ["Instant QR scan access", "Verified record provenance badges", "Add & cosign records directly", "Staff roles & permissions", "FHIR R4 EMR integration"]
+              role: 'hospital' as WaitlistRole,
+              title: 'For Hospitals & Clinics',
+              desc: 'Faster intake when patients bring a clear trail — less missing folders at the desk.',
+              features: [
+                'Scan or open a patient share',
+                'See what they authorised',
+                'Built for busy front desks',
+              ],
             },
             {
               id: 'researchers',
-              icon: <BeakerIcon className="w-12 h-12 text-primary" />,
-              title: "For Researchers & Insurers",
-              desc: "Access consented, longitudinal African health data. 75% of every study budget goes directly to patients. The split is enforced by smart contract — immutable.",
-              features: ["IRB-verified researchers only", "Differential privacy enforced", "Real-time cohort size estimates", "Automatic monthly patient payouts", "Fraud detection tools for insurers"]
-            }
-          ].map((card, i) => (
-            <div id={card.id} key={i} className="bg-white border border-[var(--border)] rounded-3xl p-8 hover:shadow-xl transition-shadow flex flex-col h-full scroll-mt-24">
-              <div className="mb-6">{card.icon}</div>
-              <h3 className="text-2xl font-bold mb-4">{card.title}</h3>
-              <p className="text-muted mb-8 flex-1">{card.desc}</p>
-              <ul className="space-y-3">
-                {card.features.map((feat, j) => (
-                  <li key={j} className="flex items-start gap-3">
+              role: 'other' as WaitlistRole,
+              title: 'For Researchers & Partners',
+              desc: 'Consent-first participation — not scraped PDFs. Patients stay in control of what they share.',
+              features: [
+                'Clear consent paths',
+                'Structured participation',
+                'Respect for patient ownership',
+              ],
+            },
+          ].map((card) => (
+            <div
+              id={card.id}
+              key={card.id}
+              className="bg-white border border-[var(--border)] rounded-3xl p-6 sm:p-8 flex flex-col h-full scroll-mt-24"
+            >
+              <h3 className="text-xl sm:text-2xl font-bold mb-3">{card.title}</h3>
+              <p className="text-muted mb-6 flex-1 text-sm sm:text-base leading-relaxed">{card.desc}</p>
+              <ul className="space-y-2.5 mb-8">
+                {card.features.map((feat) => (
+                  <li key={feat} className="flex items-start gap-2.5">
                     <CheckCircleIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                     <span className="text-sm font-medium">{feat}</span>
                   </li>
                 ))}
               </ul>
+              <button
+                type="button"
+                onClick={() => openWaitlist(card.role, `audience-${card.id}`)}
+                className="w-full min-h-[48px] rounded-full border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-white transition-colors"
+              >
+                Join as {card.role === 'other' ? 'partner' : card.role}
+              </button>
             </div>
           ))}
         </div>
       </section>
 
-      {/* PRIVACY ARCHITECTURE */}
-      <section className="bg-[#0A0B14] text-white py-16 sm:py-20 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="mb-10 sm:mb-16">
-            <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">The Architecture</p>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold max-w-3xl leading-tight mb-4 sm:mb-6">
-              We built it so that even we can&apos;t see your data.
-            </h2>
+      {/* TRUST */}
+      <section className="bg-[#0A0B14] text-white py-16 sm:py-20 md:py-24 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12 sm:mb-16 max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ownership you can feel</h2>
+            <p className="text-white/60 text-base sm:text-lg">
+              Why Selorah exists — and why the timing matters for patients across Africa.
+            </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">
               <LockClosedIcon className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Your Key. Your Phone.</h3>
-              <p className="text-white/60 leading-relaxed text-sm sm:text-base">Records are encrypted on your device before uploading. Selorah&apos;s servers receive a locked file with no key.</p>
+              <h3 className="text-lg sm:text-xl font-bold mb-3">You control access</h3>
+              <p className="text-white/60 text-sm sm:text-base leading-relaxed">
+                Share with a clinic for a limited time. When you revoke, access stops.
+              </p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-sm">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">
               <XCircleIcon className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Deletion is Real.</h3>
-              <p className="text-white/60 leading-relaxed text-sm sm:text-base">When you delete a record, it is permanently removed from our servers and cryptographically erased.</p>
+              <h3 className="text-lg sm:text-xl font-bold mb-3">Not a product to sell</h3>
+              <p className="text-white/60 text-sm sm:text-base leading-relaxed">
+                We don’t sell your health information. Privacy is part of the product, not fine print.
+              </p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-sm">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">
               <ShieldCheckIcon className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Revocation is Instant.</h3>
-              <p className="text-white/60 leading-relaxed text-sm sm:text-base">When you revoke access, it is recorded on the blockchain immediately and irreversibly.</p>
+              <h3 className="text-lg sm:text-xl font-bold mb-3">Why now</h3>
+              <p className="text-white/60 text-sm sm:text-base leading-relaxed">
+                Paper folders still decide care for millions. Digital ownership shouldn’t wait another decade.
+              </p>
             </div>
+          </div>
+          <p className="text-center text-white/40 text-sm mt-10">
+            Built by Selorah Health Limited — shipping in the open with patients and clinics.
+          </p>
+        </div>
+      </section>
+
+      {/* COMING NEXT */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-12 max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <p className="text-primary font-bold tracking-wider text-sm mb-3 uppercase">Roadmap</p>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-3">Coming next</h2>
+          <p className="text-muted text-sm sm:text-base">
+            Dates may shift. Waitlist members hear first.
+          </p>
+        </div>
+        <ol className="space-y-4">
+          {[
+            { when: 'Now', what: 'Waitlist & pilot design with clinics and patients' },
+            { when: 'Next', what: 'Patient app early access — save records & share with a code' },
+            { when: 'Later', what: 'Hospital tools and consent-first research flows' },
+          ].map((item) => (
+            <li
+              key={item.when}
+              className="flex gap-4 items-start bg-gray-50 border border-[var(--border)] rounded-2xl p-5 sm:p-6"
+            >
+              <span className="shrink-0 text-xs font-bold uppercase tracking-widest text-primary bg-primary/10 px-3 py-1.5 rounded-full">
+                {item.when}
+              </span>
+              <p className="text-sm sm:text-base font-medium text-gray-900 pt-0.5">{item.what}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* WHAT HAPPENS AFTER */}
+      <section className="py-16 sm:py-20 bg-gray-50 border-y border-[var(--border)] px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-10 sm:mb-12">
+            What happens after you join?
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {[
+              {
+                n: '1',
+                title: 'You’re on the list',
+                body: 'We confirm by email. No payment. No app install yet.',
+              },
+              {
+                n: '2',
+                title: 'We prioritise by need',
+                body: 'Patients, clinics, and partners get invites in waves so support stays solid.',
+              },
+              {
+                n: '3',
+                title: 'Early access benefits',
+                body: 'First access to the patient app, priority for pilots, and a say in what we build next.',
+              },
+            ].map((s) => (
+              <div key={s.n} className="bg-white rounded-2xl border border-[var(--border)] p-6 text-center">
+                <div className="w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center mx-auto mb-4">
+                  {s.n}
+                </div>
+                <h3 className="font-bold text-lg mb-2">{s.title}</h3>
+                <p className="text-muted text-sm leading-relaxed">{s.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA — just before footer */}
-      <section className="bg-white py-16 sm:py-20 border-t border-[var(--border)] px-4 sm:px-6 lg:px-12">
+      {/* FINAL CTA */}
+      <section className="bg-white py-16 sm:py-20 px-4 sm:px-6 lg:px-12">
         <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 tracking-tight">
-            Ready to own your health records?
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight">
+            Own your health records
           </h2>
           <p className="text-base sm:text-lg text-muted mb-8 max-w-xl">
             Join the early wave building the future of health records across Africa.
           </p>
           <button
             type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="bg-primary text-white px-8 sm:px-12 py-4 sm:py-5 rounded-full text-lg sm:text-xl font-bold hover:bg-primary-hover transition-all shadow-xl shadow-primary/25 hover:scale-[1.02] active:scale-95 min-h-[48px]"
+            onClick={() => openWaitlist('patient', 'final-cta')}
+            className="bg-primary text-white px-8 sm:px-12 py-4 sm:py-5 rounded-full text-lg sm:text-xl font-bold hover:bg-primary-hover transition-all shadow-xl shadow-primary/25 active:scale-95 min-h-[48px] w-full sm:w-auto max-w-sm"
           >
             Join the Waitlist
           </button>
+          <p className="text-xs text-muted mt-4">Free to join · No spam · Your data stays yours</p>
         </div>
       </section>
 
+      <div ref={footerSentinelRef} aria-hidden className="h-px" />
       <Footer />
 
-      {/* Waitlist Modal — always pass isOpen so the component can control body scroll */}
-      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      {/* Sticky mobile CTA */}
+      {showStickyCta && (
+        <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+          <button
+            type="button"
+            onClick={() => openWaitlist('patient', 'sticky-mobile')}
+            className="w-full bg-primary text-white font-bold py-3.5 rounded-full min-h-[48px] text-base"
+          >
+            Join waitlist — free
+          </button>
+        </div>
+      )}
+
+      <WaitlistModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialRole={modalRole}
+        source={modalSource}
+      />
     </div>
-  );
-}
-
-/* ====================== Sub-components ====================== */
-function UserCircleIcon(props: any) {
-  return (
-    <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  );
-}
-
-function BuildingOffice2Icon(props: any) {
-  return (
-    <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
-    </svg>
-  );
-}
-
-function BeakerIcon(props: any) {
-  return (
-    <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v1.244c0 .892-.567 1.686-1.414 1.99L4.389 7.75c-.279.1-.476.367-.476.665v10.332c0 .851.81 1.45 1.63 1.23l12.445-3.333c.82-.22 1.63.379 1.63 1.23V7.125c0-.298-.197-.565-.476-.665l-3.947-1.412c-.847-.304-1.414-1.098-1.414-1.99V3.104m-9.75 0h9.75M9 6h6m-7 4.5h8M3.375 19.5h17.25" />
-    </svg>
   );
 }
