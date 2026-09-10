@@ -63,15 +63,12 @@ export default function Header({
                 </div>
               </div>
             ) : (
-              <>
-                <Link to="/login" className={`px-6 py-2 rounded-full border transition-colors ${theme === 'dark' ? 'border-white/20 hover:bg-white/10' : 'border-gray-200 hover:bg-gray-50'}`}>Log in</Link>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-primary text-white px-6 py-2 rounded-full font-bold hover:bg-primary-hover transition-colors"
-                >
-                  Join Waitlist
-                </button>
-              </>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-primary text-white px-6 py-2 rounded-full font-bold hover:bg-primary-hover transition-colors"
+              >
+                Join Waitlist
+              </button>
             )}
           </div>
 
@@ -99,10 +96,12 @@ export default function Header({
             {isLoggedIn ? (
               <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="text-primary">Dashboard</Link>
             ) : (
-              <>
-                <Link to="/login" className="text-primary" onClick={() => setIsMenuOpen(false)}>Log in</Link>
-                <button onClick={() => { setIsModalOpen(true); setIsMenuOpen(false); }} className="bg-primary text-white py-4 rounded-xl font-bold">Join Waitlist</button>
-              </>
+              <button
+                onClick={() => { setIsModalOpen(true); setIsMenuOpen(false); }}
+                className="bg-primary text-white py-4 rounded-xl font-bold"
+              >
+                Join Waitlist
+              </button>
             )}
           </div>
         </div>
