@@ -104,18 +104,18 @@ export default function LandingPage() {
       </section>
 
       {/* Social proof */}
-      <section className="bg-white py-12 sm:py-16 text-center px-4 sm:px-6 border-b border-[var(--border)]">
+      <section className="bg-white py-16 sm:py-20 md:py-24 text-center px-4 sm:px-6 border-b border-[var(--border)]">
         <div className="max-w-3xl mx-auto flex flex-col items-center">
           <img
             src="/assets/custom-avatar-badge.png"
             alt="People joining Selorah across Africa"
-            className="mb-5 w-full max-w-[240px] sm:max-w-[360px] h-auto"
+            className="mb-6 sm:mb-8 w-full max-w-[280px] sm:max-w-[400px] md:max-w-[560px] h-auto"
             loading="lazy"
           />
-          <p className="text-base sm:text-lg text-gray-700 font-medium max-w-lg">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 max-w-2xl leading-snug px-2">
             Patients and clinics across Africa are joining the waitlist for{' '}
-            <em className="text-primary not-italic font-semibold">early access</em>.
-          </p>
+            <span className="text-primary">early access</span>.
+          </h2>
         </div>
       </section>
 
@@ -219,7 +219,7 @@ export default function LandingPage() {
             One platform. Clear outcomes for patients, clinics, and partners.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[
             {
               id: 'patients',
@@ -246,12 +246,23 @@ export default function LandingPage() {
             {
               id: 'researchers',
               role: 'other' as WaitlistRole,
-              title: 'For Researchers and Partners',
+              title: 'For Researchers',
               desc: 'Consent-first participation. Patients stay in control of what they share.',
               features: [
                 'Clear consent paths',
                 'Structured participation',
                 'Respect for patient ownership',
+              ],
+            },
+            {
+              id: 'insurers',
+              role: 'other' as WaitlistRole,
+              title: 'For Insurers',
+              desc: 'Cleaner claims context when patients opt in. Less back and forth on missing documents.',
+              features: [
+                'Patient-authorised context',
+                'Fewer missing documents',
+                'Clear audit of what was shared',
               ],
             },
           ].map((card) => (
