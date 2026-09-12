@@ -22,6 +22,7 @@ const HospitalDashboard = lazy(() => import('./pages/hospital/HospitalDashboard'
 const ResearcherDashboard = lazy(() => import('./pages/researcher/ResearcherDashboard'));
 const InsurerDashboard = lazy(() => import('./pages/insurer/InsurerDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const WaitlistCount = lazy(() => import('./pages/WaitlistCount'));
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/hospital/*" element={<RoleGuard><HospitalDashboard /></RoleGuard>} />
         <Route path="/researcher/*" element={<RoleGuard><ResearcherDashboard /></RoleGuard>} />
         <Route path="/insurer/*" element={<RoleGuard><InsurerDashboard /></RoleGuard>} />
+        <Route path="/wc" element={<WaitlistCount />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
