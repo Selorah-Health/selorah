@@ -6,9 +6,7 @@ export type WaitlistRole = 'patient' | 'doctor' | 'hospital' | 'other';
 interface WaitlistModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Pre-select role when opened from a section CTA */
   initialRole?: WaitlistRole;
-  /** Track where the signup came from */
   source?: string;
 }
 
@@ -22,8 +20,8 @@ const ROLES: { id: WaitlistRole; label: string }[] = [
 const FRUSTRATIONS = [
   'Lost or incomplete files',
   'Repeating my history every visit',
-  "Clinic systems don't talk to each other",
-  'Access for family / emergencies',
+  'Clinic systems do not talk to each other',
+  'Access for family or emergencies',
   'Other',
 ];
 
@@ -36,10 +34,8 @@ export default function WaitlistModal({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<WaitlistRole>(initialRole);
-  const [showName, setShowName] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'survey'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [frustration, setFrustration] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -48,9 +44,7 @@ export default function WaitlistModal({
       setFullName('');
       setEmail('');
       setRole(initialRole);
-      setShowName(false);
       setErrorMsg(null);
-      setFrustration(null);
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -63,7 +57,7 @@ export default function WaitlistModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !fullName.trim()) return;
 
     setStatus('loading');
     setErrorMsg(null);
@@ -79,14 +73,14 @@ export default function WaitlistModal({
         supabaseKey === 'placeholder'
       ) {
         throw new Error(
-          'Supabase env vars are missing in this build. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then redeploy.'
+          'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then redeploy.'
         );
       }
 
       const supabase = createClient();
       const row: Record<string, string> = {
         email: email.trim().toLowerCase(),
-        full_name: fullName.trim() || email.trim().split('@')[0],
+        full_name: fullName.trim(),
         role,
         source,
       };
@@ -94,7 +88,6 @@ export default function WaitlistModal({
       const { error } = await supabase.from('waitlist').insert(row);
 
       if (error) {
-        // Retry without optional columns if schema not migrated yet
         if (/column .* does not exist/i.test(error.message)) {
           const { error: e2 } = await supabase.from('waitlist').insert({
             email: row.email,
@@ -123,7 +116,7 @@ export default function WaitlistModal({
       setStatus('success');
     } catch (err: unknown) {
       let message =
-        err instanceof Error ? err.message : 'An error occurred. Please try again.';
+        err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       if (/Failed to fetch|NetworkError|Load failed|fetch failed/i.test(message)) {
         message =
           'Could not reach Supabase. Check VITE_SUPABASE_URL, that the project is active, and redeploy after setting env vars.';
@@ -134,7 +127,6 @@ export default function WaitlistModal({
   };
 
   const saveFrustration = async (value: string) => {
-    setFrustration(value);
     try {
       const supabase = createClient();
       await supabase
@@ -170,21 +162,16 @@ export default function WaitlistModal({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">You are in!</h3>
+            <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">You are in</h3>
             <p className="text-[#A0A4C8] text-base sm:text-lg leading-relaxed mb-6">
-              We&apos;ll email you when early access opens
-              {fullName ? (
-                <>
-                  , <span className="text-white font-medium">{fullName}</span>
-                </>
-              ) : null}
-              .
+              We will email <span className="text-white font-medium italic">{fullName}</span> when
+              early access opens.
             </p>
 
             {status === 'success' && (
               <div className="text-left bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
                 <p className="text-sm font-semibold text-white mb-3">
-                  Optional — what&apos;s your biggest frustration with medical records?
+                  Optional. What is your biggest frustration with medical records?
                 </p>
                 <div className="flex flex-col gap-2">
                   {FRUSTRATIONS.map((f) => (
@@ -202,7 +189,7 @@ export default function WaitlistModal({
             )}
 
             {status === 'survey' && (
-              <p className="text-[#5DFFAD] text-sm mb-6">Thanks — that helps us prioritise what to build.</p>
+              <p className="text-[#5DFFAD] text-sm mb-6 italic">Thanks. That helps us prioritise what to build.</p>
             )}
 
             <button
@@ -216,7 +203,7 @@ export default function WaitlistModal({
           <div>
             <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">Join the early wave</h3>
             <p className="text-[#A0A4C8] mb-6 text-sm sm:text-base">
-              Be first when Selorah opens in your city. No spam — only access updates.
+              Be first when Selorah opens in your city. Access updates only.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -227,7 +214,7 @@ export default function WaitlistModal({
               )}
 
               <div>
-                <p className="block text-sm font-medium text-[#A0A4C8] mb-2">I&apos;m joining as</p>
+                <p className="block text-sm font-medium text-[#A0A4C8] mb-2">I am joining as</p>
                 <div className="grid grid-cols-2 gap-2">
                   {ROLES.map((r) => (
                     <button
@@ -247,6 +234,22 @@ export default function WaitlistModal({
               </div>
 
               <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-[#A0A4C8] mb-1.5">
+                  Full name
+                </label>
+                <input
+                  type="text"
+                  id="fullName"
+                  required
+                  autoComplete="name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your full name"
+                  className="w-full bg-[#0A0B14] border border-[#6183FF]/20 rounded-xl px-4 py-3.5 text-white text-base placeholder-[#6B6F8E] focus:outline-none focus:border-[#6183FF] focus:ring-1 focus:ring-[#6183FF] min-h-[48px]"
+                />
+              </div>
+
+              <div>
                 <label htmlFor="email" className="block text-sm font-medium text-[#A0A4C8] mb-1.5">
                   Email address
                 </label>
@@ -259,34 +262,9 @@ export default function WaitlistModal({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com"
-                  className="w-full bg-[#0A0B14] border border-[#6183FF]/20 rounded-xl px-4 py-3.5 text-white text-base placeholder-[#6B6F8E] focus:outline-none focus:border-[#6183FF] focus:ring-1 focus:ring-[#6183FF] transition-all min-h-[48px]"
+                  className="w-full bg-[#0A0B14] border border-[#6183FF]/20 rounded-xl px-4 py-3.5 text-white text-base placeholder-[#6B6F8E] focus:outline-none focus:border-[#6183FF] focus:ring-1 focus:ring-[#6183FF] min-h-[48px]"
                 />
               </div>
-
-              {showName ? (
-                <div>
-                  <label htmlFor="fullName" className="block text-sm font-medium text-[#A0A4C8] mb-1.5">
-                    Full name <span className="text-white/40">(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="fullName"
-                    autoComplete="name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your name"
-                    className="w-full bg-[#0A0B14] border border-[#6183FF]/20 rounded-xl px-4 py-3.5 text-white text-base placeholder-[#6B6F8E] focus:outline-none focus:border-[#6183FF] min-h-[48px]"
-                  />
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowName(true)}
-                  className="text-sm text-[#6183FF] hover:underline"
-                >
-                  + Add your name (optional)
-                </button>
-              )}
 
               <button
                 type="submit"
@@ -301,7 +279,7 @@ export default function WaitlistModal({
               </button>
 
               <p className="text-[11px] sm:text-xs text-center text-[#6B6F8E] leading-relaxed">
-                Your data stays yours. We never sell health information. Unsubscribe anytime.
+                Your data stays yours. We never sell health information.
               </p>
             </form>
           </div>
