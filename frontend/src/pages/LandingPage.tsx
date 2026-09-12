@@ -18,8 +18,6 @@ export default function LandingPage() {
   const [modalRole, setModalRole] = useState<WaitlistRole>('patient');
   const [modalSource, setModalSource] = useState('hero');
   const [showStickyCta, setShowStickyCta] = useState(false);
-  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const stepVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const heroRef = useRef<HTMLElement | null>(null);
   const footerSentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -39,27 +37,6 @@ export default function LandingPage() {
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  useEffect(() => {
-    const observers: IntersectionObserver[] = [];
-    stepRefs.current.forEach((ref, i) => {
-      if (!ref) return;
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            const video = stepVideoRefs.current[i];
-            if (!video) return;
-            if (entry.isIntersecting) video.play().catch(() => {});
-            else video.pause();
-          });
-        },
-        { threshold: 0.35 }
-      );
-      observer.observe(ref);
-      observers.push(observer);
-    });
-    return () => observers.forEach((o) => o.disconnect());
   }, []);
 
   return (
@@ -87,23 +64,21 @@ export default function LandingPage() {
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-12 pb-20 sm:pb-24 text-center flex flex-col items-center">
           <div className="max-w-3xl w-full flex flex-col items-center">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium text-white mb-5 sm:mb-6">
-              <span className="text-primary" aria-hidden="true">
-                ●
-              </span>
-              Building the future of health records in Africa
+              <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" aria-hidden />
+              Health records for Africa
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.08] tracking-tighter text-white mb-6 sm:mb-8">
               Tired of chasing
-              <br className="hidden sm:block" /> your own records?
+              <br className="hidden sm:block" /> your own{' '}
+              <span className="text-primary">records</span>?
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-xl leading-relaxed mb-8 sm:mb-12 mx-auto">
-              Selorah keeps your health history in your hands — share with a clinic when you need
-              to, not forever.
+              Selorah keeps your health history in your hands. Share with a clinic{' '}
+              <em className="not-italic sm:italic text-white">when you choose</em>, not forever.
             </p>
 
-            {/* Mobile: Waitlist first (filled). Desktop: How it works primary, Waitlist outline */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center w-full sm:w-auto">
               <button
                 type="button"
@@ -121,14 +96,14 @@ export default function LandingPage() {
                 className="order-2 sm:order-1 inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 bg-transparent sm:bg-primary border-2 border-white/50 sm:border-transparent hover:bg-white/10 sm:hover:bg-primary-hover text-white font-semibold rounded-full text-base sm:text-lg transition-all active:scale-[0.985] min-h-[48px]"
               >
                 <span className="sm:hidden">How it works</span>
-                <span className="hidden sm:inline">Here&apos;s How It Works →</span>
+                <span className="hidden sm:inline">How It Works</span>
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Social proof strip */}
+      {/* Social proof */}
       <section className="bg-white py-12 sm:py-16 text-center px-4 sm:px-6 border-b border-[var(--border)]">
         <div className="max-w-3xl mx-auto flex flex-col items-center">
           <img
@@ -138,35 +113,36 @@ export default function LandingPage() {
             loading="lazy"
           />
           <p className="text-base sm:text-lg text-gray-700 font-medium max-w-lg">
-            Early interest from patients and clinics across Africa — join the waitlist to get access
-            first.
+            Patients and clinics across Africa are joining the waitlist for{' '}
+            <em className="text-primary not-italic font-semibold">early access</em>.
           </p>
         </div>
       </section>
 
-      {/* THE PROBLEM */}
+      {/* PROBLEM */}
       <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto">
         <div className="mb-10 sm:mb-16">
           <p className="text-primary font-bold tracking-wider text-sm mb-3 sm:mb-4 uppercase">
             The Problem
           </p>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold max-w-3xl leading-tight">
-            Patients still carry their health history in their heads — or not at all.
+            Patients still carry their history in their heads, or{' '}
+            <span className="text-primary">not at all</span>.
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {[
             {
               title: 'Lost files, repeated stories',
-              body: 'Every new hospital means starting over — tests, history, and time you already spent.',
+              body: 'Every new hospital means starting over: tests, history, and time already spent.',
             },
             {
-              title: 'Clinics work in the dark',
-              body: 'Without a portable record, providers guess, re-test, or delay care when it matters most.',
+              title: 'Clinics work without context',
+              body: 'Without a portable record, providers re-test or delay care when minutes matter.',
             },
             {
-              title: 'No one owns the trail',
-              body: 'Folders move; you don’t control who keeps a copy or for how long.',
+              title: 'No control over copies',
+              body: 'Folders move. You rarely control who keeps a copy or for how long.',
             },
           ].map((item) => (
             <div
@@ -191,7 +167,7 @@ export default function LandingPage() {
               How it works
             </p>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-              Three steps. You stay in control.
+              Three steps. <span className="text-primary">You stay in control.</span>
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
@@ -200,7 +176,7 @@ export default function LandingPage() {
                 n: '1',
                 icon: DocumentTextIcon,
                 title: 'Save your records',
-                body: 'Keep key history in one place on your phone — not scattered across hospital counters.',
+                body: 'Keep key history in one place on your phone, not scattered across hospital counters.',
               },
               {
                 n: '2',
@@ -211,8 +187,8 @@ export default function LandingPage() {
               {
                 n: '3',
                 icon: HandRaisedIcon,
-                title: 'You stay in control',
-                body: 'Access ends when you say so. Revoke anytime. Your story doesn’t live on their desk forever.',
+                title: 'Revoke anytime',
+                body: 'Access ends when you say so. Your story does not live on their desk forever.',
               },
             ].map((step) => (
               <div
@@ -236,9 +212,11 @@ export default function LandingPage() {
       {/* AUDIENCES */}
       <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto">
         <div className="mb-10 sm:mb-14 text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Built for everyone in the care journey</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            Built for the full <span className="text-primary">care journey</span>
+          </h2>
           <p className="text-muted text-base sm:text-lg">
-            Same platform — clear outcomes for patients, clinics, and partners.
+            One platform. Clear outcomes for patients, clinics, and partners.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -247,7 +225,7 @@ export default function LandingPage() {
               id: 'patients',
               role: 'patient' as WaitlistRole,
               title: 'For Patients',
-              desc: 'Stop retelling your history at every hospital. Share when you need to — revoke when you don’t.',
+              desc: 'Stop retelling your history at every hospital. Share when you need to. Revoke when you do not.',
               features: [
                 'Records in your hands',
                 'Share with a code at the clinic',
@@ -257,8 +235,8 @@ export default function LandingPage() {
             {
               id: 'hospitals',
               role: 'hospital' as WaitlistRole,
-              title: 'For Hospitals & Clinics',
-              desc: 'Faster intake when patients bring a clear trail — less missing folders at the desk.',
+              title: 'For Hospitals and Clinics',
+              desc: 'Faster intake when patients bring a clear trail. Less missing paperwork at the desk.',
               features: [
                 'Scan or open a patient share',
                 'See what they authorised',
@@ -268,8 +246,8 @@ export default function LandingPage() {
             {
               id: 'researchers',
               role: 'other' as WaitlistRole,
-              title: 'For Researchers & Partners',
-              desc: 'Consent-first participation — not scraped PDFs. Patients stay in control of what they share.',
+              title: 'For Researchers and Partners',
+              desc: 'Consent-first participation. Patients stay in control of what they share.',
               features: [
                 'Clear consent paths',
                 'Structured participation',
@@ -308,9 +286,11 @@ export default function LandingPage() {
       <section className="bg-[#0A0B14] text-white py-16 sm:py-20 md:py-24 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12 sm:mb-16 max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ownership you can feel</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              Ownership you can <span className="text-primary">feel</span>
+            </h2>
             <p className="text-white/60 text-base sm:text-lg">
-              Why Selorah exists — and why the timing matters for patients across Africa.
+              Why Selorah exists, and why the timing matters for patients across Africa.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
@@ -323,38 +303,40 @@ export default function LandingPage() {
             </div>
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">
               <XCircleIcon className="w-8 h-8 text-primary mb-4" />
-              <h3 className="text-lg sm:text-xl font-bold mb-3">Not a product to sell</h3>
+              <h3 className="text-lg sm:text-xl font-bold mb-3">Not for sale</h3>
               <p className="text-white/60 text-sm sm:text-base leading-relaxed">
-                We don’t sell your health information. Privacy is part of the product, not fine print.
+                We do not sell your health information. Privacy is part of the product.
               </p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">
               <ShieldCheckIcon className="w-8 h-8 text-primary mb-4" />
               <h3 className="text-lg sm:text-xl font-bold mb-3">Why now</h3>
               <p className="text-white/60 text-sm sm:text-base leading-relaxed">
-                Paper folders still decide care for millions. Digital ownership shouldn’t wait another decade.
+                Paper folders still decide care for millions. Digital ownership should not wait another decade.
               </p>
             </div>
           </div>
           <p className="text-center text-white/40 text-sm mt-10">
-            Built by Selorah Health Limited — shipping in the open with patients and clinics.
+            Built by Selorah Health Limited. Shipping with patients and clinics.
           </p>
         </div>
       </section>
 
-      {/* COMING NEXT */}
+      {/* ROADMAP */}
       <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-12 max-w-4xl mx-auto">
         <div className="text-center mb-10">
           <p className="text-primary font-bold tracking-wider text-sm mb-3 uppercase">Roadmap</p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-3">Coming next</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-3">
+            Coming <span className="text-primary">next</span>
+          </h2>
           <p className="text-muted text-sm sm:text-base">
             Dates may shift. Waitlist members hear first.
           </p>
         </div>
         <ol className="space-y-4">
           {[
-            { when: 'Now', what: 'Waitlist & pilot design with clinics and patients' },
-            { when: 'Next', what: 'Patient app early access — save records & share with a code' },
+            { when: 'Now', what: 'Waitlist and pilot design with clinics and patients' },
+            { when: 'Next', what: 'Patient app early access: save records and share with a code' },
             { when: 'Later', what: 'Hospital tools and consent-first research flows' },
           ].map((item) => (
             <li
@@ -370,17 +352,17 @@ export default function LandingPage() {
         </ol>
       </section>
 
-      {/* WHAT HAPPENS AFTER */}
+      {/* WHAT HAPPENS NEXT */}
       <section className="py-16 sm:py-20 bg-gray-50 border-y border-[var(--border)] px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl sm:text-4xl font-bold text-center mb-10 sm:mb-12">
-            What happens after you join?
+            What happens after you <span className="text-primary">join</span>?
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
               {
                 n: '1',
-                title: 'You’re on the list',
+                title: 'You are on the list',
                 body: 'We confirm by email. No payment. No app install yet.',
               },
               {
@@ -390,11 +372,14 @@ export default function LandingPage() {
               },
               {
                 n: '3',
-                title: 'Early access benefits',
+                title: 'Early access',
                 body: 'First access to the patient app, priority for pilots, and a say in what we build next.',
               },
             ].map((s) => (
-              <div key={s.n} className="bg-white rounded-2xl border border-[var(--border)] p-6 text-center">
+              <div
+                key={s.n}
+                className="bg-white rounded-2xl border border-[var(--border)] p-6 text-center"
+              >
                 <div className="w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center mx-auto mb-4">
                   {s.n}
                 </div>
@@ -410,10 +395,10 @@ export default function LandingPage() {
       <section className="bg-white py-16 sm:py-20 px-4 sm:px-6 lg:px-12">
         <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight">
-            Own your health records
+            Own your <span className="text-primary">health records</span>
           </h2>
           <p className="text-base sm:text-lg text-muted mb-8 max-w-xl">
-            Join the early wave building the future of health records across Africa.
+            Join the early wave building health record ownership across Africa.
           </p>
           <button
             type="button"
@@ -422,14 +407,13 @@ export default function LandingPage() {
           >
             Join the Waitlist
           </button>
-          <p className="text-xs text-muted mt-4">Free to join · No spam · Your data stays yours</p>
+          <p className="text-xs text-muted mt-4">Free to join. Access updates only. Your data stays yours.</p>
         </div>
       </section>
 
       <div ref={footerSentinelRef} aria-hidden className="h-px" />
       <Footer />
 
-      {/* Sticky mobile CTA */}
       {showStickyCta && (
         <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
           <button
@@ -437,7 +421,7 @@ export default function LandingPage() {
             onClick={() => openWaitlist('patient', 'sticky-mobile')}
             className="w-full bg-primary text-white font-bold py-3.5 rounded-full min-h-[48px] text-base"
           >
-            Join waitlist — free
+            Join waitlist
           </button>
         </div>
       )}
