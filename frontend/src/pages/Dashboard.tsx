@@ -201,7 +201,7 @@ export default function Dashboard() {
         title: name,
         record_type: 'Uploaded Document',
         file_url: url,
-        status: 'Private',
+        status: 'active',
         encrypted: true
       });
 
