@@ -36,6 +36,10 @@ export default function SharedRecord() {
   const [showVerificationModal, setShowVerificationModal] = useState(true);
   const [showVisitReportModal, setShowVisitReportModal] = useState(false);
   const [activeCategory, setActiveCategory] = useState<'all' | 'lab' | 'rad' | 'pres'>('all');
+  const [visitFacility, setVisitFacility] = useState('Selorah Medical Center');
+  const [visitDoctor, setVisitDoctor] = useState('Dr. Admin');
+  const [visitNotes, setVisitNotes] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,27 +138,29 @@ export default function SharedRecord() {
           ? `SH-${String(profile.id).replace(/-/g, '').substring(0, 4).toUpperCase()}-${firstName.substring(0, 1)}${lastName.substring(0, 1) || 'X'}`.toUpperCase()
           : `SH-${String(link.user_id).replace(/-/g, '').substring(0, 6).toUpperCase()}`;
 
-        setPatient({
-          first_name: firstName,
-          last_name: lastName,
-          full_name: fullName,
-          dob: dobLabel,
-          age,
-          height: '—',
-          weight: '—',
-          bloodGroup: profile?.blood_group || '—',
-          genotype: profile?.genotype || '—',
-          allergies: [] as string[],
-          familyHistory: 'Not provided',
-          medicationHistory: 'Not provided',
-          immunization: [] as string[],
-          emergencyContacts: [] as { name: string; relationship: string; phone: string }[],
-          patientId: patientIdShort,
-          profileId: profile?.id,
-          userId: link.user_id,
-        });
+        // 3) Medical records for this patient (also used to fill vitals/history)
+        let height = '—';
+        let weight = '—';
+        let bloodGroup = profile?.blood_group || '—';
+        let genotype = profile?.genotype || '—';
+        let allergies: string[] = [];
+        let familyHistory = 'Not provided';
+        let medicationHistory = 'Not provided';
+        const emergencyContacts: { name: string; relationship: string; phone: string }[] = [];
 
-        // 3) Medical records for this patient
+        const decodeContent = (fileUrl: string | null) => {
+          if (!fileUrl) return '';
+          if (fileUrl.startsWith('data:text/plain')) {
+            try {
+              const raw = fileUrl.split(',')[1] || '';
+              return decodeURIComponent(raw);
+            } catch {
+              return '';
+            }
+          }
+          return '';
+        };
+
         if (profile?.id) {
           const { data: dbRecords } = await supabase
             .from('medical_records')
@@ -163,6 +169,39 @@ export default function SharedRecord() {
             .order('created_at', { ascending: false });
 
           if (dbRecords && dbRecords.length > 0) {
+            for (const r of dbRecords) {
+              const title = (r.title || '').toLowerCase();
+              const type = (r.record_type || '').toLowerCase();
+              const content = decodeContent(r.file_url).trim();
+              if (!content && !title) continue;
+
+              if (title.includes('height') || type === 'vital' && title.includes('height')) {
+                if (height === '—') height = content || r.title;
+              } else if (title.includes('weight')) {
+                if (weight === '—') weight = content || r.title;
+              } else if (title.includes('blood')) {
+                if (bloodGroup === '—' || bloodGroup === profile?.blood_group) bloodGroup = content || bloodGroup;
+              } else if (title.includes('genotype')) {
+                if (genotype === '—' || genotype === profile?.genotype) genotype = content || genotype;
+              } else if (title.includes('allerg') || type === 'allergy') {
+                const parts = (content || r.title).split(/[,;\n]+/).map((s: string) => s.trim()).filter(Boolean);
+                allergies.push(...parts);
+              } else if (title.includes('family')) {
+                if (familyHistory === 'Not provided') familyHistory = content || r.title;
+              } else if (title.includes('medication') || title.includes('medicine')) {
+                if (medicationHistory === 'Not provided') medicationHistory = content || r.title;
+              } else if (title.includes('emergency') || type.includes('emergency')) {
+                emergencyContacts.push({
+                  name: content.split(/[–\-•|]/)[0]?.trim() || content || r.title,
+                  relationship: 'Contact',
+                  phone: content.match(/\+?[\d\s\-]{7,}/)?.[0]?.trim() || '—',
+                });
+              }
+            }
+
+            // de-dupe allergies
+            allergies = Array.from(new Set(allergies));
+
             setRecords(
               dbRecords.map((r: any) => {
                 const type = (r.record_type || '').toLowerCase();
@@ -172,11 +211,12 @@ export default function SharedRecord() {
                   category = 'rad';
                 else if (type.includes('pres') || type.includes('med') || type.includes('drug')) category = 'pres';
 
+                const content = decodeContent(r.file_url);
                 return {
                   id: r.id,
                   title: r.title || 'Uploaded Document',
                   category,
-                  facility: 'Patient Upload',
+                  facility: type === 'visit report' ? 'Visit Report' : 'Patient Upload',
                   doctor: '—',
                   date: r.created_at
                     ? new Date(r.created_at).toLocaleDateString(undefined, {
@@ -185,13 +225,33 @@ export default function SharedRecord() {
                         day: 'numeric',
                       })
                     : '—',
-                  content: r.file_url ? 'Document attached.' : 'No file attached.',
+                  content: content || (r.file_url ? 'Document attached.' : 'No file attached.'),
                   file_url: r.file_url,
                 };
               })
             );
           }
         }
+
+        setPatient({
+          first_name: firstName,
+          last_name: lastName,
+          full_name: fullName,
+          dob: dobLabel,
+          age,
+          height,
+          weight,
+          bloodGroup,
+          genotype,
+          allergies,
+          familyHistory,
+          medicationHistory,
+          immunization: [] as string[],
+          emergencyContacts,
+          patientId: patientIdShort,
+          profileId: profile?.id,
+          userId: link.user_id,
+        });
 
         // Log access (owner-side localStorage only works if same browser — demo only)
         try {
@@ -707,7 +767,8 @@ export default function SharedRecord() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="Selorah Medical Center"
+                      value={visitFacility}
+                      onChange={(e) => setVisitFacility(e.target.value)}
                       className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-gray-700 text-base"
                     />
                   </div>
@@ -717,7 +778,8 @@ export default function SharedRecord() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="Dr. Admin"
+                      value={visitDoctor}
+                      onChange={(e) => setVisitDoctor(e.target.value)}
                       className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-gray-700 text-base"
                     />
                   </div>
@@ -729,6 +791,8 @@ export default function SharedRecord() {
                   </label>
                   <textarea
                     placeholder="Describe visit details, diagnosis, or recommendations..."
+                    value={visitNotes}
+                    onChange={(e) => setVisitNotes(e.target.value)}
                     className="w-full bg-gray-50 border border-gray-100 rounded-2xl sm:rounded-3xl px-4 sm:px-6 py-3.5 sm:py-4 font-medium text-gray-700 h-32 sm:h-40 focus:outline-none focus:border-[#4262ff] transition-all text-base"
                   />
                 </div>
@@ -741,13 +805,85 @@ export default function SharedRecord() {
                     Cancel
                   </button>
                   <button
-                    onClick={() => {
-                      alert('Visit report submitted and co-signed successfully!');
-                      setShowVisitReportModal(false);
+                    onClick={async () => {
+                      if (!patient?.profileId) {
+                        alert('Patient profile not loaded. Cannot save report.');
+                        return;
+                      }
+                      if (!visitNotes.trim()) {
+                        alert('Please add observations or notes before submitting.');
+                        return;
+                      }
+                      setSubmittingReport(true);
+                      try {
+                        const title = `Visit Report — ${visitFacility || 'Clinic'} (${new Date().toLocaleDateString()})`;
+                        // Schema has no notes column — store report body as a text data URL
+                        const reportBody = [
+                          `Visit Report`,
+                          `Facility: ${visitFacility || 'Clinic'}`,
+                          `Doctor: ${visitDoctor || 'Doctor'}`,
+                          `Date: ${new Date().toISOString()}`,
+                          ``,
+                          visitNotes.trim(),
+                        ].join('\n');
+                        const notesDataUrl =
+                          'data:text/plain;charset=utf-8,' + encodeURIComponent(reportBody);
+
+                        const { data, error } = await supabase
+                          .from('medical_records')
+                          .insert({
+                            patient_id: patient.profileId,
+                            title,
+                            record_type: 'Visit Report',
+                            file_url: notesDataUrl,
+                            status: 'active',
+                            encrypted: true,
+                          })
+                          .select('id, title, record_type, file_url, created_at')
+                          .single();
+
+                        if (error) throw error;
+
+                        // Also store notes in a second field if your schema has description/notes;
+                        // for now prepend notes into list content client-side.
+                        setRecords((prev) => [
+                          {
+                            id: data.id,
+                            title: data.title,
+                            category: 'other',
+                            facility: visitFacility || 'Clinic',
+                            doctor: visitDoctor || 'Doctor',
+                            date: data.created_at
+                              ? new Date(data.created_at).toLocaleDateString(undefined, {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                })
+                              : new Date().toLocaleDateString(),
+                            content: visitNotes.trim(),
+                            file_url: notesDataUrl,
+                          },
+                          ...prev,
+                        ]);
+
+                        setVisitNotes('');
+                        setShowVisitReportModal(false);
+                        alert('Visit report saved to the patient\'s records.');
+                      } catch (err: any) {
+                        console.error(err);
+                        alert(
+                          'Failed to save visit report: ' +
+                            (err?.message || 'Unknown error') +
+                            '\n\nIf this is an RLS error, run the shared-link insert policy in Supabase.'
+                        );
+                      } finally {
+                        setSubmittingReport(false);
+                      }
                     }}
-                    className="flex-[2] bg-[#4262ff] text-white py-5 rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20 hover:bg-[#3252DF] transition-all flex items-center justify-center gap-3"
+                    disabled={submittingReport}
+                    className="flex-[2] bg-[#4262ff] text-white py-5 rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20 hover:bg-[#3252DF] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                   >
-                    Submit Report <ChevronRightIcon className="w-5 h-5" />
+                    {submittingReport ? 'Saving…' : 'Submit Report'} <ChevronRightIcon className="w-5 h-5" />
                   </button>
                 </div>
               </div>
