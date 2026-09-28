@@ -7,8 +7,6 @@ import {
   MagnifyingGlassIcon,
   ArrowRightOnRectangleIcon,
   CloudArrowUpIcon,
-  ChevronRightIcon,
-  ArrowPathIcon,
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
@@ -105,60 +103,62 @@ export default function Dashboard() {
     return `${weekday}, ${day}${suffix} ${month} ${year}`;
   };
 
-  cconst fetchRecords = async () => {
-  setLoading(true);
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const userName = user?.user_metadata?.first_name || 'User';
+  const fetchRecords = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userName = user?.user_metadata?.first_name || 'User';
 
-    const hardcodedRecords = [
-      { id: 'hc1', name: `${userName}'s Health Checkup`, date: 'Today • Selorah Medical Center', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-      { id: 'hc2', name: 'SNH Lab Result', date: 'Yesterday • St. Nicholas Hospital • Lagos Island', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-      { id: 'hc3', name: 'Metformin 500mg Prescription', date: '03/15/2026 • Igando General Hospital', status: 'Encrypted', icon: '/assets/custom-prescription-icon.png' },
-      { id: 'hc4', name: 'YFB Vaccination', date: '03/16/2026 • Self-reported', status: 'Shared Once', icon: '/assets/custom-vaccination-icon.png' },
-      { id: 'hc5', name: 'HSH Lab Result', date: '01/10/2026 • Havana Specialist Hospital', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-    ];
+      const hardcodedRecords = [
+        { id: 'hc1', name: `${userName}'s Health Checkup`, date: 'Today • Selorah Medical Center', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
+        { id: 'hc2', name: 'SNH Lab Result', date: 'Yesterday • St. Nicholas Hospital • Lagos Island', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
+        { id: 'hc3', name: 'Metformin 500mg Prescription', date: '03/15/2026 • Igando General Hospital', status: 'Encrypted', icon: '/assets/custom-prescription-icon.png' },
+        { id: 'hc4', name: 'YFB Vaccination', date: '03/16/2026 • Self-reported', status: 'Shared Once', icon: '/assets/custom-vaccination-icon.png' },
+        { id: 'hc5', name: 'HSH Lab Result', date: '01/10/2026 • Havana Specialist Hospital', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
+      ];
 
-    if (!user) {
-      setRecords(hardcodedRecords as any);
-      return;
-    }
-
-    const { data: patientProfile } = await supabase
-      .from('patient_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    let dbRecords: any[] = [];
-    if (patientProfile) {
-      const { data, error } = await supabase
-        .from('medical_records')
-        .select('*')
-        .eq('patient_id', patientProfile.id)   // ← correct id
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      if (data) {
-        dbRecords = data.map((record: any) => ({
-          id: record.id,
-          name: record.title || record.name || 'Uploaded Document',
-          date: record.created_at
-            ? new Date(record.created_at).toLocaleDateString()
-            : '',
-          status: record.status === 'active' ? 'Encrypted' : (record.status || 'Private'),
-          icon: '/assets/total-records-card-icon.png',
-          document_url: record.file_url || record.document_url,
-        }));
+      if (!user) {
+        setRecords(hardcodedRecords as any);
+        return;
       }
-    }
-      
+
+      // Resolve real patient_profiles.id (FK target for medical_records.patient_id)
+      const { data: patientProfile } = await supabase
+        .from('patient_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      let dbRecords: any[] = [];
+      if (patientProfile) {
+        const { data, error } = await supabase
+          .from('medical_records')
+          .select('*')
+          .eq('patient_id', patientProfile.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (data) {
+          dbRecords = data.map((record: any) => ({
+            id: record.id,
+            name: record.title || record.name || 'Uploaded Document',
+            date: record.created_at
+              ? new Date(record.created_at).toLocaleDateString()
+              : '',
+            status: record.status === 'active' ? 'Encrypted' : (record.status || 'Private'),
+            icon: '/assets/total-records-card-icon.png',
+            document_url: record.file_url || record.document_url,
+          }));
+        }
+      }
+
+      // DB rows first, then demo mock records
       setRecords([...dbRecords, ...hardcodedRecords] as any);
-    } catch (err) { 
-      console.error("Failed to fetch records:", err);
-    } finally { 
-      setLoading(false); 
+    } catch (err) {
+      console.error('Failed to fetch records:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -198,43 +198,44 @@ export default function Dashboard() {
     setUploading(true);
 
     const saveRecordToDb = async (name: string, url: string) => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    alert('Please log in to upload records.');
-    navigate('/login');
-    setUploading(false);
-    return;
-  }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Please log in to upload records.');
+        navigate('/login');
+        setUploading(false);
+        return;
+      }
 
-  const { data: patientProfile, error: profileError } = await supabase
-    .from('patient_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
+      const { data: patientProfile, error: profileError } = await supabase
+        .from('patient_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
 
-  if (profileError || !patientProfile) {
-    alert('Patient profile not found. Please complete onboarding first.');
-    setUploading(false);
-    return;
-  }
+      if (profileError || !patientProfile) {
+        alert('Patient profile not found. Please complete onboarding first.');
+        setUploading(false);
+        return;
+      }
 
-  const { error } = await supabase.from('medical_records').insert({
-    patient_id: patientProfile.id,   // ← correct id
-    title: name,
-    record_type: 'Uploaded Document',
-    file_url: url,
-    status: 'active',                // ← allowed by check constraint
-    encrypted: true,
-  });
+      const { error } = await supabase.from('medical_records').insert({
+        patient_id: patientProfile.id,
+        title: name,
+        record_type: 'Uploaded Document',
+        file_url: url,
+        status: 'active',
+        encrypted: true,
+      });
 
-  if (error) {
-    alert('Failed to save record to database: ' + error.message);
-  } else {
-    alert('Record uploaded successfully!');
-    fetchRecords();                  // refresh list
-  }
-  setUploading(false);
-};
+      if (error) {
+        alert('Failed to save record to database: ' + error.message);
+      } else {
+        alert('Record uploaded successfully!');
+        fetchRecords();
+      }
+      setUploading(false);
+    };
+
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
@@ -250,7 +251,7 @@ export default function Dashboard() {
         .upload(fileName, file);
 
       if (uploadError) {
-        console.warn("Storage upload failed, attempting fallback to base64 data URL", uploadError);
+        console.warn('Storage upload failed, attempting fallback to base64 data URL', uploadError);
         // Still require auth for fallback path
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
@@ -269,7 +270,7 @@ export default function Dashboard() {
         await saveRecordToDb(file.name, urlData.publicUrl);
       }
     } catch (err: any) {
-      alert("Error uploading file: " + err.message);
+      alert('Error uploading file: ' + err.message);
       setUploading(false);
     }
   };
@@ -288,7 +289,7 @@ export default function Dashboard() {
   ];
 
   // Random gradient for new users
-  const avatarGradient = "bg-gradient-to-tr from-[#14F1D9] to-[#3672F8]";
+  const avatarGradient = 'bg-gradient-to-tr from-[#14F1D9] to-[#3672F8]';
 
   const getPageTitle = () => {
     const path = location.pathname;
