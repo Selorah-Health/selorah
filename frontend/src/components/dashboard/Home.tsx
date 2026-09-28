@@ -32,9 +32,9 @@ export default function Home({ user, records, getFormattedDate }: HomeProps) {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-[#6183FF] text-white p-6 rounded-[24px] shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:opacity-90 transition-opacity">
-          <div><p className="text-[10px] font-bold opacity-80 mb-1 uppercase tracking-wider">Health Score</p><span className="text-[36px] font-bold leading-none">60/100</span></div>
+          <div><p className="text-[10px] font-bold opacity-80 mb-1 uppercase tracking-wider">Health Score</p><span className="text-[36px] font-bold leading-none">{Math.min(100, 40 + records.length * 5)}/100</span></div>
           <div className="flex items-end justify-between">
-            <p className="text-[11px] font-medium">↑ +5 this month</p>
+            <p className="text-[11px] font-medium">{records.length > 0 ? `Based on ${records.length} records` : 'Add records to improve'}</p>
             <img src="/assets/custom-heart.png" alt="I" className="w-8 h-8 brightness-0 invert opacity-60" />
           </div>
         </div>
