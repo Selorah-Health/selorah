@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
+import { useToast } from '../contexts/ToastContext';
 import {
   ArrowLeftIcon,
   EllipsisVerticalIcon,
@@ -13,6 +14,7 @@ import {
 import { useState, useEffect } from 'react';
 
 export default function RecordDetails() {
+  const { success: toastSuccess, info, error: toastError } = useToast();
   const { id } = useParams();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -137,7 +139,7 @@ export default function RecordDetails() {
 
   const handleUpdate = () => {
     setShowMenu(false);
-    alert('This will open the record editor. (Demo functionality)');
+    info('Record editor opens here (demo).');
   };
 
   const handleShare = () => {
@@ -147,7 +149,7 @@ export default function RecordDetails() {
         'Do you want to share this record with your verified doctor? This will grant them temporary access.'
       )
     ) {
-      alert('Record shared successfully. You can revoke access in the Access Log tab.');
+      toastSuccess('Record shared. Revoke access anytime in Access Log.');
     }
   };
 
@@ -161,7 +163,7 @@ export default function RecordDetails() {
       if (!isMockRecord && id) {
         await supabase.from('medical_records').delete().eq('id', id);
       }
-      alert('Record deleted.');
+      toastSuccess('Record deleted.');
       navigate('/dashboard/records');
     }
   };

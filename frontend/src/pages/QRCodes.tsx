@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { QrCodeIcon, ClockIcon, ArrowLeftIcon, XMarkIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 import { QRCodeCanvas } from 'qrcode.react';
 import { createClient } from '../lib/supabase/client';
+import { useToast } from '../contexts/ToastContext';
 
 export default function QRCodes() {
   const supabase = createClient();
+  const { success: toastSuccess, error: toastError, warning } = useToast();
   const [qrToken, setQrToken] = useState<string | null>(null);
   const [expiryType, setExpiryType] = useState<'preset' | 'custom'>('preset');
   const [expiry, setExpiry] = useState<string>('none');
@@ -67,7 +69,7 @@ export default function QRCodes() {
     } else {
       durationMins = expiryType === 'custom' ? parseInt(customExpiry) : parseInt(expiry);
       if (isNaN(durationMins) || durationMins <= 0) {
-        alert('Invalid duration');
+        warning('Invalid duration');
         return;
       }
       expiresAt = new Date(Date.now() + durationMins * 60000).toISOString();
@@ -97,7 +99,7 @@ export default function QRCodes() {
         setTimeLeft(null);
       }
     } catch (err: any) {
-      alert('Failed to generate code: ' + err.message);
+      toastError('Failed to generate code: ' + err.message);
     }
   };
 
@@ -138,9 +140,9 @@ export default function QRCodes() {
 
       setIsRevoked(true);
       setTimeLeft(0);
-      alert('Access revoked successfully. This QR code will no longer grant access.');
+      toastSuccess('Access revoked. This QR code will no longer grant access.');
     } catch (err: any) {
-      alert('Failed to revoke: ' + err.message);
+      toastError('Failed to revoke: ' + err.message);
     }
   };
 

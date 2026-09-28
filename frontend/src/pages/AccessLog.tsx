@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { ShieldExclamationIcon, DevicePhoneMobileIcon, ComputerDesktopIcon, QrCodeIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
+import { useToast } from '../contexts/ToastContext';
 
 export default function AccessLog() {
+  const { success: toastSuccess, error: toastError } = useToast();
   const [staticLogs] = useState([
     { id: 1, title: 'Reddington Hospital', action: 'viewed SNH Lab Result', time: '2hr ago', date: 'April 7, 2026', color: 'bg-[#22C55E]', status: 'Active', device: 'Hospital Workstation', verified: true },
     { id: 2, title: 'St. Nicholas Hospital', action: 'gained access to medical history', time: 'Yesterday', date: 'April 6, 2026', color: 'bg-[#FACC15]', status: 'Active', device: 'Hospital Workstation', verified: true },
@@ -171,7 +173,7 @@ export default function AccessLog() {
       )
     );
 
-    alert(`Access for ${title} has been permanently revoked.`);
+    toastSuccess(`Access for ${title} has been permanently revoked.`);
   };
 
   const localDynamicFormatted = dynamicLogs.map((l) => ({

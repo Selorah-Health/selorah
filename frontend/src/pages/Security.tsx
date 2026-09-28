@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { ShieldCheckIcon, KeyIcon, DevicePhoneMobileIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 
 export default function Security() {
   const navigate = useNavigate();
+  const { success: toastSuccess } = useToast();
   const [mfaEnabled, setMfaEnabled] = useState(false);
 
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Password updated successfully! This change is now active across your Selorah account.');
+    toastSuccess('Password updated successfully. Active across your Selorah account.');
   };
 
   return (

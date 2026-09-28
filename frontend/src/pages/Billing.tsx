@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { CreditCardIcon, ArrowLeftIcon, CheckBadgeIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 
 export default function Billing() {
   const navigate = useNavigate();
+  const { success: toastSuccess } = useToast();
   const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function Billing() {
         localStorage.setItem('selorah_user', JSON.stringify(user));
         setIsPro(user.is_pro);
         window.dispatchEvent(new Event('storage')); // Notify other components
-        alert(`Plan updated to ${user.is_pro ? 'PRO' : 'FREE'}! This change is now active across your dashboard.`);
+        toastSuccess(`Plan updated to ${user.is_pro ? 'PRO' : 'FREE'}. Active across your dashboard.`);
       } catch (e) {}
     }
   };
