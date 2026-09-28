@@ -17,10 +17,12 @@ import {
 } from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
 import { createClient } from '../lib/supabase/client';
+import { useToast } from '../contexts/ToastContext';
 
 export default function SharedRecord() {
   const { token } = useParams();
   const supabase = createClient();
+  const { success, error: toastError, info, warning } = useToast();
 
   const [patient, setPatient] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
@@ -48,7 +50,7 @@ export default function SharedRecord() {
       setIsVerified(true);
       setShowVerificationModal(false);
     } else {
-      alert('Please enter a valid license number (minimum 6 characters).');
+      warning('Enter a valid license number (min 6 characters).');
     }
   };
 
@@ -202,21 +204,33 @@ export default function SharedRecord() {
             // de-dupe allergies
             allergies = Array.from(new Set(allergies));
 
+            const PROFILE_TYPES = new Set(['vital', 'allergy', 'history', 'emergency contact', 'note']);
+            const isClinical = (r: any) => {
+              const type = (r.record_type || '').toLowerCase();
+              const title = (r.title || '').toLowerCase();
+              if (PROFILE_TYPES.has(type)) return false;
+              if (['height', 'weight', 'blood group', 'genotype', 'allergies', 'family history', 'medication history', 'emergency contact'].includes(title))
+                return false;
+              return true;
+            };
+
             setRecords(
-              dbRecords.map((r: any) => {
+              dbRecords.filter(isClinical).map((r: any) => {
                 const type = (r.record_type || '').toLowerCase();
                 let category: 'lab' | 'rad' | 'pres' | 'other' = 'other';
-                if (type.includes('lab') || type.includes('blood') || type.includes('test')) category = 'lab';
+                if (type.includes('lab') || type.includes('test')) category = 'lab';
                 else if (type.includes('xray') || type.includes('rad') || type.includes('scan') || type.includes('image'))
                   category = 'rad';
-                else if (type.includes('pres') || type.includes('med') || type.includes('drug')) category = 'pres';
+                else if (type.includes('pres') || type.includes('drug')) category = 'pres';
+                else if (type.includes('visit')) category = 'other';
 
                 const content = decodeContent(r.file_url);
+                const isTextData = (r.file_url || '').startsWith('data:text/plain');
                 return {
                   id: r.id,
-                  title: r.title || 'Uploaded Document',
+                  title: r.title || 'Clinical Document',
                   category,
-                  facility: type === 'visit report' ? 'Visit Report' : 'Patient Upload',
+                  facility: type.includes('visit') ? 'Visit Report' : 'Clinical Upload',
                   doctor: '—',
                   date: r.created_at
                     ? new Date(r.created_at).toLocaleDateString(undefined, {
@@ -225,7 +239,11 @@ export default function SharedRecord() {
                         day: 'numeric',
                       })
                     : '—',
-                  content: content || (r.file_url ? 'Document attached.' : 'No file attached.'),
+                  content: isTextData
+                    ? content || 'Document attached.'
+                    : r.file_url
+                      ? 'Document attached.'
+                      : 'No file attached.',
                   file_url: r.file_url,
                 };
               })
@@ -807,11 +825,11 @@ export default function SharedRecord() {
                   <button
                     onClick={async () => {
                       if (!patient?.profileId) {
-                        alert('Patient profile not loaded. Cannot save report.');
+                        toastError('Patient profile not loaded. Cannot save report.');
                         return;
                       }
                       if (!visitNotes.trim()) {
-                        alert('Please add observations or notes before submitting.');
+                        warning('Please add observations or notes before submitting.');
                         return;
                       }
                       setSubmittingReport(true);
@@ -868,14 +886,10 @@ export default function SharedRecord() {
 
                         setVisitNotes('');
                         setShowVisitReportModal(false);
-                        alert('Visit report saved to the patient\'s records.');
+                        success('Visit report saved to the patient\'s records.');
                       } catch (err: any) {
                         console.error(err);
-                        alert(
-                          'Failed to save visit report: ' +
-                            (err?.message || 'Unknown error') +
-                            '\n\nIf this is an RLS error, run the shared-link insert policy in Supabase.'
-                        );
+                        toastError(err?.message || 'Unknown error', 'Failed to save visit report');
                       } finally {
                         setSubmittingReport(false);
                       }
