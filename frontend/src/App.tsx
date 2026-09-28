@@ -3,8 +3,10 @@ import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import RoleGuard from './components/RoleGuard';
 import ScrollToTop from './components/ScrollToTop';
+import { ToastProvider } from './contexts/ToastContext';
+import ToastViewport from './components/ToastViewport';
 
-// Lazy load all pages (this is the "const thingy" you asked for)
+// Lazy load all pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Login = lazy(() => import('./pages/Login'));
@@ -27,36 +29,41 @@ const WaitlistCount = lazy(() => import('./pages/WaitlistCount'));
 export default function App() {
   return (
     <ErrorBoundary>
-      <ScrollToTop />
-      <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    }>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/dashboard/*" element={<RoleGuard><Dashboard /></RoleGuard>} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/shared/:token" element={<SharedRecord />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/careers" element={<Careers />} />
-        <Route path="/cookie-policy" element={<CookiePolicy />} />
-        <Route path="/dpa" element={<DataProcessing />} />
-        <Route path="/hospital/*" element={<RoleGuard><HospitalDashboard /></RoleGuard>} />
-        <Route path="/researcher/*" element={<RoleGuard><ResearcherDashboard /></RoleGuard>} />
-        <Route path="/insurer/*" element={<RoleGuard><InsurerDashboard /></RoleGuard>} />
-        <Route path="/wc" element={<WaitlistCount />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+      <ToastProvider>
+        <ScrollToTop />
+        <ToastViewport />
+        <Suspense
+          fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+              <div className="text-center">
+                <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading...</p>
+              </div>
+            </div>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/dashboard/*" element={<RoleGuard><Dashboard /></RoleGuard>} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/shared/:token" element={<SharedRecord />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/dpa" element={<DataProcessing />} />
+            <Route path="/hospital/*" element={<RoleGuard><HospitalDashboard /></RoleGuard>} />
+            <Route path="/researcher/*" element={<RoleGuard><ResearcherDashboard /></RoleGuard>} />
+            <Route path="/insurer/*" element={<RoleGuard><InsurerDashboard /></RoleGuard>} />
+            <Route path="/wc" element={<WaitlistCount />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }
