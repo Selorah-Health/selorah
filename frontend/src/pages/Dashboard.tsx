@@ -196,14 +196,26 @@ export default function Dashboard() {
         return;
       }
 
+      const { data: patientProfile, error: profileError } = await supabase
+    .from('patient_profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (profileError || !patientProfile) {
+    alert('Patient profile not found. Please complete onboarding first.');
+    setUploading(false);
+    return;
+  }
+
       const { error } = await supabase.from('medical_records').insert({
-        patient_id: user.id,
-        title: name,
-        record_type: 'Uploaded Document',
-        file_url: url,
-        status: 'active',
-        encrypted: true
-      });
+    patient_id: patientProfile.id,  
+    title: name,
+    record_type: 'Uploaded Document',
+    file_url: url,
+    status: 'active',
+    encrypted: true,
+  });
 
       if (error) {
         alert('Failed to save record to database: ' + error.message);
