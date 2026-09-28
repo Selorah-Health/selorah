@@ -43,6 +43,12 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [records, setRecords] = useState<Record[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addMode, setAddMode] = useState<'text' | 'file'>('text');
+  const [textTitle, setTextTitle] = useState('');
+  const [textContent, setTextContent] = useState('');
+  const [textCategory, setTextCategory] = useState('General');
+  const [savingText, setSavingText] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -182,7 +188,95 @@ export default function Dashboard() {
   const handleUploadClick = async () => {
     const ok = await requireAuth();
     if (!ok) return;
+    setShowAddModal(true);
+    setAddMode('text');
+    setTextTitle('');
+    setTextContent('');
+    setTextCategory('General');
+  };
+
+  const handlePickFile = () => {
     fileInputRef.current?.click();
+  };
+
+  const CATEGORY_TO_RECORD_TYPE: Record<string, string> = {
+    General: 'Note',
+    Height: 'Vital',
+    Weight: 'Vital',
+    'Blood Group': 'Vital',
+    Genotype: 'Vital',
+    Allergies: 'Allergy',
+    'Family History': 'History',
+    'Medication History': 'History',
+    'Emergency Contact': 'Emergency Contact',
+    'Visit Note': 'Visit Report',
+  };
+
+  const saveTextRecord = async () => {
+    if (!textTitle.trim() || !textContent.trim()) {
+      alert('Please enter both a name and content.');
+      return;
+    }
+    setSavingText(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Please log in to continue.');
+        navigate('/login');
+        return;
+      }
+
+      const { data: patientProfile, error: profileError } = await supabase
+        .from('patient_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError || !patientProfile) {
+        alert('Patient profile not found. Please complete onboarding first.');
+        return;
+      }
+
+      const body = textContent.trim();
+      const dataUrl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(body);
+      const recordType = CATEGORY_TO_RECORD_TYPE[textCategory] || 'Note';
+
+      const { error } = await supabase.from('medical_records').insert({
+        patient_id: patientProfile.id,
+        title: textTitle.trim(),
+        record_type: recordType,
+        file_url: dataUrl,
+        status: 'active',
+        encrypted: true,
+      });
+
+      if (error) {
+        alert('Failed to save: ' + error.message);
+        return;
+      }
+
+      // Mirror known fields onto patient_profiles when applicable
+      const profilePatch: Record<string, string> = {};
+      const cat = textCategory.toLowerCase();
+      if (cat === 'blood group') profilePatch.blood_group = body;
+      if (cat === 'genotype') profilePatch.genotype = body;
+      if (Object.keys(profilePatch).length) {
+        await supabase
+          .from('patient_profiles')
+          .update(profilePatch)
+          .eq('id', patientProfile.id);
+      }
+
+      setShowAddModal(false);
+      setTextTitle('');
+      setTextContent('');
+      await fetchRecords();
+      alert('Record added successfully!');
+    } catch (err: any) {
+      alert('Error: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setSavingText(false);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,6 +325,7 @@ export default function Dashboard() {
         alert('Failed to save record to database: ' + error.message);
       } else {
         alert('Record uploaded successfully!');
+        setShowAddModal(false);
         fetchRecords();
       }
       setUploading(false);
@@ -329,10 +424,10 @@ export default function Dashboard() {
           <button
             onClick={handleUploadClick}
             className={`w-full border-2 border-dashed border-white/30 rounded-xl py-3 flex items-center justify-center gap-3 hover:bg-white/10 transition-all ${isCollapsed ? 'px-0' : ''}`}
-            title="Upload Record"
+            title="Add a Record"
           >
             <CloudArrowUpIcon className="w-5 h-5 text-white shrink-0" />
-            {!isCollapsed && <span className="font-bold text-base whitespace-nowrap overflow-hidden text-ellipsis">Upload Record</span>}
+            {!isCollapsed && <span className="font-bold text-base whitespace-nowrap overflow-hidden text-ellipsis">Add a Record</span>}
           </button>
         </div>
 
@@ -485,6 +580,125 @@ export default function Dashboard() {
           ))}
         </nav>
       </main>
+
+      {/* Add a Record Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#0A0B14]/70 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-xl font-black text-[#101217]">Add a Record</h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-400 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-2 bg-gray-50 mx-6 mt-6 rounded-2xl flex gap-1">
+              <button
+                onClick={() => setAddMode('text')}
+                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                  addMode === 'text' ? 'bg-white text-[#6183FF] shadow-sm' : 'text-gray-400'
+                }`}
+              >
+                Enter text
+              </button>
+              <button
+                onClick={() => setAddMode('file')}
+                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                  addMode === 'file' ? 'bg-white text-[#6183FF] shadow-sm' : 'text-gray-400'
+                }`}
+              >
+                Upload file
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {addMode === 'text' ? (
+                <>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">
+                      Category
+                    </label>
+                    <select
+                      value={textCategory}
+                      onChange={(e) => {
+                        setTextCategory(e.target.value);
+                        if (!textTitle.trim() || textTitle === textCategory) {
+                          setTextTitle(e.target.value === 'General' ? '' : e.target.value);
+                        }
+                      }}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-bold text-gray-700 focus:outline-none focus:border-[#6183FF]"
+                    >
+                      {[
+                        'General',
+                        'Height',
+                        'Weight',
+                        'Blood Group',
+                        'Genotype',
+                        'Allergies',
+                        'Family History',
+                        'Medication History',
+                        'Emergency Contact',
+                        'Visit Note',
+                      ].map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">
+                      Name / Title *
+                    </label>
+                    <input
+                      type="text"
+                      value={textTitle}
+                      onChange={(e) => setTextTitle(e.target.value)}
+                      placeholder="e.g. Blood Group, Penicillin Allergy…"
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-bold text-gray-700 focus:outline-none focus:border-[#6183FF]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">
+                      Content *
+                    </label>
+                    <textarea
+                      value={textContent}
+                      onChange={(e) => setTextContent(e.target.value)}
+                      placeholder="Enter the details…"
+                      rows={5}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-700 focus:outline-none focus:border-[#6183FF] resize-none"
+                    />
+                  </div>
+                  <button
+                    onClick={saveTextRecord}
+                    disabled={savingText}
+                    className="w-full bg-[#6183FF] text-white font-bold py-4 rounded-2xl hover:bg-[#4E6EEF] transition-all disabled:opacity-50"
+                  >
+                    {savingText ? 'Saving…' : 'Save Record'}
+                  </button>
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-gray-500 font-medium mb-6">
+                    Upload an image or document (PDF, images, text files).
+                  </p>
+                  <button
+                    onClick={handlePickFile}
+                    disabled={uploading}
+                    className="w-full border-2 border-dashed border-[#6183FF]/40 bg-[#6183FF]/5 text-[#6183FF] font-bold py-10 rounded-2xl hover:bg-[#6183FF]/10 transition-all disabled:opacity-50"
+                  >
+                    {uploading ? 'Uploading…' : 'Choose file to upload'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
