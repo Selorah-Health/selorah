@@ -78,10 +78,18 @@ export default function HospitalDashboard() {
       [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') ||
       'Scanned Patient';
 
-    // Derive vitals/allergies from clinical records when present
+    // Derive vitals / allergies / history from real records (not demo text)
     const allergies: string[] = [];
     let height: string | null = null;
     let weight: string | null = null;
+    let familyHistory: string | null = null;
+    let clinicalNotes: string | null = null;
+    const PROFILE_TITLES = new Set([
+      'height', 'weight', 'blood group', 'genotype', 'allergies',
+      'family history', 'medication history', 'emergency contact',
+    ]);
+    const clinicalOnly: any[] = [];
+
     for (const r of records || []) {
       const title = (r.title || r.name || '').toLowerCase();
       const type = (r.record_type || '').toLowerCase();
@@ -101,9 +109,20 @@ export default function HospitalDashboard() {
           .map((s: string) => s.trim())
           .filter(Boolean)
           .forEach((a: string) => allergies.push(a));
+      } else if (title.includes('height') || (type === 'vital' && title.includes('height'))) {
+        if (!height) height = content || null;
+      } else if (title.includes('weight')) {
+        if (!weight) weight = content || null;
+      } else if (title.includes('family') || type === 'history') {
+        if (!familyHistory) familyHistory = content || r.title || null;
+      } else if (title.includes('visit') || type.includes('visit') || title.includes('note')) {
+        if (!clinicalNotes) clinicalNotes = content || r.title || null;
       }
-      if (title.includes('height') && !height) height = content || null;
-      if (title.includes('weight') && !weight) weight = content || null;
+
+      const isProfile =
+        ['vital', 'allergy', 'history', 'emergency contact', 'note'].includes(type) ||
+        PROFILE_TITLES.has(title);
+      if (!isProfile) clinicalOnly.push(r);
     }
 
     setSelectedPatient({
@@ -117,11 +136,13 @@ export default function HospitalDashboard() {
         weight: weight || profile?.vitals?.weight || null,
         genotype: profile?.genotype || null,
       },
-      allergies,
+      allergies: Array.from(new Set(allergies)),
+      familyHistory,
       medicalConditions: profile?.emergency_medical_info || null,
+      clinicalNotes,
       lastVisit: 'Just now',
       status: 'Checked In',
-      fetchedRecords: records,
+      fetchedRecords: clinicalOnly.length ? clinicalOnly : records,
     });
   };
 
@@ -429,7 +450,7 @@ export default function HospitalDashboard() {
                           <h2 className="text-4xl font-black text-[#101217] tracking-tight mb-2">{selectedPatient.name}</h2>
                           <div className="flex flex-wrap gap-3">
                             <span className="bg-blue-50 text-[#6183FF] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">NIN: {selectedPatient.nin || selectedPatient.id}</span>
-                            <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">DOB: {selectedPatient.date_of_birth ? new Date(selectedPatient.date_of_birth).toLocaleDateString() : 'Jan 15, 1990'}</span>
+                            <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">DOB: {selectedPatient.date_of_birth ? new Date(selectedPatient.date_of_birth).toLocaleDateString() : '—'}</span>
                           </div>
                         </div>
                       </div>
@@ -453,7 +474,7 @@ export default function HospitalDashboard() {
                             <div className="grid grid-cols-2 gap-4">
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Blood Group</p>
-                                <p className="text-xl font-black text-[#6183FF]">{selectedPatient.vitals?.bloodType || 'O+'}</p>
+                                <p className="text-xl font-black text-[#6183FF]">{selectedPatient.vitals?.bloodType || '—'}</p>
                               </div>
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Genotype</p>
@@ -461,11 +482,11 @@ export default function HospitalDashboard() {
                               </div>
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Height</p>
-                                <p className="text-xl font-bold text-gray-900">{selectedPatient.vitals?.height ? `${selectedPatient.vitals.height}cm` : '182cm'}</p>
+                                <p className="text-xl font-bold text-gray-900">{selectedPatient.vitals?.height ? `${selectedPatient.vitals.height}${String(selectedPatient.vitals.height).match(/cm|m$/i) ? '' : 'cm'}` : '—'}</p>
                               </div>
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Weight</p>
-                                <p className="text-xl font-bold text-gray-900">{selectedPatient.vitals?.weight ? `${selectedPatient.vitals.weight}kg` : '78kg'}</p>
+                                <p className="text-xl font-bold text-gray-900">{selectedPatient.vitals?.weight ? `${selectedPatient.vitals.weight}${String(selectedPatient.vitals.weight).match(/kg$/i) ? '' : 'kg'}` : '—'}</p>
                               </div>
                             </div>
                           </section>
@@ -475,9 +496,13 @@ export default function HospitalDashboard() {
                               <ShieldCheckIcon className="w-4 h-4" /> Active Allergies
                             </h3>
                             <div className="flex flex-wrap gap-2">
-                              {(selectedPatient.allergies?.length > 0 ? selectedPatient.allergies : ['Penicillin', 'Peanuts', 'Latex']).map((a: string) => (
-                                <span key={a} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-bold border border-red-100">{a}</span>
-                              ))}
+                              {(selectedPatient.allergies?.length > 0 ? selectedPatient.allergies : []).length > 0 ? (
+                                selectedPatient.allergies.map((a: string) => (
+                                  <span key={a} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-bold border border-red-100">{a}</span>
+                                ))
+                              ) : (
+                                <span className="text-sm text-gray-400 font-medium">No allergies on record</span>
+                              )}
                             </div>
                           </section>
                         </div>
@@ -491,11 +516,11 @@ export default function HospitalDashboard() {
                             <div className="space-y-6">
                               <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
                                 <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-3">Family History</h4>
-                                <p className="text-sm text-gray-600 leading-relaxed font-medium">Father: Hypertension, Mother: Type 2 Diabetes. No history of cardiovascular disease in immediate family.</p>
+                                <p className="text-sm text-gray-600 leading-relaxed font-medium">{selectedPatient.familyHistory || 'Not provided'}</p>
                               </div>
                               <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
-                                <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-3">{selectedPatient.medicalConditions ? 'Medical Conditions' : 'Recent Visit Notes'}</h4>
-                                <p className="text-sm text-gray-600 leading-relaxed font-medium italic">{selectedPatient.medicalConditions || '"Patient presents with mild fatigue. Blood sugar levels slightly elevated but within manageable range. Recommended lifestyle adjustments and follow-up in 2 weeks." — Dr. Admin'}</p>
+                                <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-3">{selectedPatient.medicalConditions ? 'Medical Conditions' : 'Clinical Notes'}</h4>
+                                <p className="text-sm text-gray-600 leading-relaxed font-medium italic">{selectedPatient.medicalConditions || selectedPatient.clinicalNotes || 'No clinical notes on file.'}</p>
                               </div>
                             </div>
                           </section>
@@ -508,10 +533,16 @@ export default function HospitalDashboard() {
                               <button className="text-[10px] font-black uppercase text-[#6183FF] hover:underline tracking-widest">Full History</button>
                             </div>
                             <div className="space-y-3">
-                              {[
-                                { title: 'Lab Results Uploaded', date: 'Yesterday, 4:30 PM', sub: 'Comprehensive Metabolic Panel' },
-                                { title: 'Prescription Renewed', date: 'April 20, 2026', sub: 'Metformin 500mg' },
-                              ].map((act, i) => (
+                              {((selectedPatient.fetchedRecords || []).length > 0
+                                ? selectedPatient.fetchedRecords.slice(0, 8).map((r: any) => ({
+                                    title: r.title || r.name || r.record_type || 'Clinical record',
+                                    sub: r.record_type || 'Document',
+                                    date: r.created_at
+                                      ? new Date(r.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                                      : '—',
+                                  }))
+                                : [{ title: 'No clinical records yet', sub: 'Records appear here after the patient uploads or shares them', date: '' }]
+                              ).map((act: any, i: number) => (
                                 <div key={i} className="flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl hover:border-blue-100 transition-all">
                                   <div className="flex items-center gap-4">
                                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
