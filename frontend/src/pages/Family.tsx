@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { UserGroupIcon, ArrowLeftIcon, PlusIcon, TrashIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 
 export default function Family() {
   const navigate = useNavigate();
+  const { success: toastSuccess } = useToast();
   const [members, setMembers] = useState([
     { id: 1, name: 'Sarah Olusegun', relation: 'Spouse', access: 'Full Access', color: 'bg-pink-500' },
     { id: 2, name: 'David Olusegun', relation: 'Son', access: 'Emergency Only', color: 'bg-blue-500' },
@@ -20,7 +22,7 @@ export default function Family() {
         color: 'bg-purple-500'
       };
       setMembers([...members, newMember]);
-      alert(`${name} has been added to your family group.`);
+      toastSuccess(`${name} has been added to your family group.`);
     }
   };
 

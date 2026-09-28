@@ -64,18 +64,64 @@ export default function HospitalDashboard() {
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
 
-  const handleScanSuccess = (patientId: string, records: any[], recordId: string | null) => {
-    // Re-fetch patients to include the newly scanned one
+  const handleScanSuccess = (
+    patientId: string,
+    records: any[],
+    _recordId: string | null,
+    profile?: any
+  ) => {
     fetchHospitalPatients();
-    
-    // Auto-open chart with temporary mock object if not immediately loaded
-    // We pass the full profile data we got from the modal so the chart is instantly populated!
+
+    const name =
+      profile?.name ||
+      profile?.full_name ||
+      [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') ||
+      'Scanned Patient';
+
+    // Derive vitals/allergies from clinical records when present
+    const allergies: string[] = [];
+    let height: string | null = null;
+    let weight: string | null = null;
+    for (const r of records || []) {
+      const title = (r.title || r.name || '').toLowerCase();
+      const type = (r.record_type || '').toLowerCase();
+      const content =
+        typeof r.file_url === 'string' && r.file_url.startsWith('data:text/plain')
+          ? (() => {
+              try {
+                return decodeURIComponent(r.file_url.split(',')[1] || '');
+              } catch {
+                return '';
+              }
+            })()
+          : '';
+      if (title.includes('allerg') || type === 'allergy') {
+        (content || r.title || '')
+          .split(/[,;\n]+/)
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+          .forEach((a: string) => allergies.push(a));
+      }
+      if (title.includes('height') && !height) height = content || null;
+      if (title.includes('weight') && !weight) weight = content || null;
+    }
+
     setSelectedPatient({
       id: patientId,
-      name: records.length > 0 ? 'Scanned Patient' : 'Scanned Patient', 
+      name,
+      nin: profile?.nin || null,
+      date_of_birth: profile?.date_of_birth || null,
+      vitals: {
+        bloodType: profile?.blood_group || profile?.vitals?.bloodType || null,
+        height: height || profile?.vitals?.height || null,
+        weight: weight || profile?.vitals?.weight || null,
+        genotype: profile?.genotype || null,
+      },
+      allergies,
+      medicalConditions: profile?.emergency_medical_info || null,
       lastVisit: 'Just now',
       status: 'Checked In',
-      fetchedRecords: records
+      fetchedRecords: records,
     });
   };
 
@@ -93,37 +139,60 @@ export default function HospitalDashboard() {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return;
 
-    // Fetch patients that this hospital has accessed
+    // Patients this hospital has previously accessed (via access_logs)
     const { data, error } = await supabase
       .from('access_logs')
-      .select(`
-        created_at,
-        patient:user_id (id, first_name, last_name, date_of_birth, vitals, allergies, emergency_medical_info)
-      `)
+      .select('created_at, user_id, provider_id')
       .eq('provider_id', currentUser.id)
       .order('created_at', { ascending: false });
 
-    if (data && !error) {
-      // Deduplicate patients since multiple scans create multiple logs
-      const uniquePatients = new Map();
-      data.forEach((log: any) => {
-        const p = Array.isArray(log.patient) ? log.patient[0] : log.patient;
-        if (p && !uniquePatients.has(p.id)) {
-          uniquePatients.set(p.id, {
-            id: p.id,
-            name: `${p.first_name} ${p.last_name}`,
-            date_of_birth: p.date_of_birth,
-            vitals: p.vitals,
-            allergies: p.allergies,
-            medicalConditions: p.emergency_medical_info,
-            lastVisit: new Date(log.created_at).toLocaleDateString(),
-            status: 'Checked In', // Or whatever logic you want
-            fetchedRecords: null, // We could fetch this or wait for click
-          });
-        }
-      });
-      setDbPatients(Array.from(uniquePatients.values()));
+    if (!data || error) return;
+
+    const uniqueUserIds = Array.from(
+      new Set(data.map((log: any) => log.user_id).filter(Boolean))
+    ) as string[];
+
+    if (uniqueUserIds.length === 0) {
+      setDbPatients([]);
+      return;
     }
+
+    // Resolve patient_profiles for those auth user ids
+    const { data: profiles } = await supabase
+      .from('patient_profiles')
+      .select('id, user_id, full_name, date_of_birth, blood_group, genotype, phone, nin')
+      .in('user_id', uniqueUserIds);
+
+    const profileByUser = new Map(
+      (profiles || []).map((p: any) => [p.user_id, p])
+    );
+
+    const uniquePatients = new Map<string, any>();
+    data.forEach((log: any) => {
+      const p = profileByUser.get(log.user_id);
+      if (!p) return;
+      const key = p.id || p.user_id;
+      if (uniquePatients.has(key)) return;
+
+      uniquePatients.set(key, {
+        id: p.id || p.user_id,
+        name: p.full_name || 'Patient',
+        nin: p.nin || null,
+        date_of_birth: p.date_of_birth,
+        vitals: {
+          bloodType: p.blood_group || null,
+          height: null,
+          weight: null,
+          genotype: p.genotype || null,
+        },
+        allergies: [],
+        medicalConditions: null,
+        lastVisit: new Date(log.created_at).toLocaleDateString(),
+        status: 'Checked In',
+        fetchedRecords: null,
+      });
+    });
+    setDbPatients(Array.from(uniquePatients.values()));
   };
 
   useEffect(() => {
@@ -196,16 +265,28 @@ export default function HospitalDashboard() {
 
   const allPatients = [...dbPatients, ...mockPatients];
 
+  /** Search by full name, NIN, or patient ID. */
   const filteredPatients = (() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return allPatients;
-    return allPatients.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        String(p.id).includes(q.replace(/\s/g, ''))
-    );
+    const qDigits = q.replace(/\s/g, '');
+    return allPatients.filter((p) => {
+      const name = (p.name || '').toLowerCase();
+      const nin = String(p.nin || '').toLowerCase().replace(/\s/g, '');
+      const id = String(p.id || '').toLowerCase().replace(/\s/g, '');
+      return (
+        name.includes(q) ||
+        nin.includes(qDigits) ||
+        id.includes(qDigits) ||
+        name.split(/\s+/).some((part: string) => part.startsWith(q))
+      );
+    });
   })();
 
+  /**
+   * Search is intentionally scoped to patients already known to this hospital
+   * (access_logs → dbPatients) plus local demo mocks. No global NIN/name lookup.
+   */
   const handleSearchSubmit = (e?: FormEvent) => {
     e?.preventDefault();
     setSelectedPatient(null);
@@ -290,7 +371,7 @@ export default function HospitalDashboard() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by NIN or name..."
+                placeholder="Search prior patients (NIN, ID, or name)..."
                 className="w-full bg-white border border-gray-200 rounded-full py-2.5 pl-12 pr-6 text-sm focus:outline-none focus:border-[#6183FF] transition-all placeholder:text-gray-400 font-medium shadow-sm"
               />
             </form>
@@ -347,7 +428,7 @@ export default function HospitalDashboard() {
                         <div>
                           <h2 className="text-4xl font-black text-[#101217] tracking-tight mb-2">{selectedPatient.name}</h2>
                           <div className="flex flex-wrap gap-3">
-                            <span className="bg-blue-50 text-[#6183FF] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">NIN: {selectedPatient.id}</span>
+                            <span className="bg-blue-50 text-[#6183FF] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">NIN: {selectedPatient.nin || selectedPatient.id}</span>
                             <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">DOB: {selectedPatient.date_of_birth ? new Date(selectedPatient.date_of_birth).toLocaleDateString() : 'Jan 15, 1990'}</span>
                           </div>
                         </div>
@@ -376,7 +457,7 @@ export default function HospitalDashboard() {
                               </div>
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Genotype</p>
-                                <p className="text-xl font-bold text-gray-900">AA</p>
+                                <p className="text-xl font-bold text-gray-900">{selectedPatient.vitals?.genotype || '—'}</p>
                               </div>
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Height</p>

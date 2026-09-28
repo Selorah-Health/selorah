@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 import { 
   ArrowLeftIcon, 
   ShieldCheckIcon, 
@@ -12,6 +13,7 @@ import {
 export default function AccessLogDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { success: toastSuccess, warning } = useToast();
 
   // Mock data based on ID
   const logData: any = {
@@ -105,7 +107,7 @@ export default function AccessLogDetails() {
                 <button 
                   onClick={() => {
                     if (window.confirm(`Revoke all future access for ${log.title}?`)) {
-                      alert('Access revoked. Security team has been notified.');
+                      toastSuccess('Access revoked. Security team has been notified.');
                       navigate('/dashboard/access-log');
                     }
                   }}

@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
 import { useRef } from 'react';
+import { useToast } from '../contexts/ToastContext';
 
 interface EmergencyContact {
   name: string;
@@ -26,6 +27,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
   const supabase = createClient();
+  const { success: toastSuccess } = useToast();
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -149,7 +151,7 @@ export default function Onboarding() {
           [currentUploadDoc]: true
         }
       }));
-      alert(`${currentUploadDoc} uploaded successfully!`);
+      toastSuccess(`${currentUploadDoc} uploaded successfully`);
     }
     // reset input
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -332,14 +334,14 @@ export default function Onboarding() {
         </Link>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-12 py-12 scrollbar-hide">
-        <div className="w-full max-w-[850px] mx-auto">
+      <main className="flex-1 overflow-y-auto px-4 sm:px-8 md:px-12 py-8 md:py-12 scrollbar-hide flex flex-col items-center">
+        <div className="w-full max-w-[850px] mx-auto flex flex-col items-center">
           <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
 
           {/* Step 1: Role Selection */}
           {step === 1 && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="mb-10">
+            <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-10 text-center sm:text-left">
                 <h1 className="text-2xl font-bold text-[#050038] mb-1 tracking-tight">What do you want to do?</h1>
                 <p className="text-[#676767] text-sm">Choose the area you want to work in.</p>
               </div>
@@ -386,7 +388,7 @@ export default function Onboarding() {
 
           {/* Step 2: Basic Info */}
           {step === 2 && (
-            <div className="max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               {errorMsg && (
                 <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100">{errorMsg}</div>
               )}
@@ -488,7 +490,7 @@ export default function Onboarding() {
 
           {/* Step 3: Medical Info / Document Upload */}
           {step === 3 && (
-            <div className="max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-8">
                 <h1 className="text-2xl font-bold text-[#050038] mb-1">
                   {isPatient ? 'Emergency Info' : 'Upload Documents'}
@@ -586,7 +588,7 @@ export default function Onboarding() {
 
           {/* Step 4: Emergency Contacts (Patient) or Completion (Others) */}
           {step === 4 && (
-            <div className="max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               {isPatient ? (
                 <>
                   <div className="mb-8">
