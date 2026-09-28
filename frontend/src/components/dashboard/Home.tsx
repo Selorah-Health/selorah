@@ -39,12 +39,19 @@ export default function Home({ user, records, getFormattedDate }: HomeProps) {
           </div>
         </div>
         <div onClick={() => navigate('/dashboard/records')} className="bg-white p-6 rounded-[24px] border border-gray-50 shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-[#6183FF]/30 transition-colors">
-          <div><p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Total Records</p><span className="text-[36px] font-bold text-[#101217] leading-none">12</span></div>
-          <div className="flex items-end justify-between">
-            <p className="text-[11px] font-bold text-gray-400">8 verified • 4 self-reported</p>
-            <img src="/assets/total-records-card-icon.png" alt="I" className="w-8 h-8" />
-          </div>
-        </div>
+  <div>
+    <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Total Records</p>
+    <span className="text-[36px] font-bold text-[#101217] leading-none">
+      {records.length}   {/* was hardcoded 12 */}
+    </span>
+  </div>
+  <div className="flex items-end justify-between">
+    <p className="text-[11px] font-bold text-gray-400">
+      {records.length} total
+    </p>
+    <img src="/assets/total-records-card-icon.png" alt="I" className="w-8 h-8" />
+  </div>
+</div>
         <div onClick={() => navigate('/dashboard/earnings')} className="bg-white p-6 rounded-[24px] border border-gray-50 shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-[#6183FF]/30 transition-colors">
           <div><p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">This Month Earnings</p><span className="text-[36px] font-bold text-[#101217] leading-none">₦3,000</span></div>
           <div className="flex items-end justify-between">
