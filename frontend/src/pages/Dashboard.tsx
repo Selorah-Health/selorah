@@ -13,6 +13,7 @@ import {
 import { createClient } from '../lib/supabase/client';
 import { useNavigate, NavLink, Routes, Route, useLocation } from 'react-router-dom';
 import SEOTitle from '../components/SEOTitle';
+import { useToast } from '../contexts/ToastContext';
 
 // Tab Components
 import Home from '../components/dashboard/Home';
@@ -45,14 +46,25 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addMode, setAddMode] = useState<'text' | 'file'>('text');
-  const [textTitle, setTextTitle] = useState('');
-  const [textContent, setTextContent] = useState('');
-  const [textCategory, setTextCategory] = useState('General');
+  const [profileForm, setProfileForm] = useState({
+    height: '',
+    weight: '',
+    bloodGroup: '',
+    genotype: '',
+    allergies: '',
+    familyHistory: '',
+    medicationHistory: '',
+    emergencyName: '',
+    emergencyPhone: '',
+    emergencyRelation: '',
+  });
+  const [fileCategory, setFileCategory] = useState('Lab Results');
   const [savingText, setSavingText] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const supabase = createClient();
+  const { success, error: toastError, info, warning } = useToast();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -146,16 +158,30 @@ export default function Dashboard() {
         if (error) throw error;
 
         if (data) {
-          dbRecords = data.map((record: any) => ({
-            id: record.id,
-            name: record.title || record.name || 'Uploaded Document',
-            date: record.created_at
-              ? new Date(record.created_at).toLocaleDateString()
-              : '',
-            status: record.status === 'active' ? 'Encrypted' : (record.status || 'Private'),
-            icon: '/assets/total-records-card-icon.png',
-            document_url: record.file_url || record.document_url,
-          }));
+          const PROFILE_TYPES = new Set(['vital', 'allergy', 'history', 'emergency contact', 'note']);
+          const PROFILE_TITLES = new Set([
+            'height', 'weight', 'blood group', 'genotype', 'allergies',
+            'family history', 'medication history', 'emergency contact',
+          ]);
+          dbRecords = data
+            .filter((record: any) => {
+              const type = (record.record_type || '').toLowerCase();
+              const title = (record.title || '').toLowerCase();
+              if (PROFILE_TYPES.has(type)) return false;
+              if (PROFILE_TITLES.has(title)) return false;
+              return true;
+            })
+            .map((record: any) => ({
+              id: record.id,
+              name: record.title || record.name || 'Clinical Document',
+              date: record.created_at
+                ? new Date(record.created_at).toLocaleDateString()
+                : '',
+              status: record.status === 'active' ? 'Encrypted' : (record.status || 'Private'),
+              icon: '/assets/total-records-card-icon.png',
+              document_url: record.file_url || record.document_url,
+              record_type: record.record_type,
+            }));
         }
       }
 
@@ -175,12 +201,12 @@ export default function Dashboard() {
     // Also reject placeholder/guest localStorage-only sessions
     const saved = localStorage.getItem('selorah_user');
     if (!saved) {
-      alert('Please log in to continue.');
+      toastError('Please log in to continue.');
       navigate('/login');
       return false;
     }
     // localStorage alone is not enough for uploads / writes
-    alert('Please log in to continue.');
+    toastError('Please log in to continue.');
     navigate('/login');
     return false;
   };
@@ -190,38 +216,91 @@ export default function Dashboard() {
     if (!ok) return;
     setShowAddModal(true);
     setAddMode('text');
-    setTextTitle('');
-    setTextContent('');
-    setTextCategory('General');
+    setProfileForm({
+      height: '',
+      weight: '',
+      bloodGroup: '',
+      genotype: '',
+      allergies: '',
+      familyHistory: '',
+      medicationHistory: '',
+      emergencyName: '',
+      emergencyPhone: '',
+      emergencyRelation: '',
+    });
+    setFileCategory('Lab Results');
   };
 
   const handlePickFile = () => {
     fileInputRef.current?.click();
   };
 
-  const CATEGORY_TO_RECORD_TYPE: Record<string, string> = {
-    General: 'Note',
-    Height: 'Vital',
-    Weight: 'Vital',
-    'Blood Group': 'Vital',
-    Genotype: 'Vital',
-    Allergies: 'Allergy',
-    'Family History': 'History',
-    'Medication History': 'History',
-    'Emergency Contact': 'Emergency Contact',
-    'Visit Note': 'Visit Report',
+  const FILE_CATEGORY_TO_TYPE: Record<string, string> = {
+    'Lab Results': 'Lab Results',
+    'Imaging': 'Imaging',
+    'Prescriptions': 'Prescription',
+    'Visit Report': 'Visit Report',
+    'Test Results': 'Test Results',
+    'Other Clinical': 'Clinical Document',
   };
 
-  const saveTextRecord = async () => {
-    if (!textTitle.trim() || !textContent.trim()) {
-      alert('Please enter both a name and content.');
+  const saveProfileFields = async () => {
+    const entries: { title: string; content: string; recordType: string; profileKey?: string }[] = [];
+    if (profileForm.height.trim())
+      entries.push({ title: 'Height', content: profileForm.height.trim(), recordType: 'Vital' });
+    if (profileForm.weight.trim())
+      entries.push({ title: 'Weight', content: profileForm.weight.trim(), recordType: 'Vital' });
+    if (profileForm.bloodGroup.trim())
+      entries.push({
+        title: 'Blood Group',
+        content: profileForm.bloodGroup.trim(),
+        recordType: 'Vital',
+        profileKey: 'blood_group',
+      });
+    if (profileForm.genotype.trim())
+      entries.push({
+        title: 'Genotype',
+        content: profileForm.genotype.trim(),
+        recordType: 'Vital',
+        profileKey: 'genotype',
+      });
+    if (profileForm.allergies.trim())
+      entries.push({ title: 'Allergies', content: profileForm.allergies.trim(), recordType: 'Allergy' });
+    if (profileForm.familyHistory.trim())
+      entries.push({
+        title: 'Family History',
+        content: profileForm.familyHistory.trim(),
+        recordType: 'History',
+      });
+    if (profileForm.medicationHistory.trim())
+      entries.push({
+        title: 'Medication History',
+        content: profileForm.medicationHistory.trim(),
+        recordType: 'History',
+      });
+    if (profileForm.emergencyName.trim() || profileForm.emergencyPhone.trim()) {
+      const content = [
+        profileForm.emergencyName.trim(),
+        profileForm.emergencyRelation.trim(),
+        profileForm.emergencyPhone.trim(),
+      ]
+        .filter(Boolean)
+        .join(' – ');
+      entries.push({ title: 'Emergency Contact', content, recordType: 'Emergency Contact' });
+    }
+
+    if (!entries.length) {
+      warning('Fill in at least one field before saving.');
       return;
     }
+
     setSavingText(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        alert('Please log in to continue.');
+        toastError('Please log in to continue.');
         navigate('/login');
         return;
       }
@@ -233,47 +312,38 @@ export default function Dashboard() {
         .single();
 
       if (profileError || !patientProfile) {
-        alert('Patient profile not found. Please complete onboarding first.');
+        toastError('Patient profile not found. Please complete onboarding first.');
         return;
       }
 
-      const body = textContent.trim();
-      const dataUrl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(body);
-      const recordType = CATEGORY_TO_RECORD_TYPE[textCategory] || 'Note';
-
-      const { error } = await supabase.from('medical_records').insert({
+      const rows = entries.map((e) => ({
         patient_id: patientProfile.id,
-        title: textTitle.trim(),
-        record_type: recordType,
-        file_url: dataUrl,
+        title: e.title,
+        record_type: e.recordType,
+        file_url: 'data:text/plain;charset=utf-8,' + encodeURIComponent(e.content),
         status: 'active',
         encrypted: true,
-      });
+      }));
 
+      const { error } = await supabase.from('medical_records').insert(rows);
       if (error) {
-        alert('Failed to save: ' + error.message);
+        toastError(error.message, 'Failed to save');
         return;
       }
 
-      // Mirror known fields onto patient_profiles when applicable
       const profilePatch: Record<string, string> = {};
-      const cat = textCategory.toLowerCase();
-      if (cat === 'blood group') profilePatch.blood_group = body;
-      if (cat === 'genotype') profilePatch.genotype = body;
+      for (const e of entries) {
+        if (e.profileKey) profilePatch[e.profileKey] = e.content;
+      }
       if (Object.keys(profilePatch).length) {
-        await supabase
-          .from('patient_profiles')
-          .update(profilePatch)
-          .eq('id', patientProfile.id);
+        await supabase.from('patient_profiles').update(profilePatch).eq('id', patientProfile.id);
       }
 
       setShowAddModal(false);
-      setTextTitle('');
-      setTextContent('');
       await fetchRecords();
-      alert('Record added successfully!');
+      success(`${entries.length} field${entries.length > 1 ? 's' : ''} saved to your profile.`, 'Profile updated');
     } catch (err: any) {
-      alert('Error: ' + (err?.message || 'Unknown error'));
+      toastError(err?.message || 'Unknown error');
     } finally {
       setSavingText(false);
     }
@@ -294,7 +364,7 @@ export default function Dashboard() {
     const saveRecordToDb = async (name: string, url: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        alert('Please log in to upload records.');
+        toastError('Please log in to upload records.');
         navigate('/login');
         setUploading(false);
         return;
@@ -307,7 +377,7 @@ export default function Dashboard() {
         .single();
 
       if (profileError || !patientProfile) {
-        alert('Patient profile not found. Please complete onboarding first.');
+        toastError('Patient profile not found. Please complete onboarding first.');
         setUploading(false);
         return;
       }
@@ -315,16 +385,16 @@ export default function Dashboard() {
       const { error } = await supabase.from('medical_records').insert({
         patient_id: patientProfile.id,
         title: name,
-        record_type: 'Uploaded Document',
+        record_type: FILE_CATEGORY_TO_TYPE[fileCategory] || 'Clinical Document',
         file_url: url,
         status: 'active',
         encrypted: true,
       });
 
       if (error) {
-        alert('Failed to save record to database: ' + error.message);
+        toastError(error.message, 'Upload failed');
       } else {
-        alert('Record uploaded successfully!');
+        success('Your file was uploaded.', 'Upload complete');
         setShowAddModal(false);
         fetchRecords();
       }
@@ -334,7 +404,7 @@ export default function Dashboard() {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
-        alert('Please log in to upload records.');
+        toastError('Please log in to upload records.');
         navigate('/login');
         setUploading(false);
         return;
@@ -350,7 +420,7 @@ export default function Dashboard() {
         // Still require auth for fallback path
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          alert('Please log in to upload records.');
+          toastError('Please log in to upload records.');
           navigate('/login');
           setUploading(false);
           return;
@@ -365,7 +435,7 @@ export default function Dashboard() {
         await saveRecordToDb(file.name, urlData.publicUrl);
       }
     } catch (err: any) {
-      alert('Error uploading file: ' + err.message);
+      toastError(err.message, 'Upload error');
       setUploading(false);
     }
   };
@@ -581,11 +651,12 @@ export default function Dashboard() {
         </nav>
       </main>
 
+      
       {/* Add a Record Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#0A0B14]/70 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
               <h3 className="text-xl font-black text-[#101217]">Add a Record</h3>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -595,14 +666,14 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="p-2 bg-gray-50 mx-6 mt-6 rounded-2xl flex gap-1">
+            <div className="p-2 bg-gray-50 mx-6 mt-6 rounded-2xl flex gap-1 shrink-0">
               <button
                 onClick={() => setAddMode('text')}
                 className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
                   addMode === 'text' ? 'bg-white text-[#6183FF] shadow-sm' : 'text-gray-400'
                 }`}
               >
-                Enter text
+                Health profile
               </button>
               <button
                 onClick={() => setAddMode('file')}
@@ -610,82 +681,137 @@ export default function Dashboard() {
                   addMode === 'file' ? 'bg-white text-[#6183FF] shadow-sm' : 'text-gray-400'
                 }`}
               >
-                Upload file
+                Clinical file
               </button>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-4 overflow-y-auto">
               {addMode === 'text' ? (
                 <>
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">
-                      Category
-                    </label>
-                    <select
-                      value={textCategory}
-                      onChange={(e) => {
-                        setTextCategory(e.target.value);
-                        if (!textTitle.trim() || textTitle === textCategory) {
-                          setTextTitle(e.target.value === 'General' ? '' : e.target.value);
-                        }
-                      }}
-                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-bold text-gray-700 focus:outline-none focus:border-[#6183FF]"
-                    >
-                      {[
-                        'General',
-                        'Height',
-                        'Weight',
-                        'Blood Group',
-                        'Genotype',
-                        'Allergies',
-                        'Family History',
-                        'Medication History',
-                        'Emergency Contact',
-                        'Visit Note',
-                      ].map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
+                  <p className="text-sm text-gray-500 font-medium">
+                    Fill any fields you want — they update your profile (vitals, history, allergies). They will not appear under Clinical Records.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Height</label>
+                      <input
+                        value={profileForm.height}
+                        onChange={(e) => setProfileForm((p) => ({ ...p, height: e.target.value }))}
+                        placeholder="e.g. 182 cm"
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:border-[#6183FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Weight</label>
+                      <input
+                        value={profileForm.weight}
+                        onChange={(e) => setProfileForm((p) => ({ ...p, weight: e.target.value }))}
+                        placeholder="e.g. 75 kg"
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:border-[#6183FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Blood group</label>
+                      <input
+                        value={profileForm.bloodGroup}
+                        onChange={(e) => setProfileForm((p) => ({ ...p, bloodGroup: e.target.value }))}
+                        placeholder="e.g. O+"
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:border-[#6183FF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Genotype</label>
+                      <input
+                        value={profileForm.genotype}
+                        onChange={(e) => setProfileForm((p) => ({ ...p, genotype: e.target.value }))}
+                        placeholder="e.g. AA"
+                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:border-[#6183FF]"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">
-                      Name / Title *
-                    </label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Allergies</label>
                     <input
-                      type="text"
-                      value={textTitle}
-                      onChange={(e) => setTextTitle(e.target.value)}
-                      placeholder="e.g. Blood Group, Penicillin Allergy…"
-                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-bold text-gray-700 focus:outline-none focus:border-[#6183FF]"
+                      value={profileForm.allergies}
+                      onChange={(e) => setProfileForm((p) => ({ ...p, allergies: e.target.value }))}
+                      placeholder="e.g. Penicillin, Peanuts"
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:border-[#6183FF]"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">
-                      Content *
-                    </label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Family history</label>
                     <textarea
-                      value={textContent}
-                      onChange={(e) => setTextContent(e.target.value)}
-                      placeholder="Enter the details…"
-                      rows={5}
-                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-medium text-gray-700 focus:outline-none focus:border-[#6183FF] resize-none"
+                      value={profileForm.familyHistory}
+                      onChange={(e) => setProfileForm((p) => ({ ...p, familyHistory: e.target.value }))}
+                      placeholder="e.g. Hypertension on father's side"
+                      rows={2}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 font-medium text-gray-700 text-sm focus:outline-none focus:border-[#6183FF] resize-none"
                     />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1.5">Medication history</label>
+                    <textarea
+                      value={profileForm.medicationHistory}
+                      onChange={(e) => setProfileForm((p) => ({ ...p, medicationHistory: e.target.value }))}
+                      placeholder="e.g. Metformin 500mg"
+                      rows={2}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 font-medium text-gray-700 text-sm focus:outline-none focus:border-[#6183FF] resize-none"
+                    />
+                  </div>
+                  <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-3 space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Emergency contact</p>
+                    <input
+                      value={profileForm.emergencyName}
+                      onChange={(e) => setProfileForm((p) => ({ ...p, emergencyName: e.target.value }))}
+                      placeholder="Full name"
+                      className="w-full bg-white border border-gray-100 rounded-xl px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:border-[#6183FF]"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        value={profileForm.emergencyRelation}
+                        onChange={(e) => setProfileForm((p) => ({ ...p, emergencyRelation: e.target.value }))}
+                        placeholder="Relationship"
+                        className="w-full bg-white border border-gray-100 rounded-xl px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:border-[#6183FF]"
+                      />
+                      <input
+                        value={profileForm.emergencyPhone}
+                        onChange={(e) => setProfileForm((p) => ({ ...p, emergencyPhone: e.target.value }))}
+                        placeholder="Phone"
+                        className="w-full bg-white border border-gray-100 rounded-xl px-3 py-2.5 font-bold text-gray-700 text-sm focus:outline-none focus:border-[#6183FF]"
+                      />
+                    </div>
                   </div>
                   <button
-                    onClick={saveTextRecord}
+                    onClick={saveProfileFields}
                     disabled={savingText}
                     className="w-full bg-[#6183FF] text-white font-bold py-4 rounded-2xl hover:bg-[#4E6EEF] transition-all disabled:opacity-50"
                   >
-                    {savingText ? 'Saving…' : 'Save Record'}
+                    {savingText ? 'Saving…' : 'Save profile fields'}
                   </button>
                 </>
               ) : (
-                <div className="text-center py-6">
-                  <p className="text-gray-500 font-medium mb-6">
-                    Upload an image or document (PDF, images, text files).
+                <div className="space-y-5 py-2">
+                  <p className="text-sm text-gray-500 font-medium">
+                    Upload labs, imaging, prescriptions, visit reports, or other clinical documents. These appear under Clinical Records.
                   </p>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">
+                      Category *
+                    </label>
+                    <select
+                      value={fileCategory}
+                      onChange={(e) => setFileCategory(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 font-bold text-gray-700 focus:outline-none focus:border-[#6183FF]"
+                    >
+                      {['Lab Results', 'Imaging', 'Prescriptions', 'Visit Report', 'Test Results', 'Other Clinical'].map(
+                        (c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
                   <button
                     onClick={handlePickFile}
                     disabled={uploading}
