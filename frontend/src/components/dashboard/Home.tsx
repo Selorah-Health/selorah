@@ -39,19 +39,15 @@ export default function Home({ user, records, getFormattedDate }: HomeProps) {
           </div>
         </div>
         <div onClick={() => navigate('/dashboard/records')} className="bg-white p-6 rounded-[24px] border border-gray-50 shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-[#6183FF]/30 transition-colors">
-  <div>
-    <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Total Records</p>
-    <span className="text-[36px] font-bold text-[#101217] leading-none">
-      {records.length}   {/* was hardcoded 12 */}
-    </span>
-  </div>
-  <div className="flex items-end justify-between">
-    <p className="text-[11px] font-bold text-gray-400">
-      {records.length} total
-    </p>
-    <img src="/assets/total-records-card-icon.png" alt="I" className="w-8 h-8" />
-  </div>
-</div>
+          <div>
+            <p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Total Records</p>
+            <span className="text-[36px] font-bold text-[#101217] leading-none">{records.length}</span>
+          </div>
+          <div className="flex items-end justify-between">
+            <p className="text-[11px] font-bold text-gray-400">{records.length} total</p>
+            <img src="/assets/total-records-card-icon.png" alt="I" className="w-8 h-8" />
+          </div>
+        </div>
         <div onClick={() => navigate('/dashboard/earnings')} className="bg-white p-6 rounded-[24px] border border-gray-50 shadow-sm flex flex-col justify-between min-h-[140px] cursor-pointer hover:border-[#6183FF]/30 transition-colors">
           <div><p className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">This Month Earnings</p><span className="text-[36px] font-bold text-[#101217] leading-none">₦3,000</span></div>
           <div className="flex items-end justify-between">
@@ -78,8 +74,8 @@ export default function Home({ user, records, getFormattedDate }: HomeProps) {
           </div>
           <div className="divide-y divide-gray-50">
             {records.map((record) => (
-              <div 
-                key={record.id} 
+              <div
+                key={record.id}
                 onClick={() => navigate(`/dashboard/records/${record.id}`)}
                 className="flex items-center justify-between py-4 first:pt-0 last:pb-0 hover:bg-gray-50 px-2 -mx-2 rounded-xl transition-all cursor-pointer group"
               >
@@ -124,7 +120,7 @@ export default function Home({ user, records, getFormattedDate }: HomeProps) {
                 </svg>
               </div>
             </div>
-            
+
             <div className="h-[180px] w-full -ml-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={[
@@ -135,20 +131,20 @@ export default function Home({ user, records, getFormattedDate }: HomeProps) {
                   { name: 'Mar', value: 11200 },
                   { name: 'Apr', value: 4100, active: true },
                 ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <XAxis 
-                    dataKey="name" 
+                  <XAxis
+                    dataKey="name"
                     axisLine={{ stroke: '#F3F4F6' }}
                     tickLine={false}
                     tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 'bold' }}
                     dy={10}
                   />
-                  <YAxis 
+                  <YAxis
                     axisLine={{ stroke: '#F3F4F6' }}
                     tickLine={false}
                     tick={{ fontSize: 10, fill: '#9CA3AF', fontWeight: 'bold' }}
                     tickFormatter={(value) => value >= 1000 ? `${value / 1000}k` : value}
                   />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
@@ -169,7 +165,7 @@ export default function Home({ user, records, getFormattedDate }: HomeProps) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            
+
             <div className="text-center mt-2">
               <p className="text-[9px] text-gray-300 font-bold uppercase">Nov 2025 - Apr 2026</p>
             </div>
