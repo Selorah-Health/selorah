@@ -1,3 +1,4 @@
+// ghgh
 import { useState, useEffect } from 'react';
 import { QrCodeIcon, ClockIcon, ArrowLeftIcon, XMarkIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 import { QRCodeCanvas } from 'qrcode.react';
