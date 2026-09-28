@@ -1,4 +1,3 @@
-// ghgh
 import { useState, useEffect } from 'react';
 import { QrCodeIcon, ClockIcon, ArrowLeftIcon, XMarkIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -12,15 +11,58 @@ export default function QRCodes() {
   const [customExpiry, setCustomExpiry] = useState<string>('5');
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isRevoked, setIsRevoked] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Restore the most recent active QR when returning to this tab
+  useEffect(() => {
+    const restoreActiveLink = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('shared_links')
+          .select('token, expires_at, is_active')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .gt('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && data) {
+          setQrToken(data.token);
+          setIsRevoked(false);
+
+          const expiresMs = new Date(data.expires_at).getTime() - Date.now();
+          // Treat "far future" (e.g. 10-year "none") as no countdown
+          const TEN_YEARS_MS = 9 * 365 * 24 * 60 * 60 * 1000;
+          if (expiresMs > 0 && expiresMs < TEN_YEARS_MS) {
+            setTimeLeft(Math.floor(expiresMs / 1000));
+          } else {
+            setTimeLeft(null);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to restore active QR:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreActiveLink();
+  }, []);
 
   const generateCode = async () => {
     setIsRevoked(false);
 
-    let expiresAt;
+    let expiresAt: string;
     let durationMins = 0;
 
     if (expiryType === 'preset' && expiry === 'none') {
-      // Set expiry far into the future (10 years)
       expiresAt = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString();
     } else {
       durationMins = expiryType === 'custom' ? parseInt(customExpiry) : parseInt(expiry);
@@ -40,7 +82,7 @@ export default function QRCodes() {
         .insert({
           user_id: user.id,
           expires_at: expiresAt,
-          is_active: true
+          is_active: true,
         })
         .select('token')
         .single();
@@ -120,6 +162,14 @@ export default function QRCodes() {
   };
 
   const domain = window.location.origin;
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-10 min-h-[500px] flex flex-col items-center justify-center text-center font-sora">
+        <p className="text-gray-400 font-medium">Loading access codes…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-10 min-h-[500px] flex flex-col items-center justify-center text-center font-sora">
@@ -256,9 +306,16 @@ export default function QRCodes() {
             </div>
           )}
 
-          <button onClick={() => setQrToken(null)} className="mt-10 flex items-center gap-2 text-gray-400 font-bold text-sm hover:text-[#6183FF] transition-colors">
+          <button
+            onClick={() => {
+              setQrToken(null);
+              setIsRevoked(false);
+              setTimeLeft(null);
+            }}
+            className="mt-10 flex items-center gap-2 text-gray-400 font-bold text-sm hover:text-[#6183FF] transition-colors"
+          >
             <ArrowLeftIcon className="w-4 h-4" />
-            Back to generation
+            {isRevoked ? 'Generate a new code' : 'Back to generation'}
           </button>
         </div>
       )}
