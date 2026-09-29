@@ -1,3 +1,4 @@
+// changed
 import { useState, useEffect, useRef } from 'react';
 import {
   HomeIcon,
@@ -239,6 +240,46 @@ if (!user) {
     'Other Clinical': 'Clinical Document',
   };
 
+
+  /** Ensure a patient_profiles row exists for the logged-in user (demo-safe). */
+  const ensurePatientProfile = async (user: { id: string; email?: string | null; user_metadata?: any }) => {
+    const { data: existing, error: selErr } = await supabase
+      .from('patient_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (existing?.id) return existing;
+
+    // RLS may hide the row — try insert; if unique violation, re-select
+    const first = user.user_metadata?.first_name || '';
+    const last = user.user_metadata?.last_name || '';
+    const fullName = [first, last].filter(Boolean).join(' ') || user.email?.split('@')[0] || 'Patient';
+
+    const { data: created, error: insErr } = await supabase
+      .from('patient_profiles')
+      .insert({
+        user_id: user.id,
+        full_name: fullName,
+      })
+      .select('id')
+      .single();
+
+    if (created?.id) return created;
+
+    // Race / already exists / partial RLS: one more select
+    const { data: again } = await supabase
+      .from('patient_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (again?.id) return again;
+
+    console.error('ensurePatientProfile failed', selErr, insErr);
+    return null;
+  };
+
   const saveProfileFields = async () => {
     const entries: { title: string; content: string; recordType: string; profileKey?: string }[] = [];
     if (profileForm.height.trim())
@@ -300,14 +341,11 @@ if (!user) {
         return;
       }
 
-      const { data: patientProfile, error: profileError } = await supabase
-        .from('patient_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError || !patientProfile) {
-        toastError('Patient profile not found. Please complete onboarding first.');
+      const patientProfile = await ensurePatientProfile(user);
+      if (!patientProfile) {
+        toastError(
+          'Could not create patient profile. Run the SQL policy fix for patient_profiles INSERT, then try again.'
+        );
         return;
       }
 
@@ -365,14 +403,11 @@ if (!user) {
         return;
       }
 
-      const { data: patientProfile, error: profileError } = await supabase
-        .from('patient_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError || !patientProfile) {
-        toastError('Patient profile not found. Please complete onboarding first.');
+      const patientProfile = await ensurePatientProfile(user);
+      if (!patientProfile) {
+        toastError(
+          'Could not create patient profile. Check patient_profiles INSERT RLS policy.'
+        );
         setUploading(false);
         return;
       }
