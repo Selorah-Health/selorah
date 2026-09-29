@@ -107,14 +107,23 @@ export default function SharedRecord() {
         }
 
         // 2) Patient profile for the link owner
-        const { data: profile } = await supabase
+        // RLS must allow SELECT when an active shared_links row exists for this user_id
+        const { data: profile, error: profileError } = await supabase
           .from('patient_profiles')
           .select('id, user_id, full_name, date_of_birth, blood_group, genotype, phone, nin')
           .eq('user_id', link.user_id)
           .maybeSingle();
 
-        // Optional: auth metadata via public fields is not available; use profile only
-        const fullName = profile?.full_name || 'Patient';
+        if (profileError) {
+          console.warn('patient_profiles read failed (check RLS):', profileError.message);
+        }
+
+        let fullName =
+          (profile?.full_name && String(profile.full_name).trim()) ||
+          '';
+        // Fallback: if full_name empty, leave placeholder — UI will show "Patient"
+        // Prefer never inventing a fake name.
+        if (!fullName) fullName = 'Patient';
         const nameParts = fullName.trim().split(/\s+/);
         const firstName = nameParts[0] || 'Patient';
         const lastName = nameParts.slice(1).join(' ') || '';
@@ -318,7 +327,7 @@ export default function SharedRecord() {
     activeCategory === 'all' ? records : records.filter((r) => r.category === activeCategory);
 
   const formatTime = (seconds: number | null) => {
-    if (seconds === null) return '∞';
+    if (seconds === null) return 'No expiry';
     if (seconds <= 0) return '0m 0s';
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
