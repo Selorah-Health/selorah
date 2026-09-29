@@ -1,4 +1,3 @@
-// changed
 import { useState, useEffect, useRef } from 'react';
 import {
   HomeIcon,
@@ -72,35 +71,40 @@ export default function Dashboard() {
   useEffect(() => {
     async function getUser() {
       try {
-        const savedUser = localStorage.getItem('selorah_user');
-        if (savedUser) {
+        // Instant paint from localStorage, then refresh session in background
+        const saved = localStorage.getItem('selorah_user');
+        if (saved) {
           try {
-            const parsed = JSON.parse(savedUser);
+            const parsed = JSON.parse(saved);
             setUser({
               email: parsed.email || parsed.phone,
               user_metadata: {
-                first_name: parsed.first_name,
-                last_name: parsed.last_name,
-                is_pro: parsed.is_pro
-              }
+                first_name: parsed.first_name || parsed.name?.split(' ')[0] || 'User',
+                last_name: parsed.last_name || '',
+                is_pro: parsed.is_pro || false,
+              },
             });
-          } catch (e) {
-            setUser({ email: 'user@selorah.com', user_metadata: { first_name: 'Guest', is_pro: false } });
-          }
-          fetchRecords();
-        } else {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            setUser({ email: 'user@selorah.com', user_metadata: { first_name: 'Guest', is_pro: false } });
-            fetchRecords();
-          } else {
-            setUser(user);
-            fetchRecords();
-          }
+          } catch { /* ignore */ }
         }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
+        if (user) {
+          setUser(user);
+          // Keep local cache warm
+          localStorage.setItem(
+            'selorah_user',
+            JSON.stringify({
+              email: user.email,
+              first_name: user.user_metadata?.first_name,
+              last_name: user.user_metadata?.last_name,
+              is_pro: user.user_metadata?.is_pro,
+            })
+          );
+        }
+        await fetchRecords({ silent: true });
       } catch (err) {
-        setUser({ email: 'user@selorah.com', user_metadata: { first_name: 'User', is_pro: false } });
-        fetchRecords();
+        await fetchRecords({ silent: true });
       }
     }
 
@@ -122,22 +126,14 @@ export default function Dashboard() {
     return `${weekday}, ${day}${suffix} ${month} ${year}`;
   };
 
-  const fetchRecords = async () => {
-    setLoading(true);
+  const fetchRecords = async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
+    if (!silent) setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const userName = user?.user_metadata?.first_name || 'User';
 
-      const hardcodedRecords = [
-        { id: 'hc1', name: `${userName}'s Health Checkup`, date: 'Today • Selorah Medical Center', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-        { id: 'hc2', name: 'SNH Lab Result', date: 'Yesterday • St. Nicholas Hospital • Lagos Island', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-        { id: 'hc3', name: 'Metformin 500mg Prescription', date: '03/15/2026 • Igando General Hospital', status: 'Encrypted', icon: '/assets/custom-prescription-icon.png' },
-        { id: 'hc4', name: 'YFB Vaccination', date: '03/16/2026 • Self-reported', status: 'Shared Once', icon: '/assets/custom-vaccination-icon.png' },
-        { id: 'hc5', name: 'HSH Lab Result', date: '01/10/2026 • Havana Specialist Hospital', status: 'Encrypted', icon: '/assets/total-records-card-icon.png' },
-      ];
-
-      if (!user) {
-        setRecords(hardcodedRecords as any);
+if (!user) {
+        setRecords([]);
         return;
       }
 
@@ -186,8 +182,7 @@ export default function Dashboard() {
         }
       }
 
-      // DB rows first, then demo mock records
-      setRecords([...dbRecords, ...hardcodedRecords] as any);
+      setRecords(dbRecords as any);
     } catch (err) {
       console.error('Failed to fetch records:', err);
     } finally {
@@ -212,9 +207,8 @@ export default function Dashboard() {
     return false;
   };
 
-  const handleUploadClick = async () => {
-    const ok = await requireAuth();
-    if (!ok) return;
+  const handleUploadClick = () => {
+    // Open instantly for demo speed — auth enforced on save/upload
     setShowAddModal(true);
     setAddMode('text');
     setProfileForm({
@@ -341,7 +335,7 @@ export default function Dashboard() {
       }
 
       setShowAddModal(false);
-      await fetchRecords();
+      await fetchRecords({ silent: true });
       success(`${entries.length} field${entries.length > 1 ? 's' : ''} saved to your profile.`, 'Profile updated');
     } catch (err: any) {
       toastError(err?.message || 'Unknown error');
@@ -397,7 +391,7 @@ export default function Dashboard() {
       } else {
         success('Your file was uploaded.', 'Upload complete');
         setShowAddModal(false);
-        fetchRecords();
+        fetchRecords({ silent: true });
       }
       setUploading(false);
     };
@@ -441,10 +435,11 @@ export default function Dashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    // Navigate immediately; sign out in background for demo speed
     localStorage.removeItem('selorah_user');
     navigate('/login');
+    void supabase.auth.signOut();
   };
 
   const menuItems = [
