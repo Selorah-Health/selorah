@@ -103,23 +103,16 @@ export default function Login() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Login failed. Please try again.');
 
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authData.user.id)
-        .maybeSingle();
-
-      const { data: patientRow } = await supabase
-        .from('patient_profiles')
-        .select('*')
-        .eq('user_id', authData.user.id)
-        .maybeSingle();
-
-      const { data: hospitalRow } = await supabase
-        .from('hospital_profiles')
-        .select('*')
-        .eq('user_id', authData.user.id)
-        .maybeSingle();
+      // Parallel profile lookups for faster login (demo)
+      const [
+        { data: userRow },
+        { data: patientRow },
+        { data: hospitalRow },
+      ] = await Promise.all([
+        supabase.from('users').select('*').eq('id', authData.user.id).maybeSingle(),
+        supabase.from('patient_profiles').select('*').eq('user_id', authData.user.id).maybeSingle(),
+        supabase.from('hospital_profiles').select('*').eq('user_id', authData.user.id).maybeSingle(),
+      ]);
 
       const role = normalizeRole(userRow?.role || 'patient');
       const profileData = {
