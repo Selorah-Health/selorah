@@ -36,6 +36,8 @@ export default function HospitalDashboard() {
   ]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResultsMode, setSearchResultsMode] = useState(false);
+  const [remoteSearchResults, setRemoteSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
   const [selectedReport, setSelectedReport] = useState<any>(null);
 
   const hospitalReports = [
@@ -286,12 +288,12 @@ export default function HospitalDashboard() {
 
   const allPatients = [...dbPatients, ...mockPatients];
 
-  /** Search by full name, NIN, or patient ID. */
+  /** Search by full name, NIN, or patient ID — local + remote. */
   const filteredPatients = (() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return allPatients;
     const qDigits = q.replace(/\s/g, '');
-    return allPatients.filter((p) => {
+    const local = allPatients.filter((p) => {
       const name = (p.name || '').toLowerCase();
       const nin = String(p.nin || '').toLowerCase().replace(/\s/g, '');
       const id = String(p.id || '').toLowerCase().replace(/\s/g, '');
@@ -302,16 +304,78 @@ export default function HospitalDashboard() {
         name.split(/\s+/).some((part: string) => part.startsWith(q))
       );
     });
+    // Merge remote results (dedupe by id / nin)
+    const seen = new Set(local.map((p) => String(p.id)));
+    const remoteExtra = remoteSearchResults.filter((p) => {
+      const key = String(p.id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return [...local, ...remoteExtra];
   })();
 
   /**
-   * Search is intentionally scoped to patients already known to this hospital
-   * (access_logs → dbPatients) plus local demo mocks. No global NIN/name lookup.
+   * Search local directory first, then query patient_profiles by NIN / name.
+   * Requires RLS policy allowing authenticated providers to SELECT patient_profiles.
    */
-  const handleSearchSubmit = (e?: FormEvent) => {
+  const handleSearchSubmit = async (e?: FormEvent) => {
     e?.preventDefault();
     setSelectedPatient(null);
     setSearchResultsMode(true);
+    setRemoteSearchResults([]);
+
+    const q = searchQuery.trim();
+    if (!q) return;
+
+    setSearching(true);
+    try {
+      const qDigits = q.replace(/\s/g, '');
+      const isLikelyNin = /^\d{8,}$/.test(qDigits);
+
+      let query = supabase
+        .from('patient_profiles')
+        .select('id, user_id, full_name, date_of_birth, blood_group, genotype, phone, nin')
+        .limit(20);
+
+      if (isLikelyNin) {
+        query = query.eq('nin', qDigits);
+      } else {
+        query = query.ilike('full_name', `%${q}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error('Patient search error:', error);
+        // Keep local filter results only
+        return;
+      }
+
+      const mapped = (data || []).map((p: any) => ({
+        id: p.id || p.user_id,
+        user_id: p.user_id,
+        name: p.full_name || 'Patient',
+        nin: p.nin || null,
+        date_of_birth: p.date_of_birth,
+        vitals: {
+          bloodType: p.blood_group || null,
+          height: null,
+          weight: null,
+          genotype: p.genotype || null,
+        },
+        allergies: [],
+        medicalConditions: null,
+        lastVisit: '—',
+        status: 'Found',
+        fetchedRecords: null,
+        fromRemote: true,
+      }));
+      setRemoteSearchResults(mapped);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSearching(false);
+    }
   };
 
   const downloadChart = () => {
@@ -569,13 +633,13 @@ export default function HospitalDashboard() {
                   <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                     <h2 className="text-xl font-bold">{searchResultsMode ? `Search results${searchQuery ? ` for "${searchQuery}"` : ''}` : 'Patient Directory'}</h2>
                     {searchResultsMode && (
-                      <button type="button" onClick={() => { setSearchResultsMode(false); setSearchQuery(''); }} className="text-sm font-bold text-[#6183FF] hover:underline">
+                      <button type="button" onClick={() => { setSearchResultsMode(false); setRemoteSearchResults([]); setSearchQuery(''); setSearchQuery(''); }} className="text-sm font-bold text-[#6183FF] hover:underline">
                         Clear search
                       </button>
                     )}
                   </div>
                   {searchResultsMode && filteredPatients.length === 0 && (
-                    <p className="text-gray-400 text-sm mb-6">No patients found for this NIN or name.</p>
+                    <p className="text-gray-400 text-sm mb-6">{searching ? "Searching directory…" : "No patients found for this NIN or name. Share a QR or register NIN on Selorah."}</p>
                   )}
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-gray-500">
