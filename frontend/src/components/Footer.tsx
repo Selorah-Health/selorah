@@ -11,7 +11,7 @@ export default function Footer() {
     { name: 'Instagram', href: 'https://instagram.com/selorahealth', icon: '/landing/social-instagram.png' },
     { name: 'X', href: 'https://x.com/selorahealth', icon: '/landing/social-x.png' },
     { name: 'LinkedIn', href: 'https://www.linkedin.com/company/selorahealth', icon: '/landing/social-linkedin.png' },
-    { name: 'TikTok', href: '#', icon: '/landing/social-tiktok.png' },
+    { name: 'TikTok', href: 'https://tiktok.com/@selorahealth', icon: '/landing/social-tiktok.png' },
     { name: 'WhatsApp', href: 'https://chat.whatsapp.com/JI2LK41IF8yHiJjEuWKk2M?mode=gi_t', icon: '/landing/social-whatsapp.png' },
   ];
 
@@ -22,7 +22,7 @@ export default function Footer() {
       {/* ── Watermark band: landing page background ── */}
       <div className="bg-[var(--background)] w-full overflow-hidden select-none pointer-events-none leading-none">
         <img
-          src="/assets/selorah-object-for-footer.png"
+          src="/landing/selorah-object-for-footer.png"
           alt=""
           aria-hidden
           className="w-full h-auto object-contain object-left-top block"
@@ -109,7 +109,7 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-white/20 text-xs text-white/70">
-            <span>Copyright (c) 2026 Selorah Health</span>
+            <span>© 2026 Selorah Health</span>
             <span className="hidden sm:inline">All Rights Reserved.</span>
             <div className="flex items-center gap-4">
               <Link to="/about" className="hover:text-white transition-colors">Help Center</Link>
