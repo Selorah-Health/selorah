@@ -1,96 +1,189 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { ArrowUpRightIcon } from '@heroicons/react/24/outline';
 import WaitlistModal from './WaitlistModal';
 
 export default function Footer() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const navigate = useNavigate();
 
-  const scrollToSection = (id: string) => {
-    if (window.location.pathname !== '/') {
-      navigate('/#' + id);
-    } else {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  };
+  const socials = [
+    { name: 'Facebook', href: '#', icon: '/landing/social-facebook.png' },
+    { name: 'Instagram', href: 'https://instagram.com/selorahealth', icon: '/landing/social-instagram.png' },
+    { name: 'X', href: 'https://x.com/selorahealth', icon: '/landing/social-x.png' },
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/selorahealth', icon: '/landing/social-linkedin.png' },
+    { name: 'TikTok', href: 'https://tiktok.com/@selorahealth', icon: '/landing/social-tiktok.png' },
+    { name: 'WhatsApp', href: 'https://chat.whatsapp.com/JI2LK41IF8yHiJjEuWKk2M?mode=gi_t', icon: '/landing/social-whatsapp.png' },
+  ];
 
   return (
     <>
       <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      <footer className="bg-[#0A0B14] text-white pt-24 pb-12 px-12 border-t border-white/10 overflow-hidden relative font-sora">
-        {/* Background Text */}
-        <div className="absolute bottom-0 left-0 w-full opacity-5 pointer-events-none select-none">
-          <h2 className="text-[20vw] font-black leading-none whitespace-nowrap -mb-8">selorahealth</h2>
+
+      <footer className="bg-[#6183FF] text-white relative overflow-hidden font-sora">
+        {/* ── Large "selorah" watermark ── */}
+        <div className="relative w-full overflow-hidden select-none pointer-events-none">
+          <img
+            src="/assets/selorah-object-for-footer.png"
+            alt=""
+            aria-hidden
+            className="w-full max-w-none h-auto object-cover object-top opacity-90"
+            style={{ maxHeight: '180px' }}
+          />
         </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-24">
-            <div className="lg:col-span-1">
-              <Link to="/" className="flex items-center mb-8 hover:opacity-80 transition-opacity">
-                <img src="/logo.svg" alt="Selorah Logo" className="w-[45px] h-[45px]" />
-              </Link>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Product</h4>
-              <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><Link to="/login" state={{ from: '/dashboard' }} className="hover:text-white transition-colors">Patient App</Link></li>
-                <li><Link to="/login" state={{ from: '/hospital' }} className="hover:text-white transition-colors">Hospital Portal</Link></li>
-                <li><Link to="/login" state={{ from: '/researcher' }} className="hover:text-white transition-colors">Research Portal</Link></li>
-                <li><Link to="/login" state={{ from: '/insurer' }} className="hover:text-white transition-colors">Insurer Portal</Link></li>
-                <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Company</h4>
-              <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><Link to="/about" className="hover:text-white transition-colors">About</Link></li>
-                <li><a href="https://samuel-amanze.vercel.app/" className="hover:text-white transition-colors">Schedule a meeting</a></li>
-                <li><Link to="/careers" className="hover:text-white transition-colors">Career</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Legal</h4>
-              <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-white transition-colors">Terms of use</Link></li>
-                <li><Link to="/cookie-policy" className="hover:text-white transition-colors">Cookie Policy</Link></li>
-                <li><Link to="/dpa" className="hover:text-white transition-colors">Data Processing Agreement</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-500 text-xs uppercase tracking-widest mb-6">Social</h4>
-              <ul className="space-y-4 text-sm font-medium text-gray-300">
-                <li><a href="https://linkedin.com/company/selorahealth/" className="hover:text-white transition-colors">LinkedIn</a></li>
-                <li><a href="https://x.com/selorahealth" className="hover:text-white transition-colors">X/Twitter</a></li>
-                <li><a href="https://chat.whatsapp.com/JI2LK41IF8yHiJjEuWKk2M?mode=gi_t" className="hover:text-white transition-colors">WhatsApp Community</a></li>
-              </ul>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-10 relative z-10">
+          {/* ── Social icons row ── */}
+          <div className="flex items-center gap-4 sm:gap-5 mb-12 sm:mb-14">
+            {socials.map((s) => (
+              <a
+                key={s.name}
+                href={s.href}
+                target={s.href === '#' ? undefined : '_blank'}
+                rel={s.href === '#' ? undefined : 'noopener noreferrer'}
+                aria-label={s.name}
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity"
+              >
+                <img
+                  src={s.icon}
+                  alt=""
+                  className="w-5 h-5 sm:w-6 sm:h-6 object-contain brightness-0 invert"
+                />
+              </a>
+            ))}
           </div>
 
-          <div className="flex flex-col md:flex-row items-center pt-12 border-t border-white/5 gap-8">
-            <div className="text-gray-500 text-xs flex-1 order-2 md:order-1 text-center md:text-left">
-              <span>Copyright (c) 2026, Selorah Health Limited. All rights reserved.</span>
-            </div>
+          {/* ── Main content: heading+CTA left, columns right ── */}
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-12 lg:gap-16 mb-14 sm:mb-16">
+            {/* Left: heading + CTA */}
+            <div className="max-w-sm shrink-0">
+              <h3 className="text-2xl sm:text-3xl font-bold leading-[1.15] tracking-tight mb-6 uppercase">
+                Ready to take
+                <br />
+                control of your
+                <br />
+                medical records?
+              </h3>
 
-            <div className="flex-1 flex justify-center order-1 md:order-2">
+              {/* White pill CTA with black circle + white arrow */}
               <button
+                type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="bg-primary text-white px-8 py-2.5 rounded-full font-bold hover:bg-primary-hover transition-all hover:scale-105 shadow-lg shadow-primary/20"
+                className="inline-flex items-center gap-2.5 bg-white text-[#020924] font-semibold rounded-full pl-5 pr-1.5 py-1.5 text-sm sm:text-base transition-all duration-300 hover:bg-gray-50 active:scale-[0.98] group"
               >
-                Join Waitlist
+                <span>Join The Waitlist</span>
+                <span className="w-8 h-8 rounded-full bg-[#020924] text-white flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                  <ArrowUpRightIcon className="w-4 h-4" strokeWidth={2.5} />
+                </span>
               </button>
             </div>
 
-            <div className="text-gray-500 text-xs flex gap-6 flex-1 justify-center md:justify-end order-3">
-              <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
-              <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            {/* Right: three link columns */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 sm:gap-12 lg:gap-16 flex-1">
+              {/* PRODUCT */}
+              <div>
+                <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">
+                  Product
+                </h4>
+                <ul className="space-y-2.5 text-sm font-medium">
+                  <li>
+                    <Link to="/login" className="hover:text-white/80 transition-colors">
+                      Patient Dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/login" className="hover:text-white/80 transition-colors">
+                      Hospital Portal
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/login" className="hover:text-white/80 transition-colors">
+                      Researcher Portal
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/login" className="hover:text-white/80 transition-colors">
+                      Insurer Portal
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/pricing" className="hover:text-white/80 transition-colors">
+                      Pricing
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* COMPANY */}
+              <div>
+                <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">
+                  Company
+                </h4>
+                <ul className="space-y-2.5 text-sm font-medium">
+                  <li>
+                    <Link to="/about" className="hover:text-white/80 transition-colors">
+                      About
+                    </Link>
+                  </li>
+                  <li>
+                    <a
+                      href="https://samuel-amanze.vercel.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-white/80 transition-colors"
+                    >
+                      Schedule a Meeting
+                    </a>
+                  </li>
+                  <li>
+                    <Link to="/careers" className="hover:text-white/80 transition-colors">
+                      Careers
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* LEGAL */}
+              <div>
+                <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">
+                  Legal
+                </h4>
+                <ul className="space-y-2.5 text-sm font-medium">
+                  <li>
+                    <Link to="/privacy" className="hover:text-white/80 transition-colors">
+                      Privacy Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/terms" className="hover:text-white/80 transition-colors">
+                      Terms of use
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/cookie-policy" className="hover:text-white/80 transition-colors">
+                      Cookie Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/dpa" className="hover:text-white/80 transition-colors">
+                      DPA
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Bottom bar ── */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-white/20 text-xs text-white/70">
+            <span>© 2026 Selorah Health</span>
+            <span className="hidden sm:inline">All Rights Reserved.</span>
+            <div className="flex items-center gap-4">
+              <Link to="/about" className="hover:text-white transition-colors">
+                Help Center
+              </Link>
+              <Link to="/about" className="hover:text-white transition-colors">
+                Contact
+              </Link>
             </div>
           </div>
         </div>
