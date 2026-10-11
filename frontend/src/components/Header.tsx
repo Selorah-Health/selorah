@@ -4,11 +4,11 @@ import {
   Bars3Icon,
   XMarkIcon,
   UserCircleIcon,
-  UserIcon,
-  BuildingOffice2Icon,
-  BeakerIcon,
-  ShieldCheckIcon,
   ChevronDownIcon,
+  QrCodeIcon,
+  MagnifyingGlassIcon,
+  BoltIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 import WaitlistModal from './WaitlistModal';
 import CTAButton from './CTAButton';
@@ -26,15 +26,25 @@ const PORTALS = [
     description:
       'Securely store, view and share your complete medical history with time-bound QR codes. You decide who sees what and for how long.',
     href: '/login',
-    icon: UserIcon,
+    features: [
+      { icon: QrCodeIcon, text: 'Time-bound QR sharing' },
+      { icon: MagnifyingGlassIcon, text: 'Full history in one place' },
+      { icon: BoltIcon, text: 'Emergency info when it counts' },
+      { icon: CurrencyDollarIcon, text: 'Earn from research shares' },
+    ],
   },
   {
     id: 'hospital',
     name: 'Hospitals Portal',
     description:
-      'Scan or open a patient share at the front desk. See only what the patient authorised. Built for busy clinics.',
+      'Faster intake when patients bring a clear trail. Less missing paperwork at the desk.',
     href: '/login',
-    icon: BuildingOffice2Icon,
+    features: [
+      { icon: QrCodeIcon, text: 'Scan or open a patient shared QR code' },
+      { icon: MagnifyingGlassIcon, text: 'Unified EMR search by NIN' },
+      { icon: BoltIcon, text: 'Faster emergency handovers' },
+      { icon: CurrencyDollarIcon, text: 'Share of research revenue' },
+    ],
   },
   {
     id: 'researcher',
@@ -42,7 +52,12 @@ const PORTALS = [
     description:
       'Consent-first participation. Access structured, patient-controlled data while patients retain full ownership.',
     href: '/login',
-    icon: BeakerIcon,
+    features: [
+      { icon: QrCodeIcon, text: 'Clear consent paths' },
+      { icon: MagnifyingGlassIcon, text: 'Structured datasets' },
+      { icon: BoltIcon, text: 'Patient stays in control' },
+      { icon: CurrencyDollarIcon, text: 'Ethical data access' },
+    ],
   },
   {
     id: 'insurer',
@@ -50,7 +65,12 @@ const PORTALS = [
     description:
       'Receive patient-authorised medical context for cleaner claims. Full audit trail of every access granted.',
     href: '/login',
-    icon: ShieldCheckIcon,
+    features: [
+      { icon: QrCodeIcon, text: 'Patient-authorised context' },
+      { icon: MagnifyingGlassIcon, text: 'Fewer missing documents' },
+      { icon: BoltIcon, text: 'Clear audit of shares' },
+      { icon: CurrencyDollarIcon, text: 'Faster claims processing' },
+    ],
   },
 ];
 
@@ -68,7 +88,6 @@ export default function Header({
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Glassmorphism on scroll (keep existing behaviour)
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
     onScroll();
@@ -76,7 +95,6 @@ export default function Header({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close portals dropdown on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (portalsRef.current && !portalsRef.current.contains(e.target as Node)) {
@@ -112,8 +130,7 @@ export default function Header({
       <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${navBg}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 h-16 sm:h-20 flex items-center justify-between gap-4">
-          {/* Brand */}
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 h-16 sm:h-[4.5rem] flex items-center justify-between gap-4">
           <Link
             to="/"
             className="flex items-center gap-2 group hover:opacity-80 transition-opacity shrink-0"
@@ -121,7 +138,7 @@ export default function Header({
             <img
               src="/logo.svg"
               alt="Selorah Logo"
-              className="w-9 h-9 sm:w-[42px] sm:h-[42px] group-hover:scale-105 transition-transform"
+              className="w-8 h-8 sm:w-9 sm:h-9 group-hover:scale-105 transition-transform"
             />
             <span
               className={`font-bold text-base sm:text-lg tracking-tight ${
@@ -132,9 +149,8 @@ export default function Header({
             </span>
           </Link>
 
-          {/* Desktop Nav */}
           <div
-            className={`hidden lg:flex items-center gap-1 xl:gap-2 text-sm font-medium ${
+            className={`hidden lg:flex items-center gap-1 text-sm font-medium ${
               isDark ? 'text-white/80' : 'text-gray-600'
             }`}
           >
@@ -148,7 +164,6 @@ export default function Header({
               How It Works
             </button>
 
-            {/* Portals Dropdown */}
             <div
               ref={portalsRef}
               className="relative"
@@ -171,14 +186,11 @@ export default function Header({
                 />
               </button>
 
-              {/* Dropdown panel */}
               {portalsOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-[520px] z-50">
-                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex">
-                    {/* Left: portal list */}
-                    <div className="w-[200px] bg-gray-50/80 p-2 border-r border-gray-100">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
+                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex w-[640px] min-h-[280px]">
+                    <div className="w-[220px] bg-[#F8F9FA] p-3 border-r border-gray-100 flex flex-col gap-1">
                       {PORTALS.map((portal) => {
-                        const Icon = portal.icon;
                         const isActive = activePortal.id === portal.id;
                         return (
                           <button
@@ -189,40 +201,42 @@ export default function Header({
                               navigate(portal.href);
                               setPortalsOpen(false);
                             }}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-sm font-medium transition-all ${
+                            className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-left text-sm font-medium transition-all ${
                               isActive
                                 ? 'bg-[#6183FF] text-white shadow-sm'
                                 : 'text-gray-700 hover:bg-white hover:shadow-sm'
                             }`}
                           >
-                            <Icon className="w-4.5 h-4.5 shrink-0" strokeWidth={2} />
+                            <span
+                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                isActive ? 'border-white bg-white' : 'border-gray-300'
+                              }`}
+                            >
+                              {isActive && (
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#6183FF]" />
+                              )}
+                            </span>
                             <span className="truncate">{portal.name}</span>
                           </button>
                         );
                       })}
                     </div>
 
-                    {/* Right: active portal detail */}
-                    <div className="flex-1 p-5 flex flex-col justify-between min-h-[180px]">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <activePortal.icon className="w-5 h-5 text-[#6183FF]" />
-                          <h4 className="font-bold text-gray-900 text-sm">
-                            {activePortal.name}
-                          </h4>
-                        </div>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          {activePortal.description}
-                        </p>
-                      </div>
-                      <Link
-                        to={activePortal.href}
-                        onClick={() => setPortalsOpen(false)}
-                        className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#6183FF] hover:underline"
-                      >
-                        Open portal
-                        <ChevronDownIcon className="w-3.5 h-3.5 -rotate-90" />
-                      </Link>
+                    <div className="flex-1 p-6 flex flex-col">
+                      <p className="text-sm text-gray-600 leading-relaxed mb-5">
+                        {activePortal.description}
+                      </p>
+                      <ul className="space-y-3 mt-auto">
+                        {activePortal.features.map((f) => {
+                          const FIcon = f.icon;
+                          return (
+                            <li key={f.text} className="flex items-start gap-2.5 text-sm text-gray-700">
+                              <FIcon className="w-4.5 h-4.5 text-[#6183FF] shrink-0 mt-0.5" strokeWidth={2} />
+                              <span>{f.text}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     </div>
                   </div>
                 </div>
@@ -249,7 +263,6 @@ export default function Header({
             </Link>
           </div>
 
-          {/* Right side */}
           <div className="flex items-center gap-3">
             <div className="hidden lg:flex items-center">
               {isLoggedIn ? (
@@ -274,7 +287,6 @@ export default function Header({
               )}
             </div>
 
-            {/* Mobile hamburger */}
             <button
               type="button"
               className="lg:hidden relative w-9 h-9 flex flex-col justify-center items-center gap-1.5 z-50"
@@ -291,7 +303,6 @@ export default function Header({
         </div>
       </nav>
 
-      {/* Mobile menu */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-40 bg-[#020924] pt-24 px-6 lg:hidden overflow-y-auto">
           <div className="flex flex-col gap-1 text-lg font-medium text-white/90">
@@ -305,20 +316,17 @@ export default function Header({
 
             <div className="py-3 border-b border-white/10">
               <p className="text-white/50 text-xs uppercase tracking-widest mb-2">Portals</p>
-              {PORTALS.map((p) => {
-                const Icon = p.icon;
-                return (
-                  <Link
-                    key={p.id}
-                    to={p.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 py-2.5 text-white/80 hover:text-white"
-                  >
-                    <Icon className="w-5 h-5 text-[#6183FF]" />
-                    {p.name}
-                  </Link>
-                );
-              })}
+              {PORTALS.map((p) => (
+                <Link
+                  key={p.id}
+                  to={p.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 py-2.5 text-white/80 hover:text-white"
+                >
+                  <span className="w-4 h-4 rounded-full border border-white/40" />
+                  {p.name}
+                </Link>
+              ))}
             </div>
 
             <button
