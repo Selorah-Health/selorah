@@ -109,8 +109,8 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-white/20 text-xs text-white/70">
-            <span>© 2026 Selorah Health</span>
-            <span className="hidden sm:inline">All Rights Reserved.</span>
+            <span>Copyright (c) 2026 Selorah Health</span>
+            <span className="sm:inline">All Rights Reserved.</span>
             <div className="flex items-center gap-4">
               <Link to="/about" className="hover:text-white transition-colors">Help Center</Link>
               <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
