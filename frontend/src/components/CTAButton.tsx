@@ -20,72 +20,57 @@ export default function CTAButton({
   type = 'button',
 }: CTAButtonProps) {
   const sizeMap = {
-    sm: 'px-4 py-2 text-sm gap-2',
-    md: 'px-5 py-3 text-base gap-2.5',
-    lg: 'px-7 py-3.5 text-lg gap-3',
+    sm: { pad: 'pl-4 pr-1.5 py-1.5 text-sm gap-2', circle: 'w-7 h-7', icon: 'w-3.5 h-3.5' },
+    md: { pad: 'pl-5 pr-1.5 py-1.5 text-base gap-2.5', circle: 'w-8 h-8', icon: 'w-4 h-4' },
+    lg: { pad: 'pl-6 pr-2 py-2 text-lg gap-3', circle: 'w-9 h-9', icon: 'w-4.5 h-4.5' },
   };
 
-  const circleSize = {
-    sm: 'w-7 h-7',
-    md: 'w-8 h-8',
-    lg: 'w-9 h-9',
-  };
-
-  const iconSize = {
-    sm: 'w-3.5 h-3.5',
-    md: 'w-4 h-4',
-    lg: 'w-4.5 h-4.5',
-  };
+  const s = sizeMap[size];
 
   const variants = {
-    primary:
-      'bg-gradient-to-r from-[#6183FF] to-[#4D6ED6] text-white border border-[#6183FF]/50 shadow-lg shadow-[#6183FF]/25 hover:shadow-[#6183FF]/40',
-    outline:
-      'bg-transparent text-white border-2 border-white/70 hover:bg-white/10',
-    white:
-      'bg-white text-[#020924] border border-white/30 hover:bg-gray-50 shadow-md',
-    dark:
-      'bg-[#020924] text-white border border-[#020924]/80 hover:bg-[#0a0f2e]',
+    primary: {
+      wrap: 'bg-gradient-to-r from-[#6183FF] to-[#4D6ED6] text-white border border-[#6183FF]/40 shadow-lg shadow-[#6183FF]/20',
+      circle: 'bg-white text-[#6183FF]',
+    },
+    outline: {
+      wrap: 'bg-transparent text-white border-2 border-white/70',
+      circle: 'bg-white text-[#020924]',
+    },
+    white: {
+      wrap: 'bg-white text-[#020924] border border-white/20 shadow-sm',
+      circle: 'bg-[#020924] text-white',
+    },
+    dark: {
+      wrap: 'bg-[#020924] text-white border border-[#020924]',
+      circle: 'bg-white text-[#020924]',
+    },
   };
 
-  const circle = {
-    primary: 'bg-white text-[#6183FF]',
-    outline: 'bg-white text-[#020924]',
-    white: 'bg-[#6183FF] text-white',
-    dark: 'bg-white text-[#020924]',
-  };
-
-  const base =
-    'inline-flex items-center font-semibold rounded-full transition-all duration-300 active:scale-[0.98] group select-none';
+  const v = variants[variant];
 
   const content = (
     <>
-      <span className="leading-none">{children}</span>
+      <span className="leading-none font-semibold">{children}</span>
       <span
-        className={`${circleSize[size]} rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${circle[variant]}`}
+        className={`${s.circle} rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${v.circle}`}
       >
-        <ArrowUpRightIcon className={iconSize[size]} strokeWidth={2.5} />
+        <ArrowUpRightIcon className={s.icon} strokeWidth={2.5} />
       </span>
     </>
   );
 
+  const base = `inline-flex items-center rounded-full transition-all duration-300 active:scale-[0.98] group select-none ${s.pad} ${v.wrap} ${className}`;
+
   if (href) {
     return (
-      <a
-        href={href}
-        className={`${base} ${sizeMap[size]} ${variants[variant]} ${className}`}
-      >
+      <a href={href} className={base}>
         {content}
       </a>
     );
   }
 
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      className={`${base} ${sizeMap[size]} ${variants[variant]} ${className}`}
-    >
+    <button type={type} onClick={onClick} className={base}>
       {content}
     </button>
   );
