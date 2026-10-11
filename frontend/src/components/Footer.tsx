@@ -11,7 +11,7 @@ export default function Footer() {
     { name: 'Instagram', href: 'https://instagram.com/selorahealth', icon: '/landing/social-instagram.png' },
     { name: 'X', href: 'https://x.com/selorahealth', icon: '/landing/social-x.png' },
     { name: 'LinkedIn', href: 'https://www.linkedin.com/company/selorahealth', icon: '/landing/social-linkedin.png' },
-    { name: 'TikTok', href: 'https://tiktok.com/@selorahealth', icon: '/landing/social-tiktok.png' },
+    { name: 'TikTok', href: '#', icon: '/landing/social-tiktok.png' },
     { name: 'WhatsApp', href: 'https://chat.whatsapp.com/JI2LK41IF8yHiJjEuWKk2M?mode=gi_t', icon: '/landing/social-whatsapp.png' },
   ];
 
@@ -19,18 +19,19 @@ export default function Footer() {
     <>
       <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-      <footer className="bg-[#6183FF] text-white relative overflow-hidden font-sora">
-        {/* Large selorah watermark */}
-        <div className="w-full overflow-hidden select-none pointer-events-none leading-none">
-          <img
-            src="/landing/selorah-object-for-footer.png"
-            alt=""
-            aria-hidden
-            className="w-full h-auto object-contain object-left-top block"
-          />
-        </div>
+      {/* ── Watermark band: landing page background ── */}
+      <div className="bg-[var(--background)] w-full overflow-hidden select-none pointer-events-none leading-none">
+        <img
+          src="/assets/selorah-object-for-footer.png"
+          alt=""
+          aria-hidden
+          className="w-full h-auto object-contain object-left-top block"
+        />
+      </div>
 
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 pb-10 relative z-10 -mt-4 sm:-mt-6">
+      {/* ── Blue footer content ── */}
+      <footer className="bg-[#6183FF] text-white relative overflow-hidden font-sora">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 pt-10 sm:pt-12 pb-10 relative z-10">
           {/* Social icons */}
           <div className="flex items-center gap-4 sm:gap-5 mb-10 sm:mb-12">
             {socials.map((s) => (
@@ -76,9 +77,7 @@ export default function Footer() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 sm:gap-12 flex-1">
               <div>
-                <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">
-                  Product
-                </h4>
+                <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">Product</h4>
                 <ul className="space-y-2.5 text-sm font-medium">
                   <li><Link to="/login" className="hover:text-white/80 transition-colors">Patient Dashboard</Link></li>
                   <li><Link to="/login" className="hover:text-white/80 transition-colors">Hospital Portal</Link></li>
@@ -89,9 +88,7 @@ export default function Footer() {
               </div>
 
               <div>
-                <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">
-                  Company
-                </h4>
+                <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">Company</h4>
                 <ul className="space-y-2.5 text-sm font-medium">
                   <li><Link to="/about" className="hover:text-white/80 transition-colors">About</Link></li>
                   <li><Link to="/contact" className="hover:text-white/80 transition-colors">Schedule a Meeting</Link></li>
@@ -100,9 +97,7 @@ export default function Footer() {
               </div>
 
               <div>
-                <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">
-                  Legal
-                </h4>
+                <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">Legal</h4>
                 <ul className="space-y-2.5 text-sm font-medium">
                   <li><Link to="/privacy" className="hover:text-white/80 transition-colors">Privacy Policy</Link></li>
                   <li><Link to="/terms" className="hover:text-white/80 transition-colors">Terms of use</Link></li>
@@ -114,7 +109,7 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-white/20 text-xs text-white/70">
-            <span>© 2026 Selorah Health</span>
+            <span>Copyright (c) 2026 Selorah Health</span>
             <span className="hidden sm:inline">All Rights Reserved.</span>
             <div className="flex items-center gap-4">
               <Link to="/about" className="hover:text-white transition-colors">Help Center</Link>
