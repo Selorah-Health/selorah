@@ -523,7 +523,7 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-3">
               <img src="/landing/hero-avatar.png" alt="People joining Selorah" className="h-8 sm:h-10 w-auto" loading="lazy" />
-              <span className="text-white/60 text-xs sm:text-sm">Join 2,000+ on the waitlist</span>
+              <span className="text-white/60 text-xs sm:text-sm">Join 50+ on the waitlist</span>
             </div>
           </div>
         </div>
