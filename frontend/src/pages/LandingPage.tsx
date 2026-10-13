@@ -87,7 +87,7 @@ const OWNERSHIP_CARDS = [
 ];
 
 const TEAM = [
-  { name: 'Ibadat', role: 'Founder', image: '/landing/team-ibadat.webp' },
+  { name: 'Ibadat', role: 'Operations Lead', image: '/landing/team-ibadat.webp' },
   { name: 'Idris Azeez', role: 'Technical Lead', image: '/landing/team-idris.jpg' },
   { name: 'Samuel Amanze', role: 'Founder & Project Manager', image: '/landing/team-samuel.png' },
   { name: 'Afolabi Olanrewaju', role: 'Lead Product Designer', image: '/landing/team-afolabi.jpg' },
