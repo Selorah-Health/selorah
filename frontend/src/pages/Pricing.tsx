@@ -1,143 +1,175 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import WaitlistModal from '../components/WaitlistModal';
-import LanguageSelector from '../components/LanguageSelector';
-import { useLanguage } from '../contexts/LanguageContext';
-import { detectCurrency, CurrencyInfo } from '../lib/utils/currency';
-import {
-  ChevronRightIcon,
-  Bars3Icon,
-  XMarkIcon,
-  CheckIcon
-} from "@heroicons/react/24/solid";
+import { useState } from 'react';
+import { CheckIcon } from '@heroicons/react/24/solid';
 import Header from '../components/Header';
 import CTAButton from '../components/CTAButton';
 import Footer from '../components/Footer';
 import SEOTitle from '../components/SEOTitle';
+import WaitlistModal from '../components/WaitlistModal';
+
+const NGN_RATE = 1400; // ₦ per $1
+
+function formatNaira(usd: number) {
+  const ngn = usd * NGN_RATE;
+  return `₦${ngn.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
+}
+
+function formatUsd(usd: number) {
+  return `$${usd.toLocaleString('en-US', { minimumFractionDigits: usd % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 })}`;
+}
 
 export default function Pricing() {
-  const { t } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currency, setCurrency] = useState<CurrencyInfo>(() => {
-    const locale = navigator.language || 'en-US';
-    if (locale.includes('NG')) return { code: 'NGN', symbol: '₦', rate: 1500, countryName: 'Nigeria' };
-    return { code: 'USD', symbol: '$', rate: 1, countryName: 'United States' };
-  });
-
-  useEffect(() => {
-    detectCurrency().then(setCurrency);
-  }, []);
-
-  const formatPrice = (usdAmount: number) => {
-    const localAmount = usdAmount * currency.rate;
-    // Simple localized formatting
-    const formattedAmount = localAmount.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    });
-    return `${currency.symbol}${formattedAmount}`;
-  };
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans selection:bg-primary/30 selection:text-primary overflow-x-hidden">
       <SEOTitle title="Pricing" />
       <Header />
 
-      {/* HEADER SECTION */}
-      <section className="pt-40 pb-20 px-12 max-w-7xl mx-auto text-center">
-        <p className="text-primary font-bold tracking-wider text-sm mb-4 uppercase">Transparent Pricing</p>
-        <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-8">
-          A sustainable model for<br />
-          <span className="text-primary italic font-normal">health data ownership</span>
-        </h1>
-        <p className="text-xl text-muted leading-relaxed">
-          Why do patients pay? Because when the product is free, you are the product.
-          We charge a minimal subscription so your data remains entirely yours—encrypted, secure, and never sold to third parties without your explicit consent and compensation.
-        </p>
+      {/* HERO — same background treatment as landing hero */}
+      <section className="relative w-full overflow-hidden bg-black min-h-[42vh] sm:min-h-[48vh] flex items-center pt-20 sm:pt-24">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/assets/hero-bg-image-1.jpg"
+          className="absolute inset-0 w-full h-full object-cover opacity-40"
+        >
+          <source src="/assets/hero-bg-video-1.mp4" type="video/mp4" />
+        </video>
+
+        <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 py-16 sm:py-20 text-center">
+          <p className="text-[#6183FF] font-bold tracking-wider text-sm mb-4 uppercase">
+            Transparent Pricing
+          </p>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6 text-white">
+            A sustainable model for
+            <br />
+            <span className="text-[#6183FF] italic font-normal">health data ownership</span>
+          </h1>
+          <p className="text-base sm:text-lg text-white/75 leading-relaxed max-w-2xl mx-auto">
+            Why do patients pay? Because when the product is free, you are the product. We charge a
+            minimal subscription so your data remains entirely yours—encrypted, secure, and never
+            sold without your explicit consent and compensation.
+          </p>
+        </div>
       </section>
 
       {/* PRICING CARDS */}
-      <section className="py-12 px-12 max-w-7xl mx-auto text-left">
-        <div className="grid md:grid-cols-3 gap-8">
+      <section className="py-12 sm:py-16 px-5 sm:px-8 lg:px-10 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
           {/* Patient Tier */}
-          <div className="bg-white border-2 border-primary rounded-3xl p-8 shadow-xl relative">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-white text-xs font-bold uppercase tracking-wider px-4 py-1 rounded-full">
+          <div className="bg-white border-2 border-[#6183FF] rounded-3xl p-6 sm:p-8 shadow-xl relative flex flex-col">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#6183FF] text-white text-xs font-bold uppercase tracking-wider px-4 py-1 rounded-full">
               For Individuals
             </div>
-            <h3 className="text-2xl font-bold mb-2 text-gray-900">Patient Premium</h3>
-            <p className="text-muted mb-6 h-12">Full control over your medical history, forever.</p>
+            <h3 className="text-2xl font-bold mb-2 text-gray-900 mt-2">Patient Premium</h3>
+            <p className="text-muted mb-6 min-h-[3rem]">Full control over your medical history, forever.</p>
             <div className="mb-8">
-              <span className="text-5xl font-bold text-gray-900">{formatPrice(3)}</span>
-              <span className="text-muted font-medium"> / month</span>
-              <p className="text-xs text-primary font-bold mt-2">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-4xl sm:text-5xl font-bold text-gray-900">{formatNaira(3)}</span>
+                <span className="text-muted font-medium">/ month</span>
+              </div>
+              <p className="text-sm text-muted mt-1">≈ {formatUsd(3)} USD</p>
+              <p className="text-xs text-[#6183FF] font-bold mt-2">
                 *Early access pricing locked in forever
               </p>
             </div>
-            <ul className="space-y-4 mb-8">
-              {['Unlimited encrypted record storage', 'QR sharing with providers', 'Emergency profile', 'Family health vault (up to 6 members)', 'Opt-in research earnings (₦2k - ₦8k/mo)'].map((feat, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <CheckIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <ul className="space-y-3 mb-8 flex-1">
+              {[
+                'Unlimited encrypted record storage',
+                'QR sharing with providers',
+                'Emergency profile',
+                'Family health vault (up to 6 members)',
+                'Opt-in research earnings (₦2k – ₦8k/mo)',
+              ].map((feat) => (
+                <li key={feat} className="flex items-start gap-3">
+                  <CheckIcon className="w-5 h-5 text-[#6183FF] shrink-0 mt-0.5" />
                   <span className="text-sm font-medium text-gray-700">{feat}</span>
                 </li>
               ))}
             </ul>
-            <div className="w-full flex justify-center">
-              <CTAButton href="/signup" className="w-full justify-center" size="md">
-                Get Started
-              </CTAButton>
-            </div>
+            <CTAButton href="/signup" className="w-full" size="md">
+              Get Started
+            </CTAButton>
           </div>
 
           {/* Hospital Tier */}
-          <div className="bg-white border border-gray-100 rounded-3xl p-8 hover:shadow-lg transition-shadow">
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 hover:shadow-lg transition-shadow flex flex-col">
             <h3 className="text-2xl font-bold mb-2 text-gray-900">Hospitals & Clinics</h3>
-            <p className="text-muted mb-6 h-12">Pay only for the data you access.</p>
+            <p className="text-muted mb-6 min-h-[3rem]">Pay only for the data you access.</p>
             <div className="mb-8">
-              <span className="text-5xl font-bold text-gray-900">{formatPrice(0.35)}</span>
-              <span className="text-muted font-medium"> / scan</span>
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-4xl sm:text-5xl font-bold text-gray-900">{formatNaira(0.35)}</span>
+                <span className="text-muted font-medium">/ scan</span>
+              </div>
+              <p className="text-sm text-muted mt-1">≈ {formatUsd(0.35)} USD</p>
               <p className="text-xs text-muted mt-2">Zero setup fees. Zero maintenance.</p>
             </div>
-            <ul className="space-y-4 mb-8">
-              {['Instant QR scan access', 'Verified provenance badges', 'Add & cosign records', 'Unlimited staff accounts', 'FHIR R4 EMR Integration'].map((feat, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <CheckIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <ul className="space-y-3 mb-8 flex-1">
+              {[
+                'Instant QR scan access',
+                'Verified provenance badges',
+                'Add & cosign records',
+                'Unlimited staff accounts',
+                'FHIR R4 EMR Integration',
+              ].map((feat) => (
+                <li key={feat} className="flex items-start gap-3">
+                  <CheckIcon className="w-5 h-5 text-[#6183FF] shrink-0 mt-0.5" />
                   <span className="text-sm font-medium text-gray-700">{feat}</span>
                 </li>
               ))}
             </ul>
-            <div className="w-full flex justify-center"><CTAButton variant="dark" className="w-full justify-center" size="md" onClick={() => window.location.href='/contact'}>Contact Sales</CTAButton></div>
+            <CTAButton
+              variant="dark"
+              className="w-full"
+              size="md"
+              onClick={() => setIsModalOpen(true)}
+            >
+              Contact Sales
+            </CTAButton>
           </div>
 
           {/* Researcher Tier */}
-          <div className="bg-white border border-gray-100 rounded-3xl p-8 hover:shadow-lg transition-shadow">
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 hover:shadow-lg transition-shadow flex flex-col">
             <h3 className="text-2xl font-bold mb-2 text-gray-900">Researchers & Insurers</h3>
-            <p className="text-muted mb-6 h-12">Access consented, longitudinal African health data.</p>
+            <p className="text-muted mb-6 min-h-[3rem]">
+              Access consented, longitudinal African health data.
+            </p>
             <div className="mb-8">
-              <span className="text-5xl font-bold text-gray-900">Custom</span>
-              <p className="text-xs text-muted mt-2">Priced per cohort size & data depth</p>
+              <span className="text-4xl sm:text-5xl font-bold text-gray-900">Custom</span>
+              <p className="text-sm text-muted mt-2">Priced per cohort size & data depth</p>
+              <p className="text-xs text-muted mt-1">Quoted in ₦ and USD</p>
             </div>
-            <ul className="space-y-4 mb-8">
-              {['IRB-verified access only', 'Differential privacy enforced', 'Real-time cohort size estimates', 'Smart contract enforced payouts', 'Fraud detection & auditing'].map((feat, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <CheckIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <ul className="space-y-3 mb-8 flex-1">
+              {[
+                'IRB-verified access only',
+                'Differential privacy enforced',
+                'Real-time cohort size estimates',
+                'Smart contract enforced payouts',
+                'Fraud detection & auditing',
+              ].map((feat) => (
+                <li key={feat} className="flex items-start gap-3">
+                  <CheckIcon className="w-5 h-5 text-[#6183FF] shrink-0 mt-0.5" />
                   <span className="text-sm font-medium text-gray-700">{feat}</span>
                 </li>
               ))}
             </ul>
-            <div className="w-full flex justify-center"><CTAButton variant="dark" className="w-full justify-center" size="md" onClick={() => window.location.href='/contact'}>Request Demo</CTAButton></div>
+            <CTAButton
+              variant="dark"
+              className="w-full"
+              size="md"
+              onClick={() => setIsModalOpen(true)}
+            >
+              Request Demo
+            </CTAButton>
           </div>
         </div>
       </section>
 
       <Footer />
+      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }
