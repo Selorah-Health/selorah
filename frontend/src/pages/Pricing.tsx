@@ -11,6 +11,7 @@ import {
   CheckIcon
 } from "@heroicons/react/24/solid";
 import Header from '../components/Header';
+import CTAButton from '../components/CTAButton';
 import Footer from '../components/Footer';
 import SEOTitle from '../components/SEOTitle';
 
@@ -19,7 +20,6 @@ export default function Pricing() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currency, setCurrency] = useState<CurrencyInfo>(() => {
-    // Immediate guess based on browser locale to prevent flicker
     const locale = navigator.language || 'en-US';
     if (locale.includes('NG')) return { code: 'NGN', symbol: '₦', rate: 1500, countryName: 'Nigeria' };
     return { code: 'USD', symbol: '$', rate: 1, countryName: 'United States' };
@@ -89,9 +89,11 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <Link to="/signup" className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary-hover transition-all block text-center shadow-lg shadow-primary/20">
-              Get Started
-            </Link>
+            <div className="w-full flex justify-center">
+              <CTAButton href="/signup" className="w-full justify-center" size="md">
+                Get Started
+              </CTAButton>
+            </div>
           </div>
 
           {/* Hospital Tier */}
@@ -111,9 +113,7 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <button className="w-full bg-gray-100 text-gray-900 font-bold py-4 rounded-xl hover:bg-gray-200 transition-colors">
-              Contact Sales
-            </button>
+            <div className="w-full flex justify-center"><CTAButton variant="dark" className="w-full justify-center" size="md" onClick={() => window.location.href='/contact'}>Contact Sales</CTAButton></div>
           </div>
 
           {/* Researcher Tier */}
@@ -132,9 +132,7 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <button className="w-full bg-gray-100 text-gray-900 font-bold py-4 rounded-xl hover:bg-gray-200 transition-colors">
-              Request Demo
-            </button>
+            <div className="w-full flex justify-center"><CTAButton variant="dark" className="w-full justify-center" size="md" onClick={() => window.location.href='/contact'}>Request Demo</CTAButton></div>
           </div>
         </div>
       </section>
