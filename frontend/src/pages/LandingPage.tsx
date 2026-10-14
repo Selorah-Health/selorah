@@ -347,9 +347,8 @@ function TeamSection() {
           </h2>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center md:items-stretch gap-8 md:gap-12 max-w-4xl mx-auto">
-          {/* Founder image — left, no hover effect */}
-          <div className="w-full max-w-[280px] sm:max-w-[320px] shrink-0">
+        <div className="flex flex-col md:flex-row items-start gap-8 md:gap-12">
+          <div className="w-full md:w-[min(100%,320px)] shrink-0">
             <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100">
               <img
                 src="/landing/team-samuel.png"
@@ -363,17 +362,16 @@ function TeamSection() {
             </div>
           </div>
 
-          {/* Bio + socials — right */}
-          <div className="flex flex-col justify-center flex-1 text-center md:text-left">
+          <div className="flex flex-col justify-center flex-1 pt-0 md:pt-2">
             <h3 className="text-2xl sm:text-3xl font-bold text-[#101217] mb-1">Samuel Amanze</h3>
-            <p className="text-[#6183FF] font-semibold text-sm sm:text-base mb-5">Founder</p>
-            <p className="text-muted text-sm sm:text-base leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
-              Samuel is building Selorah so patients across Africa can own, carry, and share their
-              health records on their own terms — with time-bound access instead of paper folders
+            <p className="text-[#6183FF] font-semibold text-sm sm:text-base mb-5">Founder, Selorah Health</p>
+            <p className="text-muted text-sm sm:text-base leading-relaxed mb-8 max-w-md">
+              Samuel is building Selorah Health so patients across Africa can own, carry, and share their
+              health records on their own terms; with time-bound access instead of paper folders
               that never move with them.
             </p>
 
-            <div className="flex items-center justify-center md:justify-start gap-3">
+            <div className="flex items-center gap-3">
               <a
                 href="https://www.linkedin.com/in/thedesigngm"
                 target="_blank"
@@ -381,7 +379,7 @@ function TeamSection() {
                 aria-label="Samuel Amanze on LinkedIn"
                 className="w-11 h-11 rounded-full bg-[#6183FF]/10 hover:bg-[#6183FF]/20 flex items-center justify-center transition-colors"
               >
-                <svg className="w-5 h-5 text-[#6183FF]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <svg className="w-5 h-5 text-[#6183FF]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 9H1.778V20.452H5.337V9zM3.557 1.018c1.144 0 2.063.926 2.063 2.065 0 1.138-.92 2.063-2.063 2.063-1.14 0-2.064-.925-2.064-2.063 0-1.139.925-2.065 2.064-2.065zm1.782 17.434H1.778V9h3.561v9.452z" />
                 </svg>
               </a>
@@ -392,7 +390,7 @@ function TeamSection() {
                 aria-label="Samuel Amanze on X"
                 className="w-11 h-11 rounded-full bg-[#6183FF]/10 hover:bg-[#6183FF]/20 flex items-center justify-center transition-colors"
               >
-                <svg className="w-4.5 h-4.5 text-[#6183FF]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <svg className="w-4 h-4 text-[#6183FF]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.722-8.829L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
                 </svg>
               </a>
