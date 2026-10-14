@@ -10,8 +10,6 @@ import {
   NoSymbolIcon,
   ShieldCheckIcon,
   ArrowUpRightIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 import WaitlistModal, { type WaitlistRole } from '../components/WaitlistModal';
 import Header from '../components/Header';
@@ -86,13 +84,6 @@ const OWNERSHIP_CARDS = [
   },
 ];
 
-const TEAM = [
-  { name: 'Ibadat', role: 'Operations Lead', image: '/landing/team-ibadat.webp' },
-  { name: 'Idris Azeez', role: 'Technical Lead', image: '/landing/team-idris.jpg' },
-  { name: 'Samuel Amanze', role: 'Founder & Project Manager', image: '/landing/team-samuel.png' },
-  { name: 'Afolabi Olanrewaju', role: 'Lead Product Designer', image: '/landing/team-afolabi.jpg' },
-];
-
 function ProgressBar() {
   const [progress, setProgress] = useState(0);
   useEffect(() => {
@@ -111,11 +102,6 @@ function ProgressBar() {
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/*  Problem: icon top / title bottom (default).                       */
-/*  Hover: icon + title same line, body appears, width expands.       */
-/* ------------------------------------------------------------------ */
 
 function ProblemSection() {
   const [hovered, setHovered] = useState<number | null>(null);
@@ -351,108 +337,73 @@ function OwnershipSection() {
 
 /* Team: fit width, auto-slide, stop on hover, grayscale default, color on hover, arrows bottom */
 function TeamSection() {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [isHovering, setIsHovering] = useState(false);
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
-  const autoScrollRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    const step = () => {
-      if (isHovering) return;
-      track.scrollLeft += 0.5;
-      if (track.scrollLeft >= track.scrollWidth - track.clientWidth - 2) track.scrollLeft = 0;
-    };
-    autoScrollRef.current = window.setInterval(step, 20);
-    return () => {
-      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
-    };
-  }, [isHovering]);
-
-  const scrollByCard = (dir: 1 | -1) => {
-    const track = trackRef.current;
-    if (!track) return;
-    const cardWidth = track.querySelector('[data-team-card]')?.clientWidth ?? 260;
-    track.scrollBy({ left: dir * (cardWidth + 16), behavior: 'smooth' });
-  };
-
   return (
-    <section className="bg-white py-16 sm:py-20 md:py-24 px-5 sm:px-8 lg:px-10 overflow-hidden">
+    <section className="bg-white py-16 sm:py-20 md:py-24 px-5 sm:px-8 lg:px-10">
       <div className="max-w-6xl mx-auto">
         <div className="mb-10 sm:mb-12">
-          <p className="text-[#6183FF] font-bold tracking-wider text-sm mb-3 uppercase">The Team</p>
+          <p className="text-[#6183FF] font-bold tracking-wider text-sm mb-3 uppercase">The Founder</p>
           <h2 className="text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-[#101217]">
-            MEET THE CREATIVE <span className="text-[#6183FF]">DRIVEN TEAM</span>
+            MEET THE <span className="text-[#6183FF]">FOUNDER</span>
           </h2>
         </div>
 
-        <div
-          ref={trackRef}
-          onMouseEnter={() => setIsHovering(true)}
-          onMouseLeave={() => {
-            setIsHovering(false);
-            setHoveredCard(null);
-          }}
-          className="flex gap-4 overflow-x-auto scrollbar-hide w-full pb-2"
-          style={{ scrollBehavior: 'auto' }}
-        >
-          {TEAM.map((member, i) => {
-            const isCardHovered = hoveredCard === i;
-            return (
-              <div
-                key={member.name}
-                data-team-card
-                onMouseEnter={() => setHoveredCard(i)}
-                onMouseLeave={() => setHoveredCard(null)}
-                className={`relative shrink-0 rounded-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                  isCardHovered ? 'w-[240px] h-[320px]' : 'w-[260px] h-[300px]'
-                }`}
-              >
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-                    isCardHovered ? 'grayscale-0' : 'grayscale'
-                  }`}
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
-                <div
-                  className={`absolute bottom-4 left-3 right-3 rounded-xl px-3.5 py-2.5 backdrop-blur-md border border-white/20 transition-all duration-400 ${
-                    isCardHovered ? 'bg-white/25' : 'bg-white/15'
-                  }`}
-                >
-                  <p className="text-white font-bold text-sm leading-tight">{member.name}</p>
-                  <p className="text-white/70 text-xs mt-0.5">{member.role}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <div className="flex flex-col md:flex-row items-center md:items-stretch gap-8 md:gap-12 max-w-4xl mx-auto">
+          {/* Founder image — left, no hover effect */}
+          <div className="w-full max-w-[280px] sm:max-w-[320px] shrink-0">
+            <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100">
+              <img
+                src="/landing/team-samuel.png"
+                alt="Samuel Amanze, Founder of Selorah Health"
+                width={640}
+                height={800}
+                decoding="async"
+                fetchPriority="high"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+          </div>
 
-        <div className="flex justify-end gap-2 mt-6">
-          <button
-            type="button"
-            onClick={() => scrollByCard(-1)}
-            className="w-10 h-10 rounded-full bg-[#6183FF] text-white flex items-center justify-center hover:bg-[#4D6ED6] transition-colors shadow-md"
-            aria-label="Previous"
-          >
-            <ChevronLeftIcon className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollByCard(1)}
-            className="w-10 h-10 rounded-full bg-[#6183FF] text-white flex items-center justify-center hover:bg-[#4D6ED6] transition-colors shadow-md"
-            aria-label="Next"
-          >
-            <ChevronRightIcon className="w-5 h-5" />
-          </button>
+          {/* Bio + socials — right */}
+          <div className="flex flex-col justify-center flex-1 text-center md:text-left">
+            <h3 className="text-2xl sm:text-3xl font-bold text-[#101217] mb-1">Samuel Amanze</h3>
+            <p className="text-[#6183FF] font-semibold text-sm sm:text-base mb-5">Founder</p>
+            <p className="text-muted text-sm sm:text-base leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
+              Samuel is building Selorah so patients across Africa can own, carry, and share their
+              health records on their own terms — with time-bound access instead of paper folders
+              that never move with them.
+            </p>
+
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <a
+                href="https://www.linkedin.com/in/thedesigngm"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Samuel Amanze on LinkedIn"
+                className="w-11 h-11 rounded-full bg-[#6183FF]/10 hover:bg-[#6183FF]/20 flex items-center justify-center transition-colors"
+              >
+                <svg className="w-5 h-5 text-[#6183FF]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 9H1.778V20.452H5.337V9zM3.557 1.018c1.144 0 2.063.926 2.063 2.065 0 1.138-.92 2.063-2.063 2.063-1.14 0-2.064-.925-2.064-2.063 0-1.139.925-2.065 2.064-2.065zm1.782 17.434H1.778V9h3.561v9.452z" />
+                </svg>
+              </a>
+              <a
+                href="https://x.com/thedesigngm"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Samuel Amanze on X"
+                className="w-11 h-11 rounded-full bg-[#6183FF]/10 hover:bg-[#6183FF]/20 flex items-center justify-center transition-colors"
+              >
+                <svg className="w-4.5 h-4.5 text-[#6183FF]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.722-8.829L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
+                </svg>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
+
 
 export default function LandingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -522,7 +473,15 @@ export default function LandingPage() {
               </CTAButton>
             </div>
             <div className="flex items-center gap-3">
-              <img src="/landing/hero-avatar.png" alt="People joining Selorah" className="h-8 sm:h-10 w-auto" loading="lazy" />
+              <img
+                src="/landing/hero-avatar.png"
+                alt="People joining Selorah"
+                width={280}
+                height={40}
+                decoding="async"
+                fetchPriority="high"
+                className="h-9 sm:h-11 w-auto max-w-[200px] sm:max-w-none object-contain"
+              />
               <span className="text-white/60 text-xs sm:text-sm">Join 50+ on the waitlist</span>
             </div>
           </div>
