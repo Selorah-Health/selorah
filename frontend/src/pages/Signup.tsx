@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import {
   EyeIcon,
@@ -19,9 +19,7 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(1);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const navigate = useNavigate();
-
+  const [submittedEmail, setSubmittedEmail] = useState('');
   const [formData, setFormData] = useState({
     role: 'patient' as 'patient' | 'hospital' | 'researcher' | 'insurer',
     firstName: '',
@@ -100,8 +98,6 @@ export default function Signup() {
     try {
       const existing = localStorage.getItem('selorah_user');
       const prev = existing ? JSON.parse(existing) : {};
-      const isOrganization =
-        formData.role === 'hospital' || formData.role === 'researcher' || formData.role === 'insurer';
       localStorage.setItem(
         'selorah_user',
         JSON.stringify({
@@ -117,16 +113,6 @@ export default function Signup() {
     } catch {
       // ignore storage errors
     }
-    // Simulate OTP send step (real implementation would call Supabase/phone OTP here)
-    setTimeout(() => {
-      setLoading(false);
-      setStep(2);
-    }, 800);
-  };
-
-  const handleVerifyOtp = async () => {
-    setLoading(true);
-    setError(null);
 
     try {
       const url = import.meta.env.VITE_SUPABASE_URL;
@@ -137,8 +123,6 @@ export default function Signup() {
         );
       }
 
-      const isOrganization =
-        formData.role === 'hospital' || formData.role === 'researcher' || formData.role === 'insurer';
       const signupEmail = isOrganization
         ? formData.workEmail.trim()
         : formData.identifier.trim();
@@ -181,7 +165,8 @@ export default function Signup() {
         })
       );
 
-      navigate('/onboarding');
+      setSubmittedEmail(signupEmail);
+      setStep(2);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An error occurred';
       if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
@@ -193,17 +178,6 @@ export default function Signup() {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    if (value && !/^\d$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-    if (value && index < 5) {
-      document.getElementById(`otp-${index + 1}`)?.focus();
     }
   };
 
@@ -463,13 +437,18 @@ export default function Signup() {
             </>
           ) : (
             <div className="text-center">
-              <div className="w-16 h-16 bg-[#4262FF]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <CheckCircleIcon className="w-8 h-8 text-[#4262FF]" />
+              <div className="w-16 h-16 bg-[#6183FF]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <CheckCircleIcon className="w-8 h-8 text-[#6183FF]" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Verify your account</h2>
-              <p className="text-white/60 mb-8 text-sm sm:text-base">
-                We&apos;ve sent a 6-digit code to{' '}
-                <span className="font-bold text-white break-all">{isOrg ? formData.workEmail : formData.identifier}</span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Check your email</h2>
+              <p className="text-white/70 mb-2 text-sm sm:text-base leading-relaxed">
+                A confirmation email from Supabase has been sent to
+              </p>
+              <p className="font-bold text-white break-all text-sm sm:text-base mb-6">
+                {submittedEmail || (isOrg ? formData.workEmail : formData.identifier)}
+              </p>
+              <p className="text-white/50 text-sm leading-relaxed mb-8 max-w-sm mx-auto">
+                Open the email and click the confirmation link to activate your account. After confirming, you can log in and continue onboarding.
               </p>
 
               {error && (
@@ -481,33 +460,12 @@ export default function Signup() {
                 </div>
               )}
 
-              <div className="flex justify-between gap-2 sm:gap-3 mb-8">
-                {otp.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    id={`otp-${idx}`}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    autoComplete="one-time-code"
-                    className="w-full aspect-square max-w-[52px] bg-[#1A1B2E] border border-white/10 rounded-xl text-center text-2xl sm:text-3xl font-bold focus:border-[#4262FF] outline-none"
-                    value={digit}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                  />
-                ))}
-              </div>
-
-              <button
-                onClick={handleVerifyOtp}
-                disabled={loading || otp.some((d) => !d)}
-                className="w-full bg-[#4262FF] py-3.5 sm:py-4 rounded-xl font-bold text-white disabled:opacity-50 min-h-[48px] text-base"
+              <Link
+                to="/login"
+                className="inline-flex w-full items-center justify-center bg-[#6183FF] py-3.5 sm:py-4 rounded-xl font-bold text-white min-h-[48px] text-base hover:bg-[#4D6ED6] transition-colors"
               >
-                {loading ? (
-                  <ArrowPathIcon className="w-4 h-4 animate-spin mx-auto shrink-0" aria-hidden="true" />
-                ) : (
-                  'Verify & Create Account'
-                )}
-              </button>
+                Go to Log in
+              </Link>
 
               <button
                 type="button"
