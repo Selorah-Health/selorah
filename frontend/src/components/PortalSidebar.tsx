@@ -43,7 +43,8 @@ export default function PortalSidebar({
   };
 
   return (
-    <aside className={`hidden md:flex transition-all duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[260px]'} ${sidebarBg} text-white flex-col shrink-0 h-full relative z-50`}>
+    <>
+      <aside className={`hidden md:flex transition-all duration-300 ${isCollapsed ? 'w-[80px]' : 'w-[260px]'} ${sidebarBg} text-white flex-col shrink-0 h-full relative z-50`}>
       {/* Brand & Toggle */}
       <div className={`p-6 pb-4 border-b border-white/10 ${isCollapsed ? 'px-4' : ''}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'}`}>
@@ -112,5 +113,34 @@ export default function PortalSidebar({
         </div>
       </div>
     </aside>
+
+      <nav className="portal-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden">
+        <div className="grid grid-cols-5 items-end px-1 pt-2">
+          {menuItems.slice(0, 4).map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.path}
+              end={item.path === `/${role}`}
+              className={({ isActive }) =>
+                `flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 transition-all ${
+                  isActive ? 'text-[#6183FF]' : 'text-gray-400'
+                }`
+              }
+            >
+              <item.icon className="h-6 w-6" />
+              <span className="text-[10px] font-bold">{item.name}</span>
+            </NavLink>
+          ))}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-gray-400 transition-all"
+          >
+            <ArrowRightOnRectangleIcon className="h-6 w-6" />
+            <span className="text-[10px] font-bold">Logout</span>
+          </button>
+        </div>
+      </nav>
+    </>
   );
 }

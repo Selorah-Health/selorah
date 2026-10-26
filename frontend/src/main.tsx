@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { registerServiceWorker } from './lib/pwa/register';
+
+registerServiceWorker();
 
 // Initialize Google Translate
 // const script = document.createElement('script');
