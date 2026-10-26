@@ -1,9 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StarIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import ProFeaturesModal from '../components/dashboard/ProFeaturesModal';
 
 export default function Notifications() {
   const [showProFeatures, setShowProFeatures] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('selorah_notifications_seen', '1');
+    } catch {
+      // Storage can be unavailable in private mode.
+    }
+    window.dispatchEvent(new Event('selorah:notifications-seen'));
+  }, []);
 
   const proFeatures = [
     "Unlimited Emergency Contacts (Up to 10)",

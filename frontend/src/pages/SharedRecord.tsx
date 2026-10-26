@@ -64,18 +64,78 @@ export default function SharedRecord() {
       }
 
       try {
-        // 1) Resolve shared_links row by token
-        const { data: link, error: linkError } = await supabase
-          .from('shared_links')
-          .select('id, user_id, token, is_active, expires_at, created_at')
-          .eq('token', token)
-          .maybeSingle();
+        // 1) Prefer the public RPC so anonymous readers are not blocked by RLS.
+        let link: any = null;
+        let profile: any = null;
+        let dbRecords: any[] | null = null;
+        let usedRpc = false;
 
-        if (linkError) {
-          console.error(linkError);
-          setLoadError(linkError.message);
-          setLoading(false);
-          return;
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_shared_record', {
+          share_token: token,
+        });
+
+        if (!rpcError && rpcData) {
+          const result = rpcData as any;
+          if (result.status === 'not_found') {
+            setLoadError('This share link was not found.');
+            setLoading(false);
+            return;
+          }
+          if (result.status === 'revoked') {
+            setIsRevoked(true);
+            setLoading(false);
+            return;
+          }
+          if (result.status === 'expired') {
+            setIsExpired(true);
+            setTimeLeft(0);
+            setLoading(false);
+            return;
+          }
+          if (result.status === 'ok') {
+            link = result.link;
+            profile = result.patient || null;
+            dbRecords = Array.isArray(result.records) ? result.records : [];
+            usedRpc = true;
+          }
+        }
+
+        // 2) Fall back to direct reads for projects without the RPC migration.
+        if (!usedRpc) {
+          const { data: directLink, error: linkError } = await supabase
+            .from('shared_links')
+            .select('id, user_id, token, is_active, expires_at, created_at, record_id')
+            .eq('token', token)
+            .maybeSingle();
+
+          if (linkError) {
+            console.error(linkError);
+            setLoadError(linkError.message);
+            setLoading(false);
+            return;
+          }
+
+          if (!directLink) {
+            setLoadError('This share link was not found.');
+            setLoading(false);
+            return;
+          }
+
+          link = directLink;
+
+          if (!directLink.is_active) {
+            setIsRevoked(true);
+            setLoading(false);
+            return;
+          }
+
+          const directExpiresMs = new Date(directLink.expires_at).getTime() - Date.now();
+          if (directExpiresMs <= 0) {
+            setIsExpired(true);
+            setTimeLeft(0);
+            setLoading(false);
+            return;
+          }
         }
 
         if (!link) {
@@ -84,38 +144,27 @@ export default function SharedRecord() {
           return;
         }
 
-        if (!link.is_active) {
-          setIsRevoked(true);
-          setLoading(false);
-          return;
-        }
-
         const expiresMs = new Date(link.expires_at).getTime() - Date.now();
-        if (expiresMs <= 0) {
-          setIsExpired(true);
-          setTimeLeft(0);
-          setLoading(false);
-          return;
-        }
-
-        // Far-future "no expiry" links → no countdown (∞)
         const TEN_YEARS_MS = 9 * 365 * 24 * 60 * 60 * 1000;
-        if (expiresMs < TEN_YEARS_MS) {
+        if (expiresMs > 0 && expiresMs < TEN_YEARS_MS) {
           setTimeLeft(Math.floor(expiresMs / 1000));
         } else {
           setTimeLeft(null);
         }
 
-        // 2) Patient profile for the link owner
-        // RLS must allow SELECT when an active shared_links row exists for this user_id
-        const { data: profile, error: profileError } = await supabase
-          .from('patient_profiles')
-          .select('id, user_id, full_name, date_of_birth, blood_group, genotype, phone, nin')
-          .eq('user_id', link.user_id)
-          .maybeSingle();
+        // 3) Patient profile for the link owner
+        if (!usedRpc) {
+          const { data: directProfile, error: profileError } = await supabase
+            .from('patient_profiles')
+            .select('id, user_id, full_name, date_of_birth, blood_group, genotype, phone, nin')
+            .eq('user_id', link.user_id)
+            .maybeSingle();
 
-        if (profileError) {
-          console.warn('patient_profiles read failed (check RLS):', profileError.message);
+          profile = directProfile;
+
+          if (profileError) {
+            console.warn('patient_profiles read failed (check RLS):', profileError.message);
+          }
         }
 
         let fullName =
@@ -173,11 +222,19 @@ export default function SharedRecord() {
         };
 
         if (profile?.id) {
-          const { data: dbRecords } = await supabase
-            .from('medical_records')
-            .select('id, title, record_type, file_url, status, created_at')
-            .eq('patient_id', profile.id)
-            .order('created_at', { ascending: false });
+          if (!usedRpc) {
+            const { data: directRecords } = await supabase
+              .from('medical_records')
+              .select('*')
+              .eq('patient_id', profile.id)
+              .order('created_at', { ascending: false });
+
+            dbRecords = directRecords;
+          }
+
+          if (link.record_id) {
+            dbRecords = (dbRecords || []).filter((record) => record.id === link.record_id);
+          }
 
           if (dbRecords && dbRecords.length > 0) {
             for (const r of dbRecords) {
@@ -235,6 +292,9 @@ export default function SharedRecord() {
 
                 const content = decodeContent(r.file_url);
                 const isTextData = (r.file_url || '').startsWith('data:text/plain');
+                const ocrText = typeof r.ocr_text === 'string' ? r.ocr_text.trim() : '';
+                const noteText = typeof r.notes === 'string' ? r.notes.trim() : '';
+                const readable = ocrText || noteText || content;
                 return {
                   id: r.id,
                   title: r.title || 'Clinical Document',
@@ -249,10 +309,10 @@ export default function SharedRecord() {
                       })
                     : '—',
                   content: isTextData
-                    ? content || 'Document attached.'
-                    : r.file_url
-                      ? 'Document attached.'
-                      : 'No file attached.',
+                    ? readable || 'Document attached.'
+                    : readable || (r.file_url ? 'Document attached.' : 'No file attached.'),
+                  ocr_text: ocrText,
+                  notes: noteText,
                   file_url: r.file_url,
                 };
               })
@@ -280,7 +340,17 @@ export default function SharedRecord() {
           userId: link.user_id,
         });
 
-        // Log access (owner-side localStorage only works if same browser — demo only)
+        // Log access on the server when the public RPC is available.
+        if (usedRpc) {
+          void supabase.rpc('log_shared_access', {
+            share_token: token,
+            device_label: /iPhone|Android/i.test(navigator.userAgent)
+              ? 'Mobile Device'
+              : 'Desktop Browser',
+          });
+        }
+
+        // Log access (owner-side localStorage only works if same browser - demo only)
         try {
           const accessLog = JSON.parse(localStorage.getItem('selorah_access_log') || '[]');
           accessLog.unshift({

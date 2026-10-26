@@ -24,37 +24,30 @@ export default function AccessLog() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 1. Fetch access_logs (provider visits)
+      // 1. Fetch access_logs (provider and shared-link visits)
       const { data: accessData, error: accessError } = await supabase
         .from('access_logs')
-        .select(`
-          id,
-          action,
-          created_at,
-          profiles:provider_id(first_name, last_name, organization_name)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (accessData && !accessError) {
         const formatted = accessData.map((log: any) => {
-          let providerTitle = 'Verified Healthcare Provider';
-          if (log.profiles) {
-            const profile = Array.isArray(log.profiles) ? log.profiles[0] : log.profiles;
-            if (profile) {
-              providerTitle = profile.organization_name || `${profile.first_name} ${profile.last_name}`;
-            }
-          }
+          const providerTitle =
+            log.organization_name || log.title || 'Verified Healthcare Provider';
 
           return {
             id: log.id,
             title: providerTitle,
-            action: log.action,
-            time: new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            action: log.action || 'viewed your medical records',
+            time: new Date(log.created_at).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
             date: new Date(log.created_at).toLocaleDateString(),
-            color: 'bg-[#6183FF]',
+            color: log.color || 'bg-[#6183FF]',
             status: 'Active',
-            device: 'Hospital Portal',
+            device: log.device || 'Hospital Portal',
             verified: true,
           };
         });

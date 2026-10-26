@@ -197,7 +197,10 @@ export default function Onboarding() {
 
         if (role === 'patient') {
           const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ').trim();
-          const payload = {
+          const contacts = (formData.emergencyContacts || []).filter(
+            (contact) => contact.name.trim() || contact.phone.trim()
+          );
+          const basePayload: Record<string, unknown> = {
             user_id: user.id,
             full_name: fullName || null,
             date_of_birth: formData.dateOfBirth || null,
@@ -205,18 +208,52 @@ export default function Onboarding() {
             nin: formData.nin || null,
             blood_group: formData.vitals?.bloodType || null,
           };
+
+          const optionalPayload: Record<string, unknown> = {
+            gender: formData.gender || null,
+            height: formData.vitals?.height || null,
+            weight: formData.vitals?.weight || null,
+            allergies: formData.allergies
+              ? formData.allergies.split(',').map((item) => item.trim()).filter(Boolean)
+              : [],
+            emergency_contacts: contacts,
+          };
+
           const { data: existing } = await supabase
             .from('patient_profiles')
             .select('id')
             .eq('user_id', user.id)
             .maybeSingle();
-          if (existing) {
-            const { error } = await supabase.from('patient_profiles').update(payload).eq('user_id', user.id);
-            if (error) throw error;
-          } else {
-            const { error } = await supabase.from('patient_profiles').insert(payload);
-            if (error) throw error;
+
+          let payload: Record<string, unknown> = { ...basePayload, ...optionalPayload };
+          let lastError: { message?: string } | null = null;
+
+          for (let attempt = 0; attempt <= Object.keys(optionalPayload).length; attempt += 1) {
+            const result = existing
+              ? await supabase.from('patient_profiles').update(payload).eq('user_id', user.id)
+              : await supabase.from('patient_profiles').insert(payload);
+
+            if (!result.error) {
+              lastError = null;
+              break;
+            }
+
+            lastError = result.error;
+            const missing = Object.keys(optionalPayload).find(
+              (key) =>
+                key in payload &&
+                /column .* does not exist|schema cache|Could not find the .* column/i.test(
+                  result.error?.message || ''
+                )
+            );
+            if (!missing) break;
+
+            const next = { ...payload };
+            delete next[missing];
+            payload = next;
           }
+
+          if (lastError) throw lastError;
         } else if (role === 'provider') {
           const orgId = `ORG-${user.id.replace(/-/g, '').slice(0, 10).toUpperCase()}`;
           const payload = {

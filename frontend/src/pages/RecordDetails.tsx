@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
+import { readCachedRecord } from '../lib/offline/records';
 import {
   ArrowLeftIcon,
   EllipsisVerticalIcon,
@@ -89,7 +90,25 @@ export default function RecordDetails() {
 
           if (error) {
             console.error('Failed to fetch record:', error);
-          } else if (data) {
+          }
+
+          if (!data) {
+            const cached = await readCachedRecord(id);
+            if (cached) {
+              setRecord({
+                ...cached,
+                name: cached.name,
+                title: cached.name,
+                date: cached.created_at || cached.date || null,
+                created_at: cached.created_at || cached.date || null,
+                document_url: cached.document_url || null,
+                file_url: cached.document_url || null,
+                record_type: cached.record_type || 'Uploaded Document',
+                ocr_text: cached.ocrText,
+                notes: cached.notes,
+              });
+            }
+          } else {
             // Normalize DB columns → UI fields
             setRecord({
               ...data,
@@ -137,19 +156,64 @@ export default function RecordDetails() {
       ? `SEL-${String(id).substring(0, 6).toUpperCase()}`
       : 'SEL-————';
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     setShowMenu(false);
-    info('Record editor opens here (demo).');
+    const currentTitle = record?.title || record?.name || '';
+    const nextTitle = window.prompt('Record title', currentTitle);
+    if (nextTitle === null) return;
+    if (!nextTitle.trim()) {
+      toastError('A record needs a title.');
+      return;
+    }
+
+    const nextNotes = window.prompt('Notes (optional)', record?.notes || '');
+    if (nextNotes === null) return;
+
+    if (!isMockRecord && id) {
+      const { error } = await supabase
+        .from('medical_records')
+        .update({ title: nextTitle.trim(), notes: nextNotes.trim() || null })
+        .eq('id', id);
+
+      if (error && !/column .* does not exist|schema cache/i.test(error.message)) {
+        toastError(error.message, 'Could not update record');
+        return;
+      }
+    }
+
+    setRecord((prev: any) => ({
+      ...prev,
+      title: nextTitle.trim(),
+      name: nextTitle.trim(),
+      notes: nextNotes.trim(),
+    }));
+    toastSuccess('Record updated.');
   };
 
   const handleShare = () => {
     setShowMenu(false);
-    if (
-      window.confirm(
-        'Do you want to share this record with your verified doctor? This will grant them temporary access.'
-      )
-    ) {
-      toastSuccess('Record shared. Revoke access anytime in Access Log.');
+    navigate('/dashboard/qrcodes', { state: { recordId: id } });
+    info('Choose the access duration to finish sharing this record.');
+  };
+
+  const handleDownload = () => {
+    if (!fileUrl) {
+      toastError('This record has no attached document.');
+      return;
+    }
+    try {
+      const anchor = document.createElement('a');
+      anchor.href = fileUrl;
+      anchor.download = `${(record?.name || record?.title || 'selorah-record')
+        .toString()
+        .replace(/[^\w.\-]+/g, '-')}`;
+      anchor.target = '_blank';
+      anchor.rel = 'noreferrer';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+    } catch {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -194,12 +258,14 @@ export default function RecordDetails() {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={() => window.print()}
             className="p-3 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-[#6183FF] hover:border-[#6183FF]/30 transition-all shadow-sm"
             title="Print"
           >
             <PrinterIcon className="w-5 h-5" />
           </button>
           <button
+            onClick={handleDownload}
             className="p-3 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-[#6183FF] hover:border-[#6183FF]/30 transition-all shadow-sm"
             title="Download PDF"
           >
@@ -502,6 +568,31 @@ export default function RecordDetails() {
                   <p className="text-gray-400 italic">No document attached to this record.</p>
                 )}
               </div>
+
+              {(record.ocr_text || record.notes) && (
+                <div className="mt-8 grid gap-4 md:grid-cols-2">
+                  {record.ocr_text && (
+                    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+                      <h4 className="mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        Extracted text (OCR)
+                      </h4>
+                      <p className="max-h-72 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-gray-600">
+                        {record.ocr_text}
+                      </p>
+                    </div>
+                  )}
+                  {record.notes && (
+                    <div className="rounded-2xl border border-gray-100 bg-[#F8F9FE] p-5">
+                      <h4 className="mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        Notes
+                      </h4>
+                      <p className="max-h-72 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-gray-600">
+                        {record.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>

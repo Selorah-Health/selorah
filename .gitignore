@@ -15,6 +15,9 @@ node_modules/
 /backend/.env
 .env
 .env*.local
+env.txt
+*.env
+**/env.txt
 
 .github
 .vscode
