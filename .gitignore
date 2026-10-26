@@ -19,6 +19,7 @@ node_modules/
 .github
 .vscode
 /shared
+env.txt
 
 # Logs
 npm-debug.log*
