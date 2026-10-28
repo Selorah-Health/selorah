@@ -1,6 +1,7 @@
 {
   "name": "Selorah Health",
   "short_name": "Selorah",
+<<<<<<< HEAD
   "description": "Own your health records. Share with clinics when you need to, not forever.",
   "start_url": "/dashboard",
   "scope": "/",
@@ -43,6 +44,28 @@
       "short_name": "Share",
       "url": "/dashboard/qrcodes",
       "icons": [{ "src": "/pwa-192.png", "sizes": "192x192" }]
+=======
+  "description": "Own your health records. Share them on your terms.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F8F9FA",
+  "theme_color": "#6183FF",
+  "categories": ["health", "medical", "productivity"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
+>>>>>>> 908a1e70 (Version 1.3)
     }
   ]
 }

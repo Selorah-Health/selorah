@@ -1,189 +1,388 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { StarIcon, ShieldCheckIcon, CreditCardIcon, UserGroupIcon, IdentificationIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowRightIcon,
+  CheckCircleIcon,
+  CreditCardIcon,
+  IdentificationIcon,
+  PhoneIcon,
+  ShieldCheckIcon,
+  StarIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline';
 import { createClient } from '../../lib/supabase/client';
-import { isValidNin, writeLocalSession, readLocalSession } from '../../lib/auth/session';
+import { isValidNin, readLocalSession, writeLocalSession } from '../../lib/auth/session';
+import { readProState, type ProState } from '../../lib/pro';
 import ProFeaturesModal from './ProFeaturesModal';
 
 interface ProfileProps {
   user: any;
   avatarGradient: string;
+  isPro?: boolean;
 }
 
-export default function Profile({ user, avatarGradient }: ProfileProps) {
+export default function Profile({ user, avatarGradient, isPro: isProProp }: ProfileProps) {
   const [showProFeatures, setShowProFeatures] = useState(false);
+  const [phone, setPhone] = useState('');
   const [nin, setNin] = useState('');
-  const [ninSaving, setNinSaving] = useState(false);
-  const [ninMsg, setNinMsg] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [messageTone, setMessageTone] = useState<'success' | 'error'>('success');
+  const [proState, setProState] = useState<ProState>(() => readProState());
   const navigate = useNavigate();
   const supabase = createClient();
 
-  useEffect(() => {
+  const isPro = Boolean(isProProp || proState.active);
+
+  const loadProfile = useCallback(async () => {
     const local = readLocalSession();
     if (local?.nin) setNin(local.nin);
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase.from('patient_profiles').select('nin').eq('user_id', user.id).maybeSingle();
-      if ((data as any)?.nin) setNin((data as any).nin);
-    })();
-  }, []);
+    if (local?.phone) setPhone(local.phone);
 
-  const saveNin = async () => {
-    setNinMsg(null);
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    if (!authUser) return;
+
+    const { data } = await supabase
+      .from('patient_profiles')
+      .select('phone, nin')
+      .eq('user_id', authUser.id)
+      .maybeSingle();
+
+    if (data?.phone) setPhone(data.phone);
+    if (data?.nin) setNin(data.nin);
+  }, [supabase]);
+
+  useEffect(() => {
+    loadProfile();
+    const refreshPro = () => setProState(readProState());
+    window.addEventListener('selorah:pro-updated', refreshPro);
+    window.addEventListener('storage', refreshPro);
+    return () => {
+      window.removeEventListener('selorah:pro-updated', refreshPro);
+      window.removeEventListener('storage', refreshPro);
+    };
+  }, [loadProfile]);
+
+  const saveContactDetails = async () => {
+    setMessage(null);
+
     if (nin && !isValidNin(nin)) {
-      setNinMsg('NIN must be exactly 11 digits.');
+      setMessageTone('error');
+      setMessage('NIN must be exactly 11 digits.');
       return;
     }
-    setNinSaving(true);
+
+    if (phone && phone.replace(/[^\d]/g, '').length < 10) {
+      setMessageTone('error');
+      setMessage('Enter a valid phone number with at least 10 digits.');
+      return;
+    }
+
+    setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setNinMsg('Please log in to save your NIN.');
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
+      if (!authUser) {
+        setMessageTone('error');
+        setMessage('Please log in to save your details.');
         return;
       }
-      const { error } = await supabase.from('patient_profiles').update({ nin: nin || null }).eq('user_id', user.id);
+
+      const { error } = await supabase
+        .from('patient_profiles')
+        .update({ phone: phone || null, nin: nin || null })
+        .eq('user_id', authUser.id);
+
       if (error) throw error;
-      writeLocalSession({ nin });
-      setNinMsg('NIN saved. You can use it to log in.');
-    } catch (e: any) {
-      setNinMsg(e.message || 'Failed to save NIN.');
+
+      writeLocalSession({ phone, nin });
+
+      try {
+        await supabase.auth.updateUser({ data: { phone: phone || null } });
+      } catch {
+        // Metadata is optional.
+      }
+
+      setMessageTone('success');
+      setMessage('Contact details saved. You can now log in with your phone or NIN.');
+    } catch (err) {
+      setMessageTone('error');
+      setMessage(err instanceof Error ? err.message : 'Could not save your details.');
     } finally {
-      setNinSaving(false);
+      setSaving(false);
     }
   };
 
-  const proFeatures = [
-    "Unlimited Emergency Contacts (Up to 10)",
-    "Priority Medical Record Verification",
-    "Ad-free Experience & Premium Themes",
-    "Early Access to Research Rewards",
-    "Secure Family Account Sharing",
-    "Exclusive Wellness Insights AI"
-  ];
-
-  const isPro = user?.user_metadata?.is_pro || false;
+  const local = readLocalSession();
+  const firstName =
+    user?.user_metadata?.first_name || local?.first_name || user?.email?.split('@')[0] || 'Your';
+  const lastName = user?.user_metadata?.last_name || local?.last_name || '';
+  const email = user?.email || local?.email || 'No email on file';
 
   return (
-    <div className="bg-white rounded-[32px] border border-gray-50 shadow-sm p-10 min-h-[500px] relative overflow-hidden">
-      <div className="flex items-center justify-between mb-10">
-        <div>
-          <h2 className="text-3xl font-bold text-[#101217] tracking-tight">Profile & Settings</h2>
-          <p className="text-gray-400 font-medium">Manage your identity and account preferences.</p>
-        </div>
+    <div className="space-y-6 font-sora">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-[#101217] sm:text-3xl">
+          Profile and settings
+        </h2>
+        <p className="mt-1 text-sm font-medium text-gray-400">
+          Manage your identity, login methods, and plan.
+        </p>
       </div>
 
-      <div className="flex items-center gap-8 mb-12 p-8 bg-gray-50 rounded-[32px] border border-gray-100">
-        <div className="w-24 h-24 rounded-full flex items-center justify-center p-[3px] shadow-sm relative" style={{ backgroundImage: "url('/assets/custom-profile-icon-ring.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
-          <div className={`w-full h-full rounded-full ${avatarGradient}`}></div>
-          {isPro && (
-            <div className="absolute -bottom-1 -right-1 bg-[#DCE4FF] text-[#6183FF] text-[8px] font-black uppercase px-2 py-1 rounded-full border-2 border-white shadow-sm z-10">
-              PRO
-            </div>
-          )}
-        </div>
-        <div className="flex-1">
-          <h3 className="text-2xl font-bold text-[#101217]">{user?.user_metadata?.first_name || 'User'} {user?.user_metadata?.last_name || ''}</h3>
-          <p className="text-gray-500 font-medium">{user?.email || 'use..ail@gmail.com'}</p>
-          <div className="flex gap-2 mt-4">
-            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${isPro ? 'bg-[#6183FF] text-white border-[#6183FF]' : 'bg-white text-gray-400 border-gray-200'}`}>
-              {isPro ? 'Pro Member' : 'Free Account'}
-            </span>
-            {!isPro && (
-              <button 
-                onClick={() => setShowProFeatures(true)}
-                className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-[#4262ff]/10 text-[#4262ff] hover:bg-[#4262ff]/20 transition-all"
-              >
-                Upgrade now
-              </button>
+      <section className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-7">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+          <div
+            className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full p-[3px] shadow-sm"
+            style={{
+              backgroundImage: "url('/assets/custom-profile-icon-ring.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            <div className={`h-full w-full rounded-full ${avatarGradient}`} />
+            {isPro && (
+              <span className="absolute -bottom-1 -right-1 z-10 rounded-full border-2 border-white bg-[#DCE4FF] px-2 py-0.5 text-[8px] font-black uppercase text-[#6183FF]">
+                Pro
+              </span>
             )}
           </div>
-        </div>
-      </div>
 
-      <div className="mb-10 p-8 bg-gray-50 rounded-[28px] border border-gray-100">
-        <div className="flex items-center gap-3 mb-4">
-          <IdentificationIcon className="w-6 h-6 text-[#6183FF]" />
-          <h3 className="text-lg font-bold text-[#101217]">National Identification Number (NIN)</h3>
-        </div>
-        <p className="text-sm text-gray-500 mb-4">
-          Required for hospital lookup and optional login. 11 digits. You can add this if you skipped it during onboarding.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={11}
-            value={nin}
-            onChange={(e) => setNin(e.target.value.replace(/\D/g, '').slice(0, 11))}
-            placeholder="Enter 11-digit NIN"
-            className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[#6183FF]"
-          />
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-xl font-bold text-[#101217] sm:text-2xl">
+              {[firstName, lastName].filter(Boolean).join(' ')}
+            </h3>
+            <p className="truncate text-sm font-medium text-gray-400">{email}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span
+                className={`rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] ${
+                  isPro
+                    ? 'border-[#6183FF] bg-[#6183FF] text-white'
+                    : 'border-gray-200 bg-white text-gray-400'
+                }`}
+              >
+                {isPro ? 'Pro member' : 'Free account'}
+              </span>
+              {!isPro && (
+                <button
+                  type="button"
+                  onClick={() => setShowProFeatures(true)}
+                  className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#6183FF] transition-colors hover:bg-[#6183FF]/15"
+                >
+                  Upgrade
+                </button>
+              )}
+            </div>
+          </div>
+
           <button
             type="button"
-            onClick={saveNin}
-            disabled={ninSaving}
-            className="bg-[#6183FF] text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-[#4E6EEF] disabled:opacity-50"
+            onClick={() => navigate('/dashboard/billing')}
+            className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-full border border-gray-200 px-4 text-[11px] font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
           >
-            {ninSaving ? 'Saving…' : 'Save NIN'}
+            <CreditCardIcon className="h-3.5 w-3.5" />
+            Billing
           </button>
         </div>
-        {ninMsg && <p className="text-sm mt-3 text-gray-600">{ninMsg}</p>}
-      </div>
+      </section>
 
-      {!isPro && (
-        <div className="mb-10 bg-[#0A0B14] p-8 rounded-[28px] text-white relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#6183FF]/20 rounded-full blur-3xl -mr-32 -mt-32"></div>
-          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-5">
-              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/10">
-                <StarIcon className="w-8 h-8 text-[#6183FF]" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">Go Pro for only ₦5,000/year</h3>
-                <p className="text-white/50 font-medium text-sm">Join 5,000+ users enjoying premium healthcare benefits.</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => setShowProFeatures(true)}
-              className="w-full lg:w-auto bg-[#6183FF] text-white font-black uppercase tracking-widest text-[11px] px-10 py-4 rounded-xl hover:bg-[#4E6EEF] transition-all shadow-xl shadow-blue-500/20"
-            >
-              Unlock Pro Features
-            </button>
+      <section className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-7">
+        <div className="mb-5 flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+            <IdentificationIcon className="h-5 w-5" />
+          </span>
+          <div>
+            <h3 className="text-base font-bold text-[#101217]">Login details</h3>
+            <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-gray-400">
+              Add a phone number or 11-digit NIN so you can log in without email.
+            </p>
           </div>
         </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+              Phone number
+            </span>
+            <span className="relative block">
+              <PhoneIcon className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-300" />
+              <input
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="0801 234 5678"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+              />
+            </span>
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+              National Identification Number
+            </span>
+            <span className="relative block">
+              <IdentificationIcon className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-300" />
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={11}
+                placeholder="11-digit NIN"
+                value={nin}
+                onChange={(event) =>
+                  setNin(event.target.value.replace(/\D/g, '').slice(0, 11))
+                }
+                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+              />
+            </span>
+          </label>
+        </div>
+
+        {message && (
+          <p
+            className={`mt-3 flex items-start gap-1.5 text-[11px] font-semibold leading-relaxed ${
+              messageTone === 'success' ? 'text-green-600' : 'text-red-500'
+            }`}
+          >
+            {messageTone === 'success' && <CheckCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
+            {message}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={saveContactDetails}
+          disabled={saving}
+          className="mt-5 flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] disabled:opacity-60"
+        >
+          {saving ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Saving...
+            </>
+          ) : (
+            'Save login details'
+          )}
+        </button>
+      </section>
+
+      {isPro ? (
+        <section className="relative overflow-hidden rounded-[28px] border border-[#6183FF]/15 bg-[#EEF2FF] p-6">
+          <div
+            aria-hidden
+            className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#6183FF]/20 blur-2xl"
+          />
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#6183FF] text-white shadow-lg shadow-[#6183FF]/25">
+                <StarIcon className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-bold text-[#101217]">Selorah Pro is active</p>
+                <p className="mt-1 text-xs font-medium leading-relaxed text-gray-500">
+                  {proState.expiresAt
+                    ? `Your plan renews on ${new Date(proState.expiresAt).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}.`
+                    : 'All Pro features are unlocked on this account.'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/billing')}
+              className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-white px-4 text-[11px] font-bold text-[#6183FF] shadow-sm"
+            >
+              Manage billing
+              <ArrowRightIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </section>
+      ) : (
+        <section className="relative overflow-hidden rounded-[28px] bg-[#020924] p-6 text-white">
+          <div
+            aria-hidden
+            className="absolute -right-12 -top-14 h-40 w-40 rounded-full bg-[#6183FF]/30 blur-3xl"
+          />
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#5FFAB0]">
+                <StarIcon className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-bold">Go Pro for ₦5,000 a year</p>
+                <p className="mt-1 max-w-sm text-xs font-medium leading-relaxed text-white/50">
+                  Up to 10 emergency contacts, priority verification, family sharing, and an
+                  ad-free dashboard.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowProFeatures(true)}
+              className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/25"
+            >
+              Unlock Pro
+              <ArrowRightIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </section>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div 
-          onClick={() => navigate('/dashboard/security')}
-          className="p-6 rounded-3xl border border-gray-100 hover:border-[#6183FF]/30 transition-all cursor-pointer group bg-white hover:shadow-xl hover:shadow-blue-500/5"
-        >
-          <ShieldCheckIcon className="w-6 h-6 text-gray-400 mb-3 group-hover:text-[#6183FF]" />
-          <p className="font-bold text-[#101217]">Security</p>
-          <p className="text-xs text-gray-400 font-medium">Passwords & MFA</p>
-        </div>
-
-        <div 
-          onClick={() => navigate('/dashboard/billing')}
-          className="p-6 rounded-3xl border border-gray-100 hover:border-[#6183FF]/30 transition-all cursor-pointer group bg-white hover:shadow-xl hover:shadow-blue-500/5"
-        >
-          <CreditCardIcon className="w-6 h-6 text-gray-400 mb-3 group-hover:text-[#6183FF]" />
-          <p className="font-bold text-[#101217]">Billing</p>
-          <p className="text-xs text-gray-400 font-medium">Plans & Invoices</p>
-        </div>
-
-        <div 
-          onClick={() => navigate('/dashboard/family')}
-          className="p-6 rounded-3xl border border-gray-100 hover:border-[#6183FF]/30 transition-all cursor-pointer group bg-white hover:shadow-xl hover:shadow-blue-500/5"
-        >
-          <UserGroupIcon className="w-6 h-6 text-gray-400 mb-3 group-hover:text-[#6183FF]" />
-          <p className="font-bold text-[#101217]">Family</p>
-          <p className="text-xs text-gray-400 font-medium">Manage Members</p>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {[
+          {
+            title: 'Security',
+            subtitle: 'Password and sessions',
+            icon: ShieldCheckIcon,
+            path: '/dashboard/security',
+          },
+          {
+            title: 'Billing',
+            subtitle: 'Plan and receipts',
+            icon: CreditCardIcon,
+            path: '/dashboard/billing',
+          },
+          {
+            title: 'Family',
+            subtitle: 'Manage members',
+            icon: UserGroupIcon,
+            path: '/dashboard/family',
+          },
+        ].map((item) => (
+          <button
+            key={item.title}
+            type="button"
+            onClick={() => navigate(item.path)}
+            className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 text-left transition-all hover:border-[#6183FF]/30 hover:shadow-sm"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-gray-400 transition-colors group-hover:text-[#6183FF]">
+              <item.icon className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-[#101217]">{item.title}</span>
+              <span className="mt-0.5 block text-[10px] font-medium text-gray-400">
+                {item.subtitle}
+              </span>
+            </span>
+            <ArrowRightIcon className="h-4 w-4 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5" />
+          </button>
+        ))}
       </div>
 
-      <ProFeaturesModal isOpen={showProFeatures} onClose={() => setShowProFeatures(false)} />
+      <ProFeaturesModal
+        isOpen={showProFeatures}
+        onClose={() => setShowProFeatures(false)}
+        onUpgraded={() => setProState(readProState())}
+        source="profile"
+      />
     </div>
   );
 }

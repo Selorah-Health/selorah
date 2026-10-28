@@ -10,6 +10,7 @@ node_modules/
 .vite
 /dist
 /build
+frontend/dist/
 
 # Environment variables
 /backend/.env
@@ -28,6 +29,9 @@ env.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Supabase CLI local state
+supabase/.temp/
 
 # Misc
 .DS_Store

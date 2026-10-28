@@ -1,367 +1,336 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useToast } from '../contexts/ToastContext';
-import { createClient } from '../lib/supabase/client';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeftIcon,
-  ShieldCheckIcon,
-  DevicePhoneMobileIcon,
-  GlobeAltIcon,
   ClockIcon,
-  ShieldExclamationIcon,
+  ComputerDesktopIcon,
   DocumentMagnifyingGlassIcon,
+  GlobeAltIcon,
+  QrCodeIcon,
+  ShieldCheckIcon,
+  ShieldExclamationIcon,
 } from '@heroicons/react/24/outline';
+import { createClient } from '../lib/supabase/client';
+import { useToast } from '../contexts/ToastContext';
 
-type LogDetail = {
+type DetailEntry = {
   title: string;
+  subtitle: string;
   action: string;
-  time: string;
-  date: string;
-  color: string;
-  location: string;
-  ip: string;
+  timestamp: string;
   device: string;
-  type: string;
-  linkToken?: string;
+  verified: boolean;
+  kind: 'provider' | 'link';
+  token?: string;
+  expiresAt?: string | null;
   revoked?: boolean;
-  expired?: boolean;
 };
 
-const STATIC_LOGS: Record<string, LogDetail> = {
-  '1': {
-    title: 'Reddington Hospital',
-    action: 'viewed SNH Lab Result',
-    time: '2hr ago',
-    date: 'April 7, 2026',
-    color: 'bg-[#22C55E]',
-    location: 'Lagos, Nigeria',
-    ip: '192.168.1.45',
-    device: 'Hospital Workstation (Chrome/Windows)',
-    type: 'Verified Provider',
-  },
-  '2': {
-    title: 'St. Nicholas Hospital',
-    action: 'gained access to medical history',
-    time: 'Yesterday',
-    date: 'April 6, 2026',
-    color: 'bg-[#FACC15]',
-    location: 'Lagos Island, Nigeria',
-    ip: '41.203.77.12',
-    device: 'iPad Pro (Safari/iOS)',
-    type: 'Emergency Access',
-  },
-  '3': {
-    title: 'Igando General Hospital',
-    action: 'viewed YFB Vaccination',
-    time: '2 days ago',
-    date: 'April 5, 2026',
-    color: 'bg-[#EF4444]',
-    location: 'Alimosho, Nigeria',
-    ip: '102.89.2.21',
-    device: 'Android Tablet (Chrome)',
-    type: 'Verified Provider',
-  },
-  '4': {
-    title: 'Dr. Adeyemi',
-    action: 'added a new prescription',
-    time: 'Last week',
-    date: 'March 15, 2026',
-    color: 'bg-[#3B82F6]',
-    location: 'Victoria Island, Nigeria',
-    ip: '105.112.33.8',
-    device: 'iPhone 15 (Mobile App)',
-    type: 'Verified Doctor',
-  },
-};
-
-function formatTime(value?: string | null) {
-  if (!value) return '';
-  return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return '';
-  return new Date(value).toLocaleDateString(undefined, {
+function formatDateTime(value?: string | null) {
+  if (!value) return 'Not recorded';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Not recorded';
+  return date.toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
 export default function AccessLogDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { success: toastSuccess, error: toastError } = useToast();
   const supabase = createClient();
-  const [log, setLog] = useState<LogDetail | null>(STATIC_LOGS[id || ''] || null);
+  const { success, error: toastError } = useToast();
+  const [entry, setEntry] = useState<DetailEntry | null>(null);
   const [loading, setLoading] = useState(true);
-  const [revoking, setRevoking] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadEntry = useCallback(async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
 
-    const load = async () => {
-      if (!id) {
-        setLoading(false);
-        return;
+    if (id.startsWith('link-')) {
+      const linkId = id.replace('link-', '');
+      const { data } = await supabase
+        .from('shared_links')
+        .select('id, token, is_active, expires_at, created_at')
+        .eq('id', linkId)
+        .maybeSingle();
+
+      if (data) {
+        const expired = data.expires_at
+          ? new Date(data.expires_at).getTime() < Date.now()
+          : false;
+        const live = data.is_active && !expired;
+        setEntry({
+          title: live ? 'Active QR access link' : 'QR access link',
+          subtitle: live ? 'Live share' : expired ? 'Expired share' : 'Revoked share',
+          action: live
+            ? 'Anyone holding this code can view the records you selected.'
+            : expired
+              ? 'This link expired and no longer grants access.'
+              : 'You revoked this link. It no longer grants access.',
+          timestamp: formatDateTime(data.created_at),
+          device: 'QR code',
+          verified: true,
+          kind: 'link',
+          token: data.token,
+          expiresAt: data.expires_at,
+          revoked: !live,
+        });
+      }
+      setLoading(false);
+      return;
+    }
+
+    const { data: log } = await supabase
+      .from('access_logs')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (log) {
+      let title = log.organization_name || 'Verified provider';
+      if (log.provider_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, organization_name')
+          .eq('id', log.provider_id)
+          .maybeSingle();
+        if (profile) {
+          title =
+            profile.organization_name ||
+            [profile.first_name, profile.last_name].filter(Boolean).join(' ') ||
+            title;
+        }
       }
 
-      try {
-        if (id.startsWith('link-')) {
-          const linkId = id.slice(5);
-          const { data } = await supabase
-            .from('shared_links')
-            .select('id, token, is_active, expires_at, created_at')
-            .eq('id', linkId)
-            .maybeSingle();
+      setEntry({
+        title,
+        subtitle: log.provider_id ? 'Verified provider session' : 'Recorded access',
+        action: log.action || 'Viewed your medical record',
+        timestamp: formatDateTime(log.accessed_at),
+        device: 'Provider portal',
+        verified: Boolean(log.provider_id || log.organization_name),
+        kind: 'provider',
+      });
+    }
 
-          if (data && !cancelled) {
-            const expired = new Date(data.expires_at).getTime() <= Date.now();
-            const live = data.is_active && !expired;
-            setLog({
-              title: live ? 'Active QR Access Link' : 'QR Access Link',
-              action: live
-                ? 'live shared link, anyone with the code can view records'
-                : data.is_active
-                  ? 'shared link expired'
-                  : 'shared link was revoked',
-              time: formatTime(data.created_at),
-              date: formatDate(data.created_at),
-              color: live ? 'bg-[#22C55E]' : 'bg-[#EF4444]',
-              location: 'Not recorded',
-              ip: 'Not recorded',
-              device: 'QR Code',
-              type: 'Temporary QR Access',
-              linkToken: data.token,
-              revoked: !data.is_active,
-              expired: data.is_active && expired,
-            });
-          }
-        } else {
-          const { data } = await supabase
-            .from('access_logs')
-            .select('*')
-            .eq('id', id)
-            .maybeSingle();
-
-          if (data && !cancelled) {
-            setLog({
-              title: data.organization_name || 'Verified Healthcare Provider',
-              action: data.action || 'viewed your medical records',
-              time: formatTime(data.created_at),
-              date: formatDate(data.created_at),
-              color: data.color || 'bg-[#6183FF]',
-              location: data.location || 'Not recorded',
-              ip: data.ip_address || 'Not recorded',
-              device: data.device || 'Hospital Portal',
-              type: 'Verified Provider',
-            });
-          }
-        }
-
-        if (!cancelled) {
-          const revoked = JSON.parse(localStorage.getItem('selorah_revoked_logs') || '[]');
-          if (Array.isArray(revoked) && revoked.includes(id)) {
-            setLog((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    revoked: true,
-                    action: 'access revoked for this share',
-                    color: 'bg-[#EF4444]',
-                  }
-                : prev
-            );
-          }
-        }
-      } catch {
-        // Keep the static fallback when the server is unavailable.
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
+    setLoading(false);
   }, [id, supabase]);
 
-  const handleRevoke = async () => {
-    if (!log) return;
-    if (!window.confirm(`Revoke all future access for ${log.title}?`)) return;
+  useEffect(() => {
+    loadEntry();
+  }, [loadEntry]);
 
-    setRevoking(true);
-    try {
-      if (log.linkToken) {
-        const { error } = await supabase
-          .from('shared_links')
-          .update({ is_active: false })
-          .eq('token', log.linkToken);
-        if (error) throw error;
-      }
+  const revokeLink = async () => {
+    if (!entry?.token) return;
+    if (!window.confirm('Revoke this QR link now? It will stop working immediately.')) return;
 
-      if (id) {
-        const existing = JSON.parse(localStorage.getItem('selorah_revoked_logs') || '[]');
-        if (!existing.includes(id)) {
-          localStorage.setItem('selorah_revoked_logs', JSON.stringify([...existing, id]));
-        }
-      }
+    const { error } = await supabase
+      .from('shared_links')
+      .update({ is_active: false })
+      .eq('token', entry.token);
 
-      toastSuccess('Access revoked. Security team has been notified.');
-      navigate('/dashboard/access-log');
-    } catch (error) {
-      toastError(
-        error instanceof Error ? error.message : 'Could not revoke this access.',
-        'Revoke failed'
-      );
-    } finally {
-      setRevoking(false);
+    if (error) {
+      toastError(error.message, 'Could not revoke access');
+      return;
     }
+
+    setEntry((previous) =>
+      previous
+        ? {
+            ...previous,
+            title: 'QR access link',
+            subtitle: 'Revoked share',
+            action: 'You revoked this link. It no longer grants access.',
+            revoked: true,
+          }
+        : previous
+    );
+    success('Access revoked. The link will not work again.');
   };
 
-  if (loading && !log) {
-    return (
-      <div className="bg-white rounded-[40px] border border-gray-50 shadow-xl shadow-blue-500/5 p-10 min-h-[400px] flex items-center justify-center">
-        <p className="text-gray-400 font-medium">Loading access details...</p>
-      </div>
-    );
-  }
-
-  if (!log) {
-    return (
-      <div className="space-y-6 font-sora">
-        <button
-          onClick={() => navigate('/dashboard/access-log')}
-          className="flex items-center gap-2 text-gray-400 hover:text-[#6183FF] transition-all group"
-        >
-          <ArrowLeftIcon className="w-4 h-4" />
-          <span className="font-bold text-sm">Back to Access Log</span>
-        </button>
-        <div className="bg-white rounded-[40px] border border-gray-50 shadow-xl shadow-blue-500/5 p-10 min-h-[400px] flex flex-col items-center justify-center text-center">
-          <ShieldExclamationIcon className="w-12 h-12 text-gray-300 mb-4" />
-          <h2 className="text-2xl font-black text-[#101217]">Access record not found</h2>
-          <p className="text-gray-400 font-medium mt-2">
-            This entry may have been removed or belongs to another account.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const isRevoked = log.revoked === true;
-
   return (
-    <div className="space-y-6 font-sora">
+    <div className="space-y-5 font-sora">
       <button
+        type="button"
         onClick={() => navigate('/dashboard/access-log')}
-        className="flex items-center gap-2 text-gray-400 hover:text-[#6183FF] transition-all group"
+        className="group flex items-center gap-2 text-xs font-bold text-gray-400 transition-colors hover:text-[#6183FF]"
       >
-        <ArrowLeftIcon className="w-4 h-4" />
-        <span className="font-bold text-sm">Back to Access Log</span>
+        <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+        Back to access log
       </button>
 
-      <div className="bg-white rounded-[40px] border border-gray-50 shadow-xl shadow-blue-500/5 overflow-hidden">
-        <div className="p-6 sm:p-10 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex items-center gap-5">
-            <div
-              className={`w-14 h-14 rounded-2xl ${log.color} flex items-center justify-center shadow-lg shadow-blue-500/10`}
-            >
-              <DocumentMagnifyingGlassIcon className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-[#101217] tracking-tight">{log.title}</h2>
-              <p className="text-gray-400 font-medium text-sm">{log.type}</p>
-            </div>
+      {loading ? (
+        <div className="h-80 animate-pulse rounded-[28px] border border-gray-50 bg-white" />
+      ) : !entry ? (
+        <div className="rounded-[28px] border border-gray-50 bg-white p-10 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F8F9FE] text-gray-300">
+            <DocumentMagnifyingGlassIcon className="h-7 w-7" />
           </div>
-          <div className="flex items-center gap-3">
-            {isRevoked || log.expired ? (
-              <span className="bg-red-50 text-red-500 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full border border-red-100 flex items-center gap-2">
-                <ShieldExclamationIcon className="w-4 h-4" />
-                {isRevoked ? 'Access Revoked' : 'Code Expired'}
-              </span>
-            ) : (
-              <span className="bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full border border-green-100 flex items-center gap-2">
-                <ShieldCheckIcon className="w-4 h-4" /> Secure Session
-              </span>
-            )}
-          </div>
+          <h2 className="mt-4 text-lg font-bold text-[#101217]">This entry is not available</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-relaxed text-gray-400">
+            The activity may have been removed, or it belongs to a different account.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/access-log')}
+            className="mt-5 min-h-[42px] rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white"
+          >
+            Return to access log
+          </button>
         </div>
+      ) : (
+        <div className="overflow-hidden rounded-[28px] border border-gray-50 bg-white shadow-sm">
+          <div className="border-b border-gray-50 p-6 sm:p-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                    entry.kind === 'link'
+                      ? 'bg-[#EEF2FF] text-[#6183FF]'
+                      : entry.revoked
+                        ? 'bg-red-50 text-red-400'
+                        : 'bg-green-50 text-green-600'
+                  }`}
+                >
+                  {entry.kind === 'link' ? (
+                    <QrCodeIcon className="h-6 w-6" />
+                  ) : (
+                    <DocumentMagnifyingGlassIcon className="h-6 w-6" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-[#101217]">
+                    {entry.title}
+                  </h2>
+                  <p className="mt-0.5 text-xs font-medium text-gray-400">{entry.subtitle}</p>
+                </div>
+              </div>
 
-        <div className="p-6 sm:p-10 md:p-14">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div className="space-y-10">
+              <span
+                className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] ${
+                  entry.revoked
+                    ? 'border-red-100 bg-red-50 text-red-500'
+                    : 'border-green-100 bg-green-50 text-green-600'
+                }`}
+              >
+                <ShieldCheckIcon className="h-3.5 w-3.5" />
+                {entry.revoked ? 'Revoked' : entry.verified ? 'Verified session' : 'Recorded'}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-8 p-6 sm:p-8 md:grid-cols-2">
+            <div className="space-y-6">
               <div>
-                <h3 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4">
-                  Activity Summary
+                <h3 className="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-gray-300">
+                  Activity summary
                 </h3>
-                <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
-                  <p className="text-[#101217] font-bold text-lg mb-2">&quot;{log.action}&quot;</p>
-                  <p className="text-gray-400 text-sm font-medium">
-                    This action was authorized via a temporary QR access token generated by the patient.
+                <div className="rounded-2xl border border-gray-100 bg-[#F8F9FE] p-5">
+                  <p className="text-sm font-bold leading-relaxed text-[#101217]">
+                    {entry.action}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <ClockIcon className="w-3 h-3" /> Timestamp
+                  <h4 className="mb-1.5 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-gray-300">
+                    <ClockIcon className="h-3 w-3" />
+                    Timestamp
                   </h4>
-                  <p className="font-bold text-[#101217]">{log.date}</p>
-                  <p className="text-xs text-gray-400 font-medium">{log.time}</p>
+                  <p className="text-xs font-bold text-[#101217]">{entry.timestamp}</p>
                 </div>
                 <div>
-                  <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <GlobeAltIcon className="w-3 h-3" /> Geolocation
+                  <h4 className="mb-1.5 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-gray-300">
+                    <GlobeAltIcon className="h-3 w-3" />
+                    Source
                   </h4>
-                  <p className="font-bold text-[#101217]">{log.location}</p>
-                  <p className="text-xs text-gray-400 font-medium">IP: {log.ip}</p>
+                  <p className="text-xs font-bold text-[#101217]">{entry.device}</p>
                 </div>
               </div>
+
+              {entry.token && (
+                <div>
+                  <h4 className="mb-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-gray-300">
+                    Share token
+                  </h4>
+                  <p className="break-all rounded-xl bg-gray-50 px-3 py-2 font-mono text-[10px] font-semibold text-gray-500">
+                    {entry.token}
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-10">
+            <div className="space-y-5">
               <div>
-                <h3 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4">
-                  Device Verification
+                <h3 className="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-gray-300">
+                  Device verification
                 </h3>
-                <div className="flex items-center gap-4 p-6 border border-gray-100 rounded-3xl">
-                  <div className="w-12 h-12 bg-[#EEF2FF] rounded-2xl flex items-center justify-center shadow-inner">
-                    <DevicePhoneMobileIcon className="w-6 h-6 text-[#6183FF]" />
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-100 p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+                    <ComputerDesktopIcon className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-bold text-[#101217] text-sm">{log.device}</p>
-                    <p className="text-[10px] font-black text-green-500 uppercase tracking-widest mt-1">
-                      Encrypted Connection
+                    <p className="text-xs font-bold text-[#101217]">{entry.device}</p>
+                    <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-green-500">
+                      Encrypted connection
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-red-50/50 rounded-3xl p-8 border border-red-100/50">
-                <div className="flex items-center gap-3 mb-4">
-                  <ShieldExclamationIcon className="w-6 h-6 text-red-500" />
-                  <h3 className="text-sm font-black text-red-600 uppercase tracking-widest">
-                    Security Controls
+              {entry.kind === 'link' && entry.expiresAt && (
+                <div className="rounded-2xl border border-gray-100 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-300">
+                    Expires
+                  </p>
+                  <p className="mt-1 text-xs font-bold text-[#101217]">
+                    {formatDateTime(entry.expiresAt)}
+                  </p>
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-red-100 bg-red-50/50 p-5">
+                <div className="mb-2 flex items-center gap-2">
+                  <ShieldExclamationIcon className="h-4 w-4 text-red-500" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.14em] text-red-600">
+                    Security controls
                   </h3>
                 </div>
-                <p className="text-xs text-red-700/60 font-medium mb-6 leading-relaxed">
-                  If you do not recognize this activity, your account security might be compromised.
-                  Revoking access will immediately invalidate all active sessions for this provider.
+                <p className="text-[11px] font-medium leading-relaxed text-red-700/60">
+                  {entry.kind === 'link'
+                    ? 'Revoking this link immediately invalidates the code for everyone who has it.'
+                    : 'Provider access comes from a QR link you shared. Revoke the matching link in your access log to stop future sessions.'}
                 </p>
                 <button
-                  onClick={handleRevoke}
-                  disabled={isRevoked || revoking}
-                  className="w-full bg-red-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                  type="button"
+                  onClick={
+                    entry.kind === 'link' && !entry.revoked
+                      ? revokeLink
+                      : () => navigate('/dashboard/access-log')
+                  }
+                  className={`mt-4 w-full rounded-2xl py-3.5 text-xs font-bold transition-colors ${
+                    entry.kind === 'link' && !entry.revoked
+                      ? 'bg-red-500 text-white hover:bg-red-600'
+                      : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
                 >
-                  {isRevoked ? 'Access Already Revoked' : revoking ? 'Revoking...' : 'Revoke Provider Access'}
+                  {entry.kind === 'link' && !entry.revoked
+                    ? 'Revoke this link'
+                    : 'Review all access'}
                 </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

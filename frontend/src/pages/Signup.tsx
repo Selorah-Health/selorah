@@ -1,17 +1,45 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import {
+  ArrowLeftIcon,
+  ArrowPathIcon,
+  BeakerIcon,
+  BuildingOffice2Icon,
+  CheckCircleIcon,
+  EnvelopeIcon,
   EyeIcon,
   EyeSlashIcon,
-  ArrowPathIcon,
-  CheckCircleIcon,
-  UserIcon,
-  BuildingOffice2Icon,
-  BeakerIcon,
+  LockClosedIcon,
+  PhoneIcon,
   ShieldCheckIcon,
+  UserIcon,
 } from '@heroicons/react/24/outline';
 import SEOTitle from '../components/SEOTitle';
 import { createClient } from '../lib/supabase/client';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const ROLE_OPTIONS = [
+  { id: 'patient' as const, title: 'Patient', desc: 'Own your health records', icon: UserIcon },
+  {
+    id: 'hospital' as const,
+    title: 'Hospital',
+    desc: 'Clinic and provider portal',
+    icon: BuildingOffice2Icon,
+  },
+  {
+    id: 'researcher' as const,
+    title: 'Researcher',
+    desc: 'Studies and cohorts',
+    icon: BeakerIcon,
+  },
+  {
+    id: 'insurer' as const,
+    title: 'Insurer',
+    desc: 'Claims and policies',
+    icon: ShieldCheckIcon,
+  },
+];
 
 export default function Signup() {
   const supabase = createClient();
@@ -26,113 +54,77 @@ export default function Signup() {
     lastName: '',
     orgName: '',
     workEmail: '',
+    email: '',
     phone: '',
-    identifier: '',
     password: '',
     agree: false,
   });
 
-  const isOrg = formData.role === 'hospital' || formData.role === 'researcher' || formData.role === 'insurer';
+  const isOrg =
+    formData.role === 'hospital' ||
+    formData.role === 'researcher' ||
+    formData.role === 'insurer';
 
-  const roleOptions = [
-    { id: 'patient' as const, title: 'Patient', desc: 'Personal health records', icon: UserIcon },
-    { id: 'hospital' as const, title: 'Hospital', desc: 'Clinic / provider portal', icon: BuildingOffice2Icon },
-    { id: 'researcher' as const, title: 'Researcher', desc: 'Studies & cohorts', icon: BeakerIcon },
-    { id: 'insurer' as const, title: 'Insurer', desc: 'Claims & policies', icon: ShieldCheckIcon },
-  ];
+  const update = (key: keyof typeof formData, value: string | boolean) =>
+    setFormData((current) => ({ ...current, [key]: value }));
 
-  const validateIdentifier = (val: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^\+?[\d\s-]{10,}$/;
-    if (emailRegex.test(val)) return 'email';
-    if (phoneRegex.test(val)) return 'phone';
-    return null;
-  };
+  const passwordScore = (() => {
+    const value = formData.password;
+    let score = 0;
+    if (value.length >= 8) score += 1;
+    if (value.length >= 12) score += 1;
+    if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1;
+    if (/\d/.test(value) || /[^A-Za-z0-9]/.test(value)) score += 1;
+    return Math.min(score, 4);
+  })();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError(null);
 
-    if (!formData.role) {
-      setError('Please select whether you are a patient, hospital, researcher, or insurer');
+    const signupEmail = isOrg ? formData.workEmail.trim() : formData.email.trim();
+
+    if (!EMAIL_RE.test(signupEmail)) {
+      setError(
+        isOrg
+          ? 'Enter a valid work or organization email address.'
+          : 'Enter a valid email address. You can add your phone for phone login next.'
+      );
+      return;
+    }
+
+    if (!isOrg && (!formData.firstName.trim() || !formData.lastName.trim())) {
+      setError('First and last name are required.');
+      return;
+    }
+
+    if (isOrg && !formData.orgName.trim()) {
+      setError('Organization name is required.');
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
 
     if (!formData.agree) {
-      setError('You must agree to the terms and conditions');
-      return;
-    }
-
-    const isOrganization =
-      formData.role === 'hospital' || formData.role === 'researcher' || formData.role === 'insurer';
-
-    if (isOrganization) {
-      if (!formData.orgName.trim()) {
-        setError('Organization name is required');
-        return;
-      }
-      const emailType = validateIdentifier(formData.workEmail.trim());
-      if (emailType !== 'email') {
-        setError('Please enter a valid work / organization email');
-        return;
-      }
-    } else {
-      if (!formData.firstName.trim() || !formData.lastName.trim()) {
-        setError('First and last name are required');
-        return;
-      }
-      const type = validateIdentifier(formData.identifier);
-      if (!type) {
-        setError('Please enter a valid email address or phone number');
-        return;
-      }
-    }
-
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError('Please accept the terms to continue.');
       return;
     }
 
     setLoading(true);
-    // Cache names early so onboarding can prefill even if the user refreshes mid-flow
-    try {
-      const existing = localStorage.getItem('selorah_user');
-      const prev = existing ? JSON.parse(existing) : {};
-      localStorage.setItem(
-        'selorah_user',
-        JSON.stringify({
-          ...prev,
-          first_name: isOrganization ? formData.orgName.trim() : formData.firstName.trim(),
-          last_name: isOrganization ? '' : formData.lastName.trim(),
-          org_name: isOrganization ? formData.orgName.trim() : undefined,
-          email: isOrganization ? formData.workEmail.trim() : formData.identifier.trim(),
-          phone: isOrganization ? formData.phone.trim() : undefined,
-          role: formData.role,
-        })
-      );
-    } catch {
-      // ignore storage errors
-    }
+
+    const displayFirst = isOrg ? formData.orgName.trim() : formData.firstName.trim();
+    const displayLast = isOrg ? '' : formData.lastName.trim();
+    const phone = formData.phone.trim();
 
     try {
       const url = import.meta.env.VITE_SUPABASE_URL;
       const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
       if (!url || !key || url.includes('placeholder')) {
         throw new Error(
-          'Authentication is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.'
-        );
-      }
-
-      const signupEmail = isOrganization
-        ? formData.workEmail.trim()
-        : formData.identifier.trim();
-
-      const idType = validateIdentifier(signupEmail);
-      if (idType !== 'email') {
-        throw new Error(
-          isOrganization
-            ? 'Organization signup requires a work email address.'
-            : 'Phone signup is not yet available. Please use an email address.'
+          'Authentication is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
         );
       }
 
@@ -141,11 +133,11 @@ export default function Signup() {
         password: formData.password,
         options: {
           data: {
-            first_name: isOrganization ? formData.orgName.trim() : formData.firstName.trim(),
-            last_name: isOrganization ? '' : formData.lastName.trim(),
-            org_name: isOrganization ? formData.orgName.trim() : undefined,
+            first_name: displayFirst,
+            last_name: displayLast,
+            org_name: isOrg ? formData.orgName.trim() : undefined,
             role: formData.role,
-            phone: isOrganization ? formData.phone.trim() : undefined,
+            phone: phone || undefined,
           },
         },
       });
@@ -155,11 +147,11 @@ export default function Signup() {
       localStorage.setItem(
         'selorah_user',
         JSON.stringify({
-          first_name: isOrganization ? formData.orgName.trim() : formData.firstName.trim(),
-          last_name: isOrganization ? '' : formData.lastName.trim(),
-          org_name: isOrganization ? formData.orgName.trim() : undefined,
+          first_name: displayFirst,
+          last_name: displayLast,
+          org_name: isOrg ? formData.orgName.trim() : undefined,
           email: signupEmail,
-          phone: isOrganization ? formData.phone.trim() : undefined,
+          phone: phone || undefined,
           is_pro: false,
           role: formData.role,
         })
@@ -168,11 +160,11 @@ export default function Signup() {
       setSubmittedEmail(signupEmail);
       setStep(2);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'An error occurred';
+      const message = err instanceof Error ? err.message : 'Something went wrong.';
       if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-        setError(
-          'Unable to reach the authentication server. Check your connection or contact support if this persists.'
-        );
+        setError('Unable to reach the authentication server. Check your connection.');
+      } else if (message.toLowerCase().includes('already registered')) {
+        setError('An account with this email already exists. Try logging in instead.');
       } else {
         setError(message);
       }
@@ -181,65 +173,99 @@ export default function Signup() {
     }
   };
 
-  const handleSocialSignup = (provider: 'google' | 'apple') => {
-    setError(
-      `${provider === 'google' ? 'Google' : 'Apple'} sign-up is coming soon. Please use email for now.`
-    );
-  };
+  const inputClass =
+    'min-h-[50px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]';
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-[#0A0B14] text-white font-sora">
-      <SEOTitle title="Create Account" />
+    <div className="min-h-screen bg-white font-sora text-[#101217] lg:grid lg:grid-cols-[1.05fr_1fr]">
+      <SEOTitle title="Create account" />
 
-      {/* LEFT SIDE - Desktop only */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+      <aside className="relative hidden overflow-hidden bg-[#020924] lg:flex lg:flex-col lg:justify-between lg:p-12">
         <img
           src="/assets/hero-bg-image-2.jpg"
-          alt="Medical Background"
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-35"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0B14] to-transparent" />
-        <div className="relative z-10 flex flex-col justify-between h-full p-12">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 flex items-center justify-center">
-              <img src="/logo.svg" alt="Selorah Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-white">Selorah Health</span>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#020924] via-[#020924]/70 to-[#020924]/30" />
+        <div
+          aria-hidden
+          className="absolute -left-24 bottom-1/4 h-72 w-72 rounded-full bg-[#5FFAB0]/15 blur-3xl"
+        />
+
+        <Link to="/" className="relative z-10 flex items-center gap-3">
+          <img src="/logo.svg" alt="Selorah" className="h-10 w-10 object-contain" />
+          <span className="text-xl font-bold tracking-tight text-white">Selorah Health</span>
+        </Link>
+
+        <div className="relative z-10 max-w-md">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-[11px] font-semibold text-white/70">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5FFAB0]" />
+            Your records. Your rules.
           </div>
-          <div className="max-w-md">
-            <h1 className="text-4xl xl:text-5xl font-bold leading-tight mb-4 text-white">
-              Empowering You to Own and Earn from Your Health Data
-            </h1>
-            <div className="flex gap-2 mt-4">
-              <div className="w-8 h-1 bg-[#4262FF] rounded-full" />
-              <div className="w-8 h-1 bg-white/30 rounded-full" />
-              <div className="w-8 h-1 bg-white/30 rounded-full" />
-            </div>
+          <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-white xl:text-5xl">
+            Own your health data, everywhere you go.
+          </h1>
+          <p className="mt-4 text-sm leading-relaxed text-white/55">
+            Join patients, hospitals, researchers and insurers building a portable health record
+            for Africa.
+          </p>
+
+          <div className="mt-8 space-y-3">
+            {[
+              'Free forever for patients',
+              'Share with a time-limited QR code',
+              'Revoke access whenever you want',
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-3">
+                <CheckCircleIcon className="h-4 w-4 shrink-0 text-[#5FFAB0]" />
+                <span className="text-xs font-semibold text-white/65">{item}</span>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* RIGHT SIDE - Form */}
-      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 py-8 sm:py-12 min-h-screen lg:min-h-0 overflow-y-auto">
-        <div className="max-w-md w-full mx-auto">
-          {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <img src="/logo.svg" alt="Selorah" className="w-9 h-9 object-contain" />
-            <span className="text-lg font-bold tracking-tight">Selorah Health</span>
+        <p className="relative z-10 text-[11px] font-medium text-white/30">
+          Copyright (c) 2026, Selorah Health Limited.
+        </p>
+      </aside>
+
+      <main className="flex min-h-screen flex-col justify-center px-5 py-10 sm:px-8 lg:min-h-0 lg:px-12">
+        <div className="mx-auto w-full max-w-md">
+          <div className="mb-8 flex items-center justify-between lg:hidden">
+            <Link to="/" className="flex items-center gap-2.5">
+              <img src="/logo.svg" alt="Selorah" className="h-9 w-9 object-contain" />
+              <span className="text-lg font-bold tracking-tight">Selorah Health</span>
+            </Link>
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-[#101217]"
+            >
+              <ArrowLeftIcon className="h-3.5 w-3.5" />
+              Home
+            </Link>
           </div>
 
           {step === 1 ? (
             <>
-              <div className="flex justify-between items-center mb-6 sm:mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-white">Create an account</h2>
-                <Link to="/" className="text-white/60 hover:text-white text-sm whitespace-nowrap">
-                  Back →
+              <div className="hidden items-center justify-between lg:flex">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+                  Get started
+                </p>
+                <Link
+                  to="/"
+                  className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-[#101217]"
+                >
+                  <ArrowLeftIcon className="h-3.5 w-3.5" />
+                  Back to site
                 </Link>
               </div>
 
-              <p className="text-white/60 mb-6 sm:mb-8 text-sm sm:text-base">
-                Already have an account?{' '}
-                <Link to="/login" className="text-[#4262FF] hover:underline">
+              <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                Create your account
+              </h1>
+              <p className="mt-2 text-sm font-medium leading-relaxed text-gray-500">
+                Already have one?{' '}
+                <Link to="/login" className="font-bold text-[#6183FF] hover:underline">
                   Log in
                 </Link>
               </p>
@@ -247,33 +273,51 @@ export default function Signup() {
               {error && (
                 <div
                   role="alert"
-                  className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 sm:p-4 rounded-xl mb-6 text-sm break-words"
+                  className="mt-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-semibold leading-relaxed text-red-600"
                 >
                   {error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div>
-                  <p className="text-xs font-bold text-white/50 uppercase tracking-widest mb-3">I am signing up as</p>
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                    {roleOptions.map((r) => {
-                      const selected = formData.role === r.id;
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                    I am signing up as
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {ROLE_OPTIONS.map((role) => {
+                      const Icon = role.icon;
+                      const selected = formData.role === role.id;
                       return (
                         <button
-                          key={r.id}
+                          key={role.id}
                           type="button"
-                          onClick={() => setFormData({ ...formData, role: r.id })}
-                          className={`flex items-start gap-2.5 p-3 rounded-xl border text-left transition-all ${
+                          onClick={() => {
+                            update('role', role.id);
+                            setError(null);
+                          }}
+                          className={`flex min-h-[70px] items-start gap-2.5 rounded-2xl border p-3 text-left transition-all ${
                             selected
-                              ? 'border-[#4262FF] bg-[#4262FF]/15 text-white'
-                              : 'border-white/10 bg-[#1A1B2E] text-white/60 hover:border-white/30'
+                              ? 'border-[#6183FF] bg-[#EEF2FF]'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
                           }`}
                         >
-                          <r.icon className={`w-5 h-5 shrink-0 mt-0.5 ${selected ? 'text-[#4262FF]' : ''}`} />
-                          <span>
-                            <span className="block text-sm font-bold text-white">{r.title}</span>
-                            <span className="block text-[11px] text-white/40 leading-snug">{r.desc}</span>
+                          <span
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+                              selected
+                                ? 'bg-[#6183FF] text-white'
+                                : 'bg-gray-50 text-gray-400'
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-xs font-bold text-[#101217]">
+                              {role.title}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] font-medium leading-snug text-gray-400">
+                              {role.desc}
+                            </span>
                           </span>
                         </button>
                       );
@@ -283,201 +327,251 @@ export default function Signup() {
 
                 {isOrg ? (
                   <>
-                    <input
-                      type="text"
-                      required
-                      autoComplete="organization"
-                      placeholder={
-                        formData.role === 'hospital'
-                          ? 'Hospital / clinic name'
-                          : formData.role === 'researcher'
-                            ? 'Institution / research org name'
-                            : 'Insurance company name'
-                      }
-                      className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                      value={formData.orgName}
-                      onChange={(e) => setFormData({ ...formData, orgName: e.target.value })}
-                    />
-                    <input
-                      type="email"
-                      required
-                      autoComplete="email"
-                      placeholder="Work email (organization domain)"
-                      className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                      value={formData.workEmail}
-                      onChange={(e) => setFormData({ ...formData, workEmail: e.target.value })}
-                    />
-                    <input
-                      type="tel"
-                      autoComplete="tel"
-                      placeholder="Organization phone (optional)"
-                      className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    />
-                    <p className="text-[11px] text-white/40 -mt-2 px-1">
-                      You are registering as an organization. An Organization ID will be issued after onboarding and required at staff login.
+                    <label className="block">
+                      <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                        Organization name
+                      </span>
+                      <input
+                        type="text"
+                        required
+                        autoComplete="organization"
+                        placeholder={
+                          formData.role === 'hospital'
+                            ? 'Hospital or clinic name'
+                            : formData.role === 'researcher'
+                              ? 'Institution or research org'
+                              : 'Insurance company name'
+                        }
+                        className={inputClass}
+                        value={formData.orgName}
+                        onChange={(event) => update('orgName', event.target.value)}
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                        Work email
+                      </span>
+                      <span className="relative block">
+                        <EnvelopeIcon className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-300" />
+                        <input
+                          type="email"
+                          required
+                          autoComplete="email"
+                          placeholder="you@hospital.org"
+                          className={`${inputClass} pl-11`}
+                          value={formData.workEmail}
+                          onChange={(event) => update('workEmail', event.target.value)}
+                        />
+                      </span>
+                    </label>
+
+                    <p className="rounded-2xl bg-[#F8F9FE] px-4 py-3 text-[11px] font-medium leading-relaxed text-gray-500">
+                      An Organization ID is issued after verification. Staff will need it to log in
+                      to the provider portal.
                     </p>
                   </>
                 ) : (
                   <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        required
-                        autoComplete="given-name"
-                        placeholder="First name"
-                        className="bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      />
-                      <input
-                        type="text"
-                        required
-                        autoComplete="family-name"
-                        placeholder="Last name"
-                        className="bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      />
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="block">
+                        <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                          First name
+                        </span>
+                        <input
+                          type="text"
+                          required
+                          autoComplete="given-name"
+                          placeholder="Ada"
+                          className={inputClass}
+                          value={formData.firstName}
+                          onChange={(event) => update('firstName', event.target.value)}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                          Last name
+                        </span>
+                        <input
+                          type="text"
+                          required
+                          autoComplete="family-name"
+                          placeholder="Okafor"
+                          className={inputClass}
+                          value={formData.lastName}
+                          onChange={(event) => update('lastName', event.target.value)}
+                        />
+                      </label>
                     </div>
-                    <input
-                      type="text"
-                      required
-                      autoComplete="email"
-                      placeholder="Email or phone number"
-                      className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                      value={isOrg ? formData.workEmail : formData.identifier}
-                      onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
-                    />
+
+                    <label className="block">
+                      <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                        Email address
+                      </span>
+                      <span className="relative block">
+                        <EnvelopeIcon className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-300" />
+                        <input
+                          type="email"
+                          required
+                          autoComplete="email"
+                          placeholder="you@example.com"
+                          className={`${inputClass} pl-11`}
+                          value={formData.email}
+                          onChange={(event) => update('email', event.target.value)}
+                        />
+                      </span>
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                        Phone number
+                        <span className="font-semibold normal-case tracking-normal text-gray-300">
+                          Optional
+                        </span>
+                      </span>
+                      <span className="relative block">
+                        <PhoneIcon className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-300" />
+                        <input
+                          type="tel"
+                          autoComplete="tel"
+                          placeholder="0801 234 5678"
+                          className={`${inputClass} pl-11`}
+                          value={formData.phone}
+                          onChange={(event) => update('phone', event.target.value)}
+                        />
+                      </span>
+                      <span className="mt-1.5 block px-1 text-[10px] font-medium text-gray-400">
+                        Add this to log in with your phone instead of email.
+                      </span>
+                    </label>
                   </>
                 )}
 
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    autoComplete="new-password"
-                    placeholder="Password (min. 8 characters)"
-                    className="w-full bg-[#1A1B2E] border border-white/10 rounded-xl px-4 py-3.5 pr-12 text-white placeholder:text-gray-500 focus:border-[#4262FF] outline-none text-base"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  />
-                  <button
-                    type="button"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white p-1"
-                  >
-                    {showPassword ? (
-                      <EyeSlashIcon className="w-5 h-5" />
-                    ) : (
-                      <EyeIcon className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
+                <label className="block">
+                  <span className="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                    Password
+                    <span className="font-semibold normal-case tracking-normal text-gray-300">
+                      Min. 8 characters
+                    </span>
+                  </span>
+                  <span className="relative block">
+                    <LockClosedIcon className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-300" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      autoComplete="new-password"
+                      placeholder="Create a strong password"
+                      className={`${inputClass} pl-11 pr-12`}
+                      value={formData.password}
+                      onChange={(event) => update('password', event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      onClick={() => setShowPassword((value) => !value)}
+                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-gray-50 hover:text-gray-500"
+                    >
+                      {showPassword ? (
+                        <EyeSlashIcon className="h-4.5 w-4.5" />
+                      ) : (
+                        <EyeIcon className="h-4.5 w-4.5" />
+                      )}
+                    </button>
+                  </span>
+                  {formData.password && (
+                    <span className="mt-2 flex gap-1.5" aria-hidden>
+                      {[0, 1, 2, 3].map((index) => (
+                        <span
+                          key={index}
+                          className={`h-1 flex-1 rounded-full transition-colors ${
+                            index < passwordScore
+                              ? passwordScore >= 3
+                                ? 'bg-[#5FFAB0]'
+                                : 'bg-[#6183FF]'
+                              : 'bg-gray-100'
+                          }`}
+                        />
+                      ))}
+                    </span>
+                  )}
+                </label>
 
-                <div className="flex items-start gap-3">
+                <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-[#F8F9FE] px-4 py-3">
                   <input
                     type="checkbox"
-                    id="agree-terms"
                     checked={formData.agree}
-                    onChange={(e) => setFormData({ ...formData, agree: e.target.checked })}
-                    className="mt-1 h-4 w-4 rounded border-white/20 bg-[#1A1B2E] text-[#4262FF] focus:ring-[#4262FF]"
+                    onChange={(event) => update('agree', event.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-[#6183FF] focus:ring-[#6183FF]"
                   />
-                  <label htmlFor="agree-terms" className="text-sm text-white/70 cursor-pointer leading-snug">
+                  <span className="text-[11px] font-medium leading-relaxed text-gray-500">
                     I agree to the{' '}
-                    <Link to="/terms" className="text-white hover:underline">
-                      Terms &amp; Conditions
+                    <Link to="/terms" className="font-bold text-[#6183FF] hover:underline">
+                      Terms and Conditions
+                    </Link>{' '}
+                    and the{' '}
+                    <Link to="/privacy" className="font-bold text-[#6183FF] hover:underline">
+                      Privacy Policy
                     </Link>
-                  </label>
-                </div>
+                    .
+                  </span>
+                </label>
 
                 <button
                   type="submit"
                   disabled={loading || !formData.agree}
-                  className="w-full bg-[#4262FF] hover:bg-[#3250E6] py-3.5 sm:py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 min-h-[48px]"
+                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-all hover:bg-[#4D6ED6] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading ? (
-                    <ArrowPathIcon className="w-4 h-4 animate-spin mx-auto shrink-0" aria-hidden="true" />
+                    <>
+                      <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                      Creating your account...
+                    </>
                   ) : (
-                    'Sign Up'
+                    'Create account'
                   )}
                 </button>
-
-                {/* Social — always visible on mobile */}
-                <div className="relative py-6 flex items-center justify-center">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/10" />
-                  </div>
-                  <span className="relative z-10 px-4 bg-[#0A0B14] text-xs text-white/40 uppercase tracking-widest">
-                    Or register with
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <button
-                    type="button"
-                    onClick={() => handleSocialSignup('google')}
-                    className="flex items-center justify-center gap-2 sm:gap-3 bg-transparent border border-white/10 py-3 rounded-xl hover:bg-white/5 transition-all text-white min-h-[48px]"
-                  >
-                    <img src="/assets/google-logo.png" alt="" className="w-5 h-5" />
-                    <span className="font-medium text-sm">Google</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSocialSignup('apple')}
-                    className="flex items-center justify-center gap-2 sm:gap-3 bg-transparent border border-white/10 py-3 rounded-xl hover:bg-white/5 transition-all text-white min-h-[48px]"
-                  >
-                    <img src="/assets/apple-logo.png" alt="" className="w-5 h-5" />
-                    <span className="font-medium text-sm">Apple</span>
-                  </button>
-                </div>
               </form>
+
+              <p className="mt-5 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-gray-400">
+                <ShieldCheckIcon className="h-3.5 w-3.5 text-[#5FFAB0]" />
+                Encrypted account. No health data sold.
+              </p>
             </>
           ) : (
             <div className="text-center">
-              <div className="w-16 h-16 bg-[#6183FF]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <CheckCircleIcon className="w-8 h-8 text-[#6183FF]" />
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EAFBF2] text-[#15955C]">
+                <CheckCircleIcon className="h-8 w-8" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Check your email</h2>
-              <p className="text-white/70 mb-2 text-sm sm:text-base leading-relaxed">
-                A confirmation email from Supabase has been sent to
+              <h1 className="mt-5 text-2xl font-bold tracking-tight sm:text-3xl">
+                Check your email
+              </h1>
+              <p className="mt-2 text-sm font-medium leading-relaxed text-gray-500">
+                We sent a confirmation link to
               </p>
-              <p className="font-bold text-white break-all text-sm sm:text-base mb-6">
-                {submittedEmail || (isOrg ? formData.workEmail : formData.identifier)}
+              <p className="mt-1 break-all text-sm font-bold text-[#101217]">{submittedEmail}</p>
+              <p className="mx-auto mt-4 max-w-sm text-xs font-medium leading-relaxed text-gray-400">
+                Open the email and confirm your address, then log in to finish setting up your
+                profile. Check spam if it does not arrive in a minute.
               </p>
-              <p className="text-white/50 text-sm leading-relaxed mb-8 max-w-sm mx-auto">
-                Open the email and click the confirmation link to activate your account. After confirming, you can log in and continue onboarding.
-              </p>
-
-              {error && (
-                <div
-                  role="alert"
-                  className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 sm:p-4 rounded-xl mb-6 text-sm break-words text-left"
-                >
-                  {error}
-                </div>
-              )}
 
               <Link
                 to="/login"
-                className="inline-flex w-full items-center justify-center bg-[#6183FF] py-3.5 sm:py-4 rounded-xl font-bold text-white min-h-[48px] text-base hover:bg-[#4D6ED6] transition-colors"
+                className="mt-7 flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-colors hover:bg-[#4D6ED6]"
               >
-                Go to Log in
+                Go to log in
               </Link>
 
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="mt-4 text-sm text-white/50 hover:text-white transition-colors"
+                className="mt-3 min-h-[44px] w-full rounded-2xl text-xs font-bold text-gray-400 transition-colors hover:text-gray-600"
               >
-                ← Back to form
+                Back to the form
               </button>
             </div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

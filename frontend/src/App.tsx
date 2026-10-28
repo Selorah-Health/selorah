@@ -3,11 +3,11 @@ import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import RoleGuard from './components/RoleGuard';
 import ScrollToTop from './components/ScrollToTop';
+import InstallPrompt from './components/InstallPrompt';
 import { ToastProvider } from './contexts/ToastContext';
 import { SyncProvider } from './contexts/SyncContext';
 import ToastViewport from './components/ToastViewport';
 import NetworkStatus from './components/NetworkStatus';
-import InstallPrompt from './components/InstallPrompt';
 
 // Lazy load all pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
