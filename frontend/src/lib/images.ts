@@ -7,13 +7,8 @@ export type PreparedImage = {
   size: number;
 };
 
-<<<<<<< HEAD
-const MAX_DIMENSION = 1800;
-const JPEG_QUALITY = 0.82;
-=======
 const MAX_STORED_DIMENSION = 2000;
 const JPEG_QUALITY = 0.86;
->>>>>>> 908a1e70 (Version 1.3)
 
 export function readFileAsDataUrl(file: File | Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -34,13 +29,9 @@ function loadImage(dataUrl: string): Promise<HTMLImageElement> {
 }
 
 /**
-<<<<<<< HEAD
  * Downscale large phone photos before they are stored. Keeps records fast to
- * open and avoids blowing the Supabase storage or IndexedDB quota.
-=======
- * Downscale large phone photos before they are stored. The original file can
- * still be passed to OCR so small print is not lost.
->>>>>>> 908a1e70 (Version 1.3)
+ * open and avoids blowing the Supabase storage or IndexedDB quota. The original
+ * file can still be passed to OCR so small print is not lost.
  */
 export async function prepareImageFile(file: File): Promise<PreparedImage> {
   const originalDataUrl = await readFileAsDataUrl(file);
@@ -58,11 +49,7 @@ export async function prepareImageFile(file: File): Promise<PreparedImage> {
 
   try {
     const image = await loadImage(originalDataUrl);
-<<<<<<< HEAD
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(image.width, image.height));
-=======
     const scale = Math.min(1, MAX_STORED_DIMENSION / Math.max(image.width, image.height));
->>>>>>> 908a1e70 (Version 1.3)
     const width = Math.max(1, Math.round(image.width * scale));
     const height = Math.max(1, Math.round(image.height * scale));
 
@@ -96,11 +83,8 @@ export async function prepareImageFile(file: File): Promise<PreparedImage> {
     };
   }
 }
-<<<<<<< HEAD
-=======
 
 export async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
   const response = await fetch(dataUrl);
   return response.blob();
 }
->>>>>>> 908a1e70 (Version 1.3)
