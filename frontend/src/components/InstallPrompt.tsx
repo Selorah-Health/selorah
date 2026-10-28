@@ -1,30 +1,16 @@
 import { useEffect, useState } from 'react';
-<<<<<<< HEAD
-import { ArrowDownTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
-=======
 import {
   ArrowDownTrayIcon,
   CheckCircleIcon,
   ShareIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
->>>>>>> 908a1e70 (Version 1.3)
 
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 };
 
-<<<<<<< HEAD
-const DISMISS_KEY = 'selorah_install_dismissed';
-
-export default function InstallPrompt() {
-  const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-=======
 type PromptMode = 'install' | 'ios' | null;
 
 const DISMISS_KEY = 'selorah_install_dismissed_v2';
@@ -55,39 +41,24 @@ export default function InstallPrompt() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
->>>>>>> 908a1e70 (Version 1.3)
     try {
       if (localStorage.getItem(DISMISS_KEY) === '1') return;
     } catch {
       return;
     }
-<<<<<<< HEAD
-
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true;
-    if (standalone) return;
-=======
     if (isStandalone()) return;
 
     // Mobile and tablets only. Desktop never sees the prompt.
     if (window.matchMedia(DESKTOP_BREAKPOINT).matches) return;
->>>>>>> 908a1e70 (Version 1.3)
 
     const handlePrompt = (event: Event) => {
       event.preventDefault();
       setInstallEvent(event as InstallEvent);
-<<<<<<< HEAD
-=======
       setMode('install');
->>>>>>> 908a1e70 (Version 1.3)
       setVisible(true);
     };
 
     window.addEventListener('beforeinstallprompt', handlePrompt);
-<<<<<<< HEAD
-    return () => window.removeEventListener('beforeinstallprompt', handlePrompt);
-=======
 
     let iosTimer: ReturnType<typeof setTimeout> | undefined;
     if (detectIosSafari()) {
@@ -101,54 +72,10 @@ export default function InstallPrompt() {
       window.removeEventListener('beforeinstallprompt', handlePrompt);
       if (iosTimer) clearTimeout(iosTimer);
     };
->>>>>>> 908a1e70 (Version 1.3)
   }, []);
 
   const install = async () => {
     if (!installEvent) return;
-<<<<<<< HEAD
-    await installEvent.prompt();
-    const choice = await installEvent.userChoice;
-    if (choice.outcome === 'accepted') setVisible(false);
-  };
-
-  const dismiss = () => {
-    setVisible(false);
-    try {
-      localStorage.setItem(DISMISS_KEY, '1');
-    } catch {
-      // ignore
-    }
-  };
-
-  if (!visible || !installEvent) return null;
-
-  return (
-    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-[250] md:bottom-6 md:left-6 md:right-auto">
-      <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-xl shadow-black/10 md:max-w-sm">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
-          <ArrowDownTrayIcon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-[#101217]">Install Selorah</p>
-          <p className="text-[11px] font-medium text-gray-400">Open records faster, even offline.</p>
-        </div>
-        <button
-          type="button"
-          onClick={install}
-          className="shrink-0 rounded-xl bg-[#6183FF] px-3 py-2 text-xs font-bold text-white"
-        >
-          Install
-        </button>
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label="Dismiss install prompt"
-          className="shrink-0 rounded-lg p-1.5 text-gray-300 hover:bg-gray-50 hover:text-gray-500"
-        >
-          <XMarkIcon className="h-4 w-4" />
-        </button>
-=======
     setInstalling(true);
     try {
       await installEvent.prompt();
@@ -250,7 +177,6 @@ export default function InstallPrompt() {
             No app store. No extra downloads.
           </p>
         </div>
->>>>>>> 908a1e70 (Version 1.3)
       </div>
     </div>
   );

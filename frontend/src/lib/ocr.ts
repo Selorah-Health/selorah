@@ -1,30 +1,5 @@
 type OcrProgress = (progress: number, status: string) => void;
 
-<<<<<<< HEAD
-let workerPromise: Promise<unknown> | null = null;
-let idleTimer: number | null = null;
-
-async function getWorker(onProgress?: OcrProgress) {
-  if (!workerPromise) {
-    workerPromise = (async () => {
-      const module = (await import('tesseract.js')) as unknown as {
-        createWorker: (
-          lang: string,
-          oem?: number,
-          options?: { logger?: (message: { status: string; progress: number }) => void }
-        ) => Promise<unknown>;
-      };
-
-      return module.createWorker('eng', 1, {
-        logger: (message) => {
-          if (typeof message.progress === 'number') {
-            onProgress?.(message.progress, message.status);
-          }
-        },
-      });
-    })();
-  }
-=======
 type OcrResult = {
   data: {
     text: string;
@@ -392,16 +367,11 @@ async function loadWorker(onProgress?: OcrProgress): Promise<TesseractWorker> {
 
     return worker;
   })();
->>>>>>> 908a1e70 (Version 1.3)
 
   return workerPromise;
 }
 
 /**
-<<<<<<< HEAD
- * Read text from a medical document image. The worker is lazy loaded only when
- * a patient scans or uploads an image, so the main bundle stays small.
-=======
  * Warm the worker and language data before the patient chooses a file.
  * This hides most of the first-run download behind the capture UI.
  */
@@ -591,7 +561,6 @@ function wordCount(text: string) {
  * A normal pass handles most scans. If it returns almost nothing, a second
  * high-contrast pass is attempted automatically so faint or shadowed pages are
  * not silently saved as empty text.
->>>>>>> 908a1e70 (Version 1.3)
  */
 export async function extractTextFromImage(
   image: string | Blob,
@@ -601,33 +570,6 @@ export async function extractTextFromImage(
     throw new Error('Text recognition needs a connection the first time it runs.');
   }
 
-<<<<<<< HEAD
-  const worker = (await getWorker(onProgress)) as {
-    recognize: (input: string | Blob) => Promise<{ data: { text: string } }>;
-  };
-
-  const result = await worker.recognize(image);
-  const text = String(result?.data?.text || '')
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-
-  if (idleTimer) window.clearTimeout(idleTimer);
-  idleTimer = window.setTimeout(() => {
-    const current = worker as unknown as { terminate?: () => Promise<unknown> };
-    void current.terminate?.();
-    workerPromise = null;
-  }, 120_000);
-
-  return text;
-}
-
-export function resetOcrWorker() {
-  if (idleTimer) window.clearTimeout(idleTimer);
-  const current = workerPromise as Promise<{ terminate?: () => Promise<unknown> }> | null;
-  void current?.then((worker) => worker.terminate?.()).catch(() => undefined);
-  workerPromise = null;
-=======
   activeProgress = onProgress || null;
   const prepared = await prepareForOcr(image, 'normal');
   const worker = await loadWorker(onProgress);
@@ -669,5 +611,4 @@ export function resetOcrWorker() {
   const current = workerPromise;
   workerPromise = null;
   void current?.then((worker) => worker.terminate()).catch(() => undefined);
->>>>>>> 908a1e70 (Version 1.3)
 }
