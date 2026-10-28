@@ -1,23 +1,110 @@
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  ShieldCheckIcon,
-  CalendarIcon,
-  IdentificationIcon,
+  ArrowTopRightOnSquareIcon,
   BeakerIcon,
-  ClockIcon,
-  HeartIcon,
-  InformationCircleIcon,
-  DocumentPlusIcon,
-  XMarkIcon,
+  CalendarIcon,
+  CheckCircleIcon,
   ChevronRightIcon,
-  FunnelIcon,
   ClipboardDocumentListIcon,
-  UserPlusIcon,
+  ClockIcon,
+  DocumentPlusIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  FunnelIcon,
+  HeartIcon,
+  IdentificationIcon,
+  LockClosedIcon,
+  MagnifyingGlassIcon,
   PencilSquareIcon,
+  PhoneIcon,
+  PrinterIcon,
+  ShieldCheckIcon,
+  UserIcon,
+  UserPlusIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { useState, useEffect } from 'react';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
+
+type RecordCategory = 'lab' | 'rad' | 'pres' | 'visit' | 'other';
+
+type SharedRecordItem = {
+  id: string;
+  title: string;
+  category: RecordCategory;
+  facility: string;
+  doctor: string;
+  date: string;
+  content: string;
+  file_url: string | null;
+};
+
+type AccessMode = 'gate' | 'full' | 'guest';
+
+type ProviderRole = 'doctor' | 'nurse' | 'pharmacist' | 'lab' | 'admin';
+
+const ROLE_OPTIONS: { id: ProviderRole; label: string }[] = [
+  { id: 'doctor', label: 'Doctor' },
+  { id: 'nurse', label: 'Nurse' },
+  { id: 'pharmacist', label: 'Pharmacist' },
+  { id: 'lab', label: 'Lab scientist' },
+  { id: 'admin', label: 'Admin staff' },
+];
+
+const ROLE_LABELS: Record<string, string> = {
+  doctor: 'Doctor',
+  nurse: 'Nurse',
+  pharmacist: 'Pharmacist',
+  lab: 'Lab scientist',
+  admin: 'Admin staff',
+  guest: 'Guest',
+};
+
+const CATEGORY_ICONS: Record<RecordCategory, typeof DocumentTextIcon> = {
+  lab: BeakerIcon,
+  rad: IdentificationIcon,
+  pres: PencilSquareIcon,
+  visit: ClipboardDocumentListIcon,
+  other: DocumentTextIcon,
+};
+
+function toList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === 'string' ? item : String((item as any)?.name || '')))
+      .filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value
+      .split(/[,;\n]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function toContacts(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item: any) => ({
+      name: String(item?.name || item?.full_name || '').trim(),
+      relationship: String(item?.relationship || item?.relation || 'Contact').trim(),
+      phone: String(item?.phone || item?.phone_number || '').trim(),
+    }))
+    .filter((item) => item.name || item.phone);
+}
+
+function formatTime(seconds: number | null) {
+  if (seconds === null) return 'No expiry';
+  if (seconds <= 0) return '0m';
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
 
 export default function SharedRecord() {
   const { token } = useParams();
@@ -25,36 +112,33 @@ export default function SharedRecord() {
   const { success, error: toastError, info, warning } = useToast();
 
   const [patient, setPatient] = useState<any>(null);
-  const [records, setRecords] = useState<any[]>([]);
+  const [records, setRecords] = useState<SharedRecordItem[]>([]);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isExpired, setIsExpired] = useState(false);
   const [isRevoked, setIsRevoked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [isVerified, setIsVerified] = useState(false);
-  const [verificationRole, setVerificationRole] = useState<'doctor' | 'nurse' | null>(null);
-  const [licenseNumber, setLicenseNumber] = useState('');
-  const [showVerificationModal, setShowVerificationModal] = useState(true);
+  const [accessMode, setAccessMode] = useState<AccessMode>('gate');
+  const [accessLogged, setAccessLogged] = useState(false);
+  const [loggingAccess, setLoggingAccess] = useState(false);
+  const [accessError, setAccessError] = useState<string | null>(null);
+  const [provider, setProvider] = useState({
+    name: '',
+    role: 'doctor' as ProviderRole,
+    license: '',
+    facility: '',
+  });
+
   const [showVisitReportModal, setShowVisitReportModal] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<'all' | 'lab' | 'rad' | 'pres'>('all');
-  const [visitFacility, setVisitFacility] = useState('Selorah Medical Center');
-  const [visitDoctor, setVisitDoctor] = useState('Dr. Admin');
+  const [activeCategory, setActiveCategory] = useState<'all' | RecordCategory>('all');
+  const [recordQuery, setRecordQuery] = useState('');
+  const [visitFacility, setVisitFacility] = useState('');
+  const [visitDoctor, setVisitDoctor] = useState('');
   const [visitNotes, setVisitNotes] = useState('');
   const [submittingReport, setSubmittingReport] = useState(false);
 
-  const handleVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    const normalized = licenseNumber.trim().toUpperCase();
-    if (normalized.length >= 6) {
-      setIsVerified(true);
-      setShowVerificationModal(false);
-    } else {
-      warning('Enter a valid license number (min 6 characters).');
-    }
-  };
-
-  // Load shared link → patient profile → medical records
+  // Load shared link, patient profile, and scoped records.
   useEffect(() => {
     const load = async () => {
       if (!token) {
@@ -64,22 +148,20 @@ export default function SharedRecord() {
       }
 
       try {
-        // 1) Resolve shared_links row by token
         const { data: link, error: linkError } = await supabase
           .from('shared_links')
-          .select('id, user_id, token, is_active, expires_at, created_at')
+          .select('id, user_id, token, is_active, expires_at, created_at, record_id')
           .eq('token', token)
           .maybeSingle();
 
         if (linkError) {
-          console.error(linkError);
           setLoadError(linkError.message);
           setLoading(false);
           return;
         }
 
         if (!link) {
-          setLoadError('This share link was not found.');
+          setLoadError('This share link was not found. Ask the patient for a new link.');
           setLoading(false);
           return;
         }
@@ -98,7 +180,6 @@ export default function SharedRecord() {
           return;
         }
 
-        // Far-future "no expiry" links → no countdown (∞)
         const TEN_YEARS_MS = 9 * 365 * 24 * 60 * 60 * 1000;
         if (expiresMs < TEN_YEARS_MS) {
           setTimeLeft(Math.floor(expiresMs / 1000));
@@ -106,30 +187,26 @@ export default function SharedRecord() {
           setTimeLeft(null);
         }
 
-        // 2) Patient profile for the link owner
-        // RLS must allow SELECT when an active shared_links row exists for this user_id
         const { data: profile, error: profileError } = await supabase
           .from('patient_profiles')
-          .select('id, user_id, full_name, date_of_birth, blood_group, genotype, phone, nin')
+          .select(
+            'id, user_id, full_name, date_of_birth, blood_group, genotype, gender, height, weight, allergies, emergency_contacts'
+          )
           .eq('user_id', link.user_id)
           .maybeSingle();
 
         if (profileError) {
-          console.warn('patient_profiles read failed (check RLS):', profileError.message);
+          console.warn('patient_profiles read failed:', profileError.message);
         }
 
-        let fullName =
-          (profile?.full_name && String(profile.full_name).trim()) ||
-          '';
-        // Fallback: if full_name empty, leave placeholder — UI will show "Patient"
-        // Prefer never inventing a fake name.
+        let fullName = (profile?.full_name && String(profile.full_name).trim()) || '';
         if (!fullName) fullName = 'Patient';
         const nameParts = fullName.trim().split(/\s+/);
         const firstName = nameParts[0] || 'Patient';
         const lastName = nameParts.slice(1).join(' ') || '';
 
         let age: number | null = null;
-        let dobLabel = '—';
+        let dobLabel = 'Not recorded';
         if (profile?.date_of_birth) {
           const dob = new Date(profile.date_of_birth);
           if (!Number.isNaN(dob.getTime())) {
@@ -140,24 +217,25 @@ export default function SharedRecord() {
             });
             const now = new Date();
             age = now.getFullYear() - dob.getFullYear();
-            const m = now.getMonth() - dob.getMonth();
-            if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age -= 1;
+            const monthDiff = now.getMonth() - dob.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) age -= 1;
           }
         }
 
         const patientIdShort = profile?.id
-          ? `SH-${String(profile.id).replace(/-/g, '').substring(0, 4).toUpperCase()}-${firstName.substring(0, 1)}${lastName.substring(0, 1) || 'X'}`.toUpperCase()
+          ? `SH-${String(profile.id).replace(/-/g, '').substring(0, 4).toUpperCase()}-${firstName
+              .substring(0, 1)
+              .toUpperCase()}${lastName.substring(0, 1).toUpperCase() || 'X'}`
           : `SH-${String(link.user_id).replace(/-/g, '').substring(0, 6).toUpperCase()}`;
 
-        // 3) Medical records for this patient (also used to fill vitals/history)
-        let height = '—';
-        let weight = '—';
-        let bloodGroup = profile?.blood_group || '—';
-        let genotype = profile?.genotype || '—';
-        let allergies: string[] = [];
+        let height = profile?.height ? String(profile.height) : 'Not recorded';
+        let weight = profile?.weight ? String(profile.weight) : 'Not recorded';
+        let bloodGroup = profile?.blood_group || 'Not recorded';
+        let genotype = profile?.genotype || 'Not recorded';
         let familyHistory = 'Not provided';
         let medicationHistory = 'Not provided';
-        const emergencyContacts: { name: string; relationship: string; phone: string }[] = [];
+        let allergies = toList(profile?.allergies);
+        const emergencyContacts = toContacts(profile?.emergency_contacts);
 
         const decodeContent = (fileUrl: string | null) => {
           if (!fileUrl) return '';
@@ -172,94 +250,137 @@ export default function SharedRecord() {
           return '';
         };
 
+        let mappedRecords: SharedRecordItem[] = [];
+
         if (profile?.id) {
-          const { data: dbRecords } = await supabase
+          let query = supabase
             .from('medical_records')
-            .select('id, title, record_type, file_url, status, created_at')
+            .select(
+              'id, title, record_type, file_url, status, created_at, notes, ocr_text'
+            )
             .eq('patient_id', profile.id)
             .order('created_at', { ascending: false });
 
+          if (link.record_id) {
+            query = query.eq('id', link.record_id);
+          }
+
+          const { data: dbRecords } = await query;
+
           if (dbRecords && dbRecords.length > 0) {
-            for (const r of dbRecords) {
-              const title = (r.title || '').toLowerCase();
-              const type = (r.record_type || '').toLowerCase();
-              const content = decodeContent(r.file_url).trim();
+            for (const row of dbRecords) {
+              const title = (row.title || '').toLowerCase();
+              const type = (row.record_type || '').toLowerCase();
+              const content =
+                [row.notes, row.ocr_text].filter(Boolean).join('\n\n').trim() ||
+                decodeContent(row.file_url).trim();
+
               if (!content && !title) continue;
 
-              if (title.includes('height') || type === 'vital' && title.includes('height')) {
-                if (height === '—') height = content || r.title;
-              } else if (title.includes('weight')) {
-                if (weight === '—') weight = content || r.title;
-              } else if (title.includes('blood')) {
-                if (bloodGroup === '—' || bloodGroup === profile?.blood_group) bloodGroup = content || bloodGroup;
-              } else if (title.includes('genotype')) {
-                if (genotype === '—' || genotype === profile?.genotype) genotype = content || genotype;
+              if (title.includes('height') && height === 'Not recorded') {
+                height = content || row.title;
+              } else if (title.includes('weight') && weight === 'Not recorded') {
+                weight = content || row.title;
+              } else if (title.includes('blood') && bloodGroup === 'Not recorded') {
+                bloodGroup = content || row.title;
+              } else if (title.includes('genotype') && genotype === 'Not recorded') {
+                genotype = content || row.title;
               } else if (title.includes('allerg') || type === 'allergy') {
-                const parts = (content || r.title).split(/[,;\n]+/).map((s: string) => s.trim()).filter(Boolean);
-                allergies.push(...parts);
-              } else if (title.includes('family')) {
-                if (familyHistory === 'Not provided') familyHistory = content || r.title;
-              } else if (title.includes('medication') || title.includes('medicine')) {
-                if (medicationHistory === 'Not provided') medicationHistory = content || r.title;
+                allergies = Array.from(
+                  new Set([
+                    ...allergies,
+                    ...(content || row.title)
+                      .split(/[,;\n]+/)
+                      .map((item: string) => item.trim())
+                      .filter(Boolean),
+                  ])
+                );
+              } else if (title.includes('family') && familyHistory === 'Not provided') {
+                familyHistory = content || row.title;
+              } else if (
+                (title.includes('medication') || title.includes('medicine')) &&
+                medicationHistory === 'Not provided'
+              ) {
+                medicationHistory = content || row.title;
               } else if (title.includes('emergency') || type.includes('emergency')) {
                 emergencyContacts.push({
-                  name: content.split(/[–\-•|]/)[0]?.trim() || content || r.title,
+                  name: content.split(/[,\-|]/)[0]?.trim() || content || row.title,
                   relationship: 'Contact',
-                  phone: content.match(/\+?[\d\s\-]{7,}/)?.[0]?.trim() || '—',
+                  phone: content.match(/\+?[\d\s-]{7,}/)?.[0]?.trim() || '',
                 });
               }
             }
 
-            // de-dupe allergies
-            allergies = Array.from(new Set(allergies));
+            const PROFILE_TYPES = new Set([
+              'vital',
+              'allergy',
+              'history',
+              'emergency contact',
+              'note',
+            ]);
+            const PROFILE_TITLES = [
+              'height',
+              'weight',
+              'blood group',
+              'genotype',
+              'allergies',
+              'family history',
+              'medication history',
+              'emergency contact',
+            ];
 
-            const PROFILE_TYPES = new Set(['vital', 'allergy', 'history', 'emergency contact', 'note']);
-            const isClinical = (r: any) => {
-              const type = (r.record_type || '').toLowerCase();
-              const title = (r.title || '').toLowerCase();
-              if (PROFILE_TYPES.has(type)) return false;
-              if (['height', 'weight', 'blood group', 'genotype', 'allergies', 'family history', 'medication history', 'emergency contact'].includes(title))
-                return false;
-              return true;
-            };
-
-            setRecords(
-              dbRecords.filter(isClinical).map((r: any) => {
-                const type = (r.record_type || '').toLowerCase();
-                let category: 'lab' | 'rad' | 'pres' | 'other' = 'other';
+            mappedRecords = dbRecords
+              .filter((row) => {
+                const type = (row.record_type || '').toLowerCase();
+                const title = (row.title || '').toLowerCase();
+                if (PROFILE_TYPES.has(type)) return false;
+                if (PROFILE_TITLES.includes(title)) return false;
+                return true;
+              })
+              .map((row: any) => {
+                const type = (row.record_type || '').toLowerCase();
+                let category: RecordCategory = 'other';
                 if (type.includes('lab') || type.includes('test')) category = 'lab';
-                else if (type.includes('xray') || type.includes('rad') || type.includes('scan') || type.includes('image'))
+                else if (
+                  type.includes('xray') ||
+                  type.includes('rad') ||
+                  type.includes('scan') ||
+                  type.includes('image')
+                )
                   category = 'rad';
                 else if (type.includes('pres') || type.includes('drug')) category = 'pres';
-                else if (type.includes('visit')) category = 'other';
+                else if (type.includes('visit')) category = 'visit';
 
-                const content = decodeContent(r.file_url);
-                const isTextData = (r.file_url || '').startsWith('data:text/plain');
+                const content =
+                  [row.notes, row.ocr_text].filter(Boolean).join('\n\n').trim() ||
+                  decodeContent(row.file_url);
+
                 return {
-                  id: r.id,
-                  title: r.title || 'Clinical Document',
+                  id: row.id,
+                  title: row.title || 'Clinical document',
                   category,
-                  facility: type.includes('visit') ? 'Visit Report' : 'Clinical Upload',
-                  doctor: '—',
-                  date: r.created_at
-                    ? new Date(r.created_at).toLocaleDateString(undefined, {
+                  facility: type.includes('visit')
+                    ? row.notes?.match(/Facility:\s*(.+)/i)?.[1]?.trim() || 'Visit report'
+                    : 'Clinical upload',
+                  doctor: type.includes('visit')
+                    ? row.notes?.match(/Doctor:\s*(.+)/i)?.[1]?.trim() || 'Not recorded'
+                    : 'Not recorded',
+                  date: row.created_at
+                    ? new Date(row.created_at).toLocaleDateString(undefined, {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
                       })
-                    : '—',
-                  content: isTextData
-                    ? content || 'Document attached.'
-                    : r.file_url
-                      ? 'Document attached.'
-                      : 'No file attached.',
-                  file_url: r.file_url,
+                    : 'Date not recorded',
+                  content: content || 'No text was captured for this document.',
+                  file_url: row.file_url,
                 };
               })
-            );
+              .filter((row: SharedRecordItem) => Boolean(row.id));
           }
         }
 
+        setRecords(mappedRecords);
         setPatient({
           first_name: firstName,
           last_name: lastName,
@@ -270,642 +391,949 @@ export default function SharedRecord() {
           weight,
           bloodGroup,
           genotype,
+          gender: profile?.gender || '',
           allergies,
           familyHistory,
           medicationHistory,
-          immunization: [] as string[],
           emergencyContacts,
           patientId: patientIdShort,
           profileId: profile?.id,
           userId: link.user_id,
+          singleRecord: Boolean(link.record_id),
         });
-
       } catch (err: any) {
         console.error(err);
-        setLoadError(err?.message || 'Failed to load shared record.');
+        setLoadError(err?.message || 'This shared record could not be loaded.');
       } finally {
         setLoading(false);
       }
     };
 
-    load();
-  }, [token]);
+    void load();
+  }, [token, supabase]);
 
-  // Countdown ticker
   useEffect(() => {
     if (timeLeft === null || timeLeft <= 0) return;
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev === null || prev <= 1) {
-          clearInterval(timer);
+    const timer = window.setInterval(() => {
+      setTimeLeft((previous) => {
+        if (previous === null || previous <= 1) {
+          window.clearInterval(timer);
           setIsExpired(true);
           return 0;
         }
-        return prev - 1;
+        return previous - 1;
       });
     }, 1000);
-    return () => clearInterval(timer);
+    return () => window.clearInterval(timer);
   }, [timeLeft]);
 
-  const filteredRecords =
-    activeCategory === 'all' ? records : records.filter((r) => r.category === activeCategory);
+  const openRecord = async (mode: 'full' | 'guest') => {
+    if (mode === 'full') {
+      if (provider.name.trim().length < 2) {
+        setAccessError('Add the name of the person viewing this record.');
+        return;
+      }
+      if (provider.license.trim().length < 4) {
+        setAccessError('Add a license or staff number so the patient can identify you.');
+        return;
+      }
+    }
 
-  const formatTime = (seconds: number | null) => {
-    if (seconds === null) return 'No expiry';
-    if (seconds <= 0) return '0m 0s';
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (h > 0) return `${h}h ${m}m ${s}s`;
-    return `${m}m ${s}s`;
+    setAccessError(null);
+    setLoggingAccess(true);
+    let logged = false;
+
+    try {
+      const { data, error } = await supabase.rpc('log_shared_access', {
+        p_token: token,
+        p_name: mode === 'full' ? provider.name.trim() : 'Anonymous visitor',
+        p_role: mode === 'full' ? provider.role : 'guest',
+        p_license: mode === 'full' ? provider.license.trim() : null,
+        p_facility: mode === 'full' ? provider.facility.trim() || null : null,
+      });
+      const result = data as { ok?: boolean } | null;
+      logged = Boolean(result?.ok) && !error;
+    } catch {
+      logged = false;
+    } finally {
+      setAccessLogged(logged);
+      setLoggingAccess(false);
+      setAccessMode(mode);
+    }
   };
 
+  const filteredRecords = records.filter((record) => {
+    if (activeCategory !== 'all' && record.category !== activeCategory) return false;
+    if (!recordQuery.trim()) return true;
+    const haystack = `${record.title} ${record.content} ${record.facility} ${record.doctor}`.toLowerCase();
+    return haystack.includes(recordQuery.trim().toLowerCase());
+  });
+
   const initials = patient
-    ? `${(patient.first_name || 'P')[0]}${(patient.last_name || 'X')[0] || ''}`.toUpperCase()
-    : '—';
+    ? `${(patient.first_name || 'P')[0]}${(patient.last_name || '')[0] || ''}`.toUpperCase()
+    : 'P';
+
+  const accent = '#4262ff';
+  const isGuest = accessMode === 'guest';
+  const patientDisplay = patient
+    ? `${patient.first_name || 'Patient'} ${(patient.last_name || '').charAt(0)}${patient.last_name ? '.' : ''}`
+    : 'Patient';
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8F9FE] flex items-center justify-center p-6 font-sora">
-        <p className="text-gray-400 font-medium">Loading shared record…</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#F6F8FC] p-6 font-sora">
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-lg shadow-blue-500/5">
+            <img src="/logo.svg" alt="Selorah" className="h-8 w-8 object-contain" />
+          </div>
+          <p className="text-sm font-semibold text-gray-400">Opening secure share...</p>
+        </div>
       </div>
     );
   }
 
-  if (loadError) {
+  if (loadError || isRevoked || isExpired) {
+    const state = loadError
+      ? {
+          title: 'This link cannot be opened',
+          body: loadError,
+          icon: ExclamationTriangleIcon,
+          tone: 'text-amber-500 bg-amber-50 border-amber-100',
+        }
+      : isRevoked
+        ? {
+            title: 'Access revoked',
+            body: 'The patient revoked this link. Ask for a new secure share if you still need the record.',
+            icon: LockClosedIcon,
+            tone: 'text-red-500 bg-red-50 border-red-100',
+          }
+        : {
+            title: 'Access expired',
+            body: 'This link reached its time limit. Ask the patient to share a new link.',
+            icon: ClockIcon,
+            tone: 'text-red-500 bg-red-50 border-red-100',
+          };
+    const StateIcon = state.icon;
+
     return (
-      <div className="min-h-screen bg-[#F8F9FE] flex items-center justify-center p-6 font-sora">
-        <div className="max-w-md w-full bg-white rounded-[40px] p-12 text-center shadow-2xl border border-gray-100">
-          <h2 className="text-2xl font-black text-gray-900 mb-4">Unable to open link</h2>
-          <p className="text-gray-500 mb-8">{loadError}</p>
-          <button
-            onClick={() => (window.location.href = '/')}
-            className="w-full bg-[#0A0B14] text-white py-5 rounded-2xl font-bold"
+      <div className="flex min-h-screen items-center justify-center bg-[#F6F8FC] p-4 font-sora sm:p-6">
+        <div className="w-full max-w-md rounded-[32px] border border-gray-100 bg-white p-8 text-center shadow-2xl shadow-blue-500/5 sm:p-10">
+          <div
+            className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border ${state.tone}`}
           >
-            Back to Home
+            <StateIcon className="h-7 w-7" />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-[#0A0B14]">{state.title}</h1>
+          <p className="mt-3 text-sm font-medium leading-relaxed text-gray-500">{state.body}</p>
+          <button
+            type="button"
+            onClick={() => (window.location.href = '/')}
+            className="mt-8 min-h-[48px] w-full rounded-2xl bg-[#0A0B14] px-5 text-sm font-bold text-white transition-colors hover:bg-black"
+          >
+            Back to Selorah
           </button>
         </div>
       </div>
     );
   }
 
-  if (isRevoked) {
+  if (accessMode === 'gate') {
     return (
-      <div className="min-h-screen bg-[#F8F9FE] flex items-center justify-center p-6 font-sora">
-        <div className="max-w-md w-full bg-white rounded-[40px] p-12 text-center shadow-2xl border border-gray-100">
-          <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mx-auto mb-8">
-            <XMarkIcon className="w-12 h-12 text-red-500" />
-          </div>
-          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Access Revoked</h2>
-          <p className="text-gray-500 leading-relaxed mb-10">
-            This secure link has been revoked by the patient and can no longer be used.
-          </p>
-          <button
-            onClick={() => (window.location.href = '/')}
-            className="w-full bg-[#0A0B14] text-white py-5 rounded-2xl font-bold hover:bg-black transition-all"
-          >
-            Back to Home
-          </button>
-        </div>
-      </div>
-    );
-  }
+      <div className="min-h-screen bg-[#F6F8FC] font-sora text-[#101217]">
+        <div className="mx-auto grid min-h-screen max-w-6xl lg:grid-cols-[0.95fr_1.05fr]">
+          <section className="relative overflow-hidden bg-[#05081A] px-6 py-10 text-white sm:px-10 lg:flex lg:flex-col lg:justify-between lg:px-14 lg:py-12">
+            <div
+              aria-hidden
+              className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#4262ff]/30 blur-3xl"
+            />
+            <div
+              aria-hidden
+              className="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-[#14F1D9]/10 blur-3xl"
+            />
 
-  if (isExpired) {
-    return (
-      <div className="min-h-screen bg-[#F8F9FE] flex items-center justify-center p-6 font-sora">
-        <div className="max-w-md w-full bg-white rounded-[40px] p-12 text-center shadow-2xl border border-gray-100">
-          <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mx-auto mb-8">
-            <ClockIcon className="w-12 h-12 text-red-500" />
-          </div>
-          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">Access Expired</h2>
-          <p className="text-gray-500 leading-relaxed mb-10">
-            This secure link has reached its time limit. Please request a new one from the patient.
-          </p>
-          <button
-            onClick={() => (window.location.href = '/')}
-            className="w-full bg-[#0A0B14] text-white py-5 rounded-2xl font-bold hover:bg-black transition-all"
-          >
-            Back to Home
-          </button>
+            <div className="relative">
+              <div className="flex items-center gap-3">
+                <img src="/logo.svg" alt="Selorah" className="h-10 w-10 object-contain" />
+                <div>
+                  <p className="text-lg font-bold leading-none">Selorah Health</p>
+                  <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/40">
+                    Secure patient share
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-12 flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-tr from-[#6183FF] to-[#14F1D9] text-2xl font-black text-white">
+                  {initials}
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/40">
+                    Shared with you
+                  </p>
+                  <p className="mt-1 text-2xl font-black tracking-tight">{patientDisplay}</p>
+                </div>
+              </div>
+
+              <p className="mt-8 max-w-sm text-sm font-medium leading-relaxed text-white/55">
+                A patient chose to share their medical record with you. Access is time limited and
+                every opening is added to their access log.
+              </p>
+
+              <div className="mt-8 grid gap-3">
+                {[
+                  { icon: ClockIcon, text: 'Access closes automatically when the timer ends' },
+                  { icon: ShieldCheckIcon, text: 'Views are recorded for the patient to review' },
+                  { icon: LockClosedIcon, text: 'The link is private. Do not forward it' },
+                ].map((item) => (
+                  <div
+                    key={item.text}
+                    className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3"
+                  >
+                    <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-[#8FA8FF]" />
+                    <p className="text-xs font-semibold leading-relaxed text-white/65">
+                      {item.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative mt-10 flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-[11px] font-bold text-white/70">
+                <ClockIcon className="h-3.5 w-3.5 text-[#5FFAB0]" />
+                {formatTime(timeLeft)} left
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-[11px] font-bold text-white/70">
+                <DocumentTextIcon className="h-3.5 w-3.5 text-[#8FA8FF]" />
+                {patient?.singleRecord ? 'Single record' : 'Full record'}
+              </span>
+            </div>
+          </section>
+
+          <section className="flex items-center px-5 py-8 sm:px-10 lg:px-14">
+            <div className="w-full">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4262ff]">
+                Before you continue
+              </p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0A0B14] sm:text-4xl">
+                Who is viewing this record?
+              </h1>
+              <p className="mt-3 max-w-md text-sm font-medium leading-relaxed text-gray-500">
+                The patient will see your name, role, and facility in their access log. This keeps
+                sharing accountable without slowing down care.
+              </p>
+
+              <form
+                className="mt-7 space-y-5"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void openRecord('full');
+                }}
+              >
+                <div>
+                  <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                    Your role
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {ROLE_OPTIONS.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() =>
+                          setProvider((previous) => ({ ...previous, role: option.id }))
+                        }
+                        className={`min-h-[40px] rounded-full border px-4 text-xs font-bold transition-all ${
+                          provider.role === option.id
+                            ? 'border-[#4262ff] bg-[#EEF2FF] text-[#4262ff]'
+                            : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                      Full name
+                    </span>
+                    <input
+                      value={provider.name}
+                      onChange={(event) =>
+                        setProvider((previous) => ({ ...previous, name: event.target.value }))
+                      }
+                      placeholder="Dr. Ada Okafor"
+                      autoComplete="name"
+                      className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                      License or staff number
+                    </span>
+                    <input
+                      value={provider.license}
+                      onChange={(event) =>
+                        setProvider((previous) => ({ ...previous, license: event.target.value }))
+                      }
+                      placeholder="MDCN / staff ID"
+                      autoComplete="off"
+                      className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                    />
+                  </label>
+                </div>
+
+                <label className="block">
+                  <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                    Facility <span className="font-semibold normal-case tracking-normal">(optional)</span>
+                  </span>
+                  <input
+                    value={provider.facility}
+                    onChange={(event) =>
+                      setProvider((previous) => ({ ...previous, facility: event.target.value }))
+                    }
+                    placeholder="Hospital or clinic name"
+                    autoComplete="organization"
+                    className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                  />
+                </label>
+
+                {accessError && (
+                  <p className="flex items-start gap-2 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-700">
+                    <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                    {accessError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loggingAccess}
+                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#4262ff] px-5 text-base font-bold text-white shadow-xl shadow-blue-500/20 transition-colors hover:bg-[#3252DF] disabled:opacity-60"
+                >
+                  {loggingAccess ? 'Opening record...' : 'Open patient record'}
+                  {!loggingAccess && <ChevronRightIcon className="h-5 w-5" />}
+                </button>
+              </form>
+
+              <div className="my-6 flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-300">
+                  or
+                </span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void openRecord('guest')}
+                disabled={loggingAccess}
+                className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-white px-5 text-sm font-bold text-gray-600 transition-colors hover:border-gray-300 hover:text-[#101217] disabled:opacity-60"
+              >
+                Continue with emergency preview
+              </button>
+
+              <p className="mt-4 text-center text-[11px] font-medium leading-relaxed text-gray-400">
+                Emergency preview shows blood group, genotype, allergies, and emergency contacts
+                only. Clinical history stays hidden.
+              </p>
+            </div>
+          </section>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FE] font-sora py-8 md:py-16 px-4 selection:bg-primary/30">
-      {showVerificationModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0B14]/80 backdrop-blur-md p-4 sm:p-6">
-          <div className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-white rounded-3xl sm:rounded-[40px] p-6 sm:p-10 md:p-12 shadow-2xl my-auto">
-            <div className="flex items-center gap-3 mb-6 sm:mb-8">
-              <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                <img src="/logo.svg" alt="Logo" className="w-full h-full object-contain" />
-              </div>
-              <span className="text-lg sm:text-xl font-black tracking-tight text-[#0A0B14]">
-                Selorah Secure
-              </span>
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-3 sm:mb-4 tracking-tight leading-tight">
-              Verification Required
-            </h2>
-            <p className="text-gray-500 mb-6 sm:mb-10 leading-relaxed font-medium text-sm sm:text-base">
-              To view this patient&apos;s full medical history, please verify your credentials.
-            </p>
-
-            <form onSubmit={handleVerify} className="space-y-5 sm:space-y-6">
-              <div className="flex p-1 bg-gray-100 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => setVerificationRole('doctor')}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all min-h-[44px] ${
-                    verificationRole === 'doctor'
-                      ? 'bg-white text-[#4262ff] shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Doctor
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVerificationRole('nurse')}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all min-h-[44px] ${
-                    verificationRole === 'nurse'
-                      ? 'bg-white text-[#4262ff] shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Nurse
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                  License Number
-                </label>
-                <input
-                  type="text"
-                  required
-                  autoComplete="off"
-                  placeholder="Enter License No."
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 focus:outline-none focus:border-[#4262ff] transition-all font-bold placeholder:text-gray-300 text-base"
-                  value={licenseNumber}
-                  onChange={(e) => setLicenseNumber(e.target.value)}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={!verificationRole || !licenseNumber}
-                className="w-full bg-[#4262ff] text-white py-4 sm:py-5 rounded-2xl font-bold text-base sm:text-lg hover:bg-[#3252DF] transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
-              >
-                Unlock Records
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowVerificationModal(false)}
-                className="w-full text-gray-400 font-bold py-2 hover:text-gray-600 transition-colors"
-              >
-                View as Guest (Restricted)
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="bg-white/80 backdrop-blur-md border border-white/20 p-6 rounded-[32px] flex items-center justify-between shadow-xl shadow-blue-500/5 sticky top-8 z-50">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
-            <div className="hidden sm:block">
-              <span className="font-black text-lg tracking-tight">Selorah Health</span>
-              <p className="text-[10px] font-black uppercase text-[#4262ff] tracking-[0.2em] leading-none">
-                Shared Access
+    <div className="min-h-screen bg-[#F6F8FC] font-sora text-[#101217] print:bg-white">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/85 backdrop-blur-xl print:hidden">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <img src="/logo.svg" alt="Selorah" className="h-8 w-8 shrink-0 object-contain" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold leading-none text-[#0A0B14]">
+                Selorah Health
+              </p>
+              <p className="mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#4262ff]">
+                Shared access
               </p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {isVerified && (
-              <button
-                onClick={() => setShowVisitReportModal(true)}
-                className="bg-[#4262ff] text-white px-6 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-[#3252DF] transition-all shadow-lg shadow-blue-500/20"
-              >
-                <DocumentPlusIcon className="w-4 h-4" />
-                Add Visit Report
-              </button>
-            )}
-            <div className="h-8 w-px bg-gray-100 mx-2 hidden sm:block"></div>
-            <div className="text-right">
-              <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                Time Remaining
-              </p>
-              <p
-                className={`font-bold text-sm ${
-                  timeLeft !== null && timeLeft < 300 ? 'text-red-500' : 'text-gray-900'
-                }`}
-              >
-                {formatTime(timeLeft)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white border border-gray-100 rounded-[48px] overflow-hidden shadow-2xl relative">
-          <div className="h-32 bg-[#F0F2FF] relative">
-            <div className="absolute -bottom-16 left-12">
-              <div className="w-32 h-32 rounded-[40px] bg-white p-2 shadow-xl border border-gray-100">
-                <div className="w-full h-full rounded-[32px] bg-gradient-to-tr from-[#6183FF] to-[#14F1D9] flex items-center justify-center font-black text-4xl text-white">
-                  {initials}
-                </div>
-              </div>
-            </div>
-            {isVerified && (
-              <div className="absolute top-6 right-12 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 flex items-center gap-2">
-                <ShieldCheckIcon className="w-4 h-4 text-[#4262ff]" />
-                <span className="text-xs font-bold text-[#4262ff] uppercase tracking-widest">
-                  Verified {verificationRole}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="pt-24 px-12 pb-16">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 border-b border-gray-100 pb-12">
-              <div>
-                <h1 className="text-5xl font-black text-[#0A0B14] tracking-tighter mb-4">
-                  {patient?.full_name || `${patient?.first_name || ''} ${patient?.last_name || ''}`.trim()}
-                </h1>
-                <div className="flex flex-wrap gap-4">
-                  <span className="bg-gray-100 px-4 py-2 rounded-xl text-sm font-bold text-gray-600 flex items-center gap-2">
-                    <CalendarIcon className="w-4 h-4" />
-                    {patient?.dob}
-                    {patient?.age != null ? ` (${patient.age}Y)` : ''}
-                  </span>
-                  <span className="bg-[#4262ff]/5 px-4 py-2 rounded-xl text-sm font-bold text-[#4262ff] flex items-center gap-2 border border-[#4262ff]/10">
-                    <IdentificationIcon className="w-4 h-4" /> Patient ID: {patient?.patientId}
-                  </span>
-                </div>
-              </div>
-              {patient?.allergies?.length > 0 && (
-                <div className="flex flex-col items-start md:items-end gap-2">
-                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                    Emergency Priority
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
-                    <span className="text-red-500 font-bold">Critical Allergies Listed</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-              <div className="space-y-12">
-                <section>
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#4262ff] mb-6 flex items-center gap-2">
-                    <HeartIcon className="w-4 h-4" /> Physical Vitals
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-gray-50 p-5 rounded-3xl">
-                      <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Height</p>
-                      <p className="text-xl font-bold text-gray-900">{patient?.height}</p>
-                    </div>
-                    <div className="bg-gray-50 p-5 rounded-3xl">
-                      <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Weight</p>
-                      <p className="text-xl font-bold text-gray-900">{patient?.weight}</p>
-                    </div>
-                    <div className="bg-gray-50 p-5 rounded-3xl">
-                      <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Blood Group</p>
-                      <p className="text-xl font-black text-[#4262ff]">{patient?.bloodGroup}</p>
-                    </div>
-                    <div className="bg-gray-50 p-5 rounded-3xl">
-                      <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Genotype</p>
-                      <p className="text-xl font-bold text-gray-900">{patient?.genotype}</p>
-                    </div>
-                  </div>
-                </section>
-
-                <section>
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-red-500 mb-6 flex items-center gap-2">
-                    <InformationCircleIcon className="w-4 h-4" /> Allergies
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {patient?.allergies?.length ? (
-                      patient.allergies.map((a: string) => (
-                        <span
-                          key={a}
-                          className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold border border-red-100"
-                        >
-                          {a}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-sm text-gray-400 font-medium">None recorded</span>
-                    )}
-                  </div>
-                </section>
-
-                <section>
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#4262ff] mb-6 flex items-center gap-2">
-                    <UserPlusIcon className="w-4 h-4" /> Emergency Contacts
-                  </h3>
-                  <div className="space-y-4">
-                    {patient?.emergencyContacts?.length ? (
-                      patient.emergencyContacts.map((c: any, i: number) => (
-                        <div key={i} className="border-l-4 border-[#4262ff] pl-4 py-1">
-                          <p className="font-bold text-gray-900">{c.name}</p>
-                          <p className="text-xs text-gray-500 font-medium">
-                            {c.relationship} • {c.phone}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-400 font-medium">None recorded</p>
-                    )}
-                  </div>
-                </section>
-              </div>
-
-              <div className="lg:col-span-2 space-y-16">
-                <section>
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#4262ff] mb-8 flex items-center gap-2">
-                    <ClipboardDocumentListIcon className="w-4 h-4" /> Medical History
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-12">
-                    <div>
-                      <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-4">
-                        Family History
-                      </h4>
-                      <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                        {patient?.familyHistory}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-4">
-                        Medication History
-                      </h4>
-                      <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                        {patient?.medicationHistory}
-                      </p>
-                    </div>
-                  </div>
-                </section>
-
-                <section>
-                  <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#4262ff] flex items-center gap-2">
-                      <BeakerIcon className="w-4 h-4" /> Clinical Records
-                    </h3>
-                    <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
-                      {[
-                        { id: 'all', label: 'All', icon: FunnelIcon },
-                        { id: 'lab', label: 'Labs', icon: BeakerIcon },
-                        { id: 'rad', label: 'Imaging', icon: IdentificationIcon },
-                        { id: 'pres', label: 'Prescriptions', icon: PencilSquareIcon },
-                      ].map((cat) => (
-                        <button
-                          key={cat.id}
-                          onClick={() => setActiveCategory(cat.id as any)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
-                            activeCategory === cat.id
-                              ? 'bg-white text-[#4262ff] shadow-sm'
-                              : 'text-gray-400 hover:text-gray-600'
-                          }`}
-                        >
-                          <cat.icon className="w-3.5 h-3.5" />
-                          {cat.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {filteredRecords.length === 0 && (
-                      <p className="text-sm text-gray-400 font-medium py-8 text-center">
-                        No clinical records available for this patient yet.
-                      </p>
-                    )}
-                    {filteredRecords.map((r) => (
-                      <div
-                        key={r.id}
-                        className="group p-6 bg-gray-50 rounded-[32px] border border-transparent hover:border-[#4262ff]/20 hover:bg-white transition-all"
-                      >
-                        <div className="flex justify-between items-start mb-4 gap-4">
-                          <h4 className="font-black text-gray-900 group-hover:text-[#4262ff] transition-colors">
-                            {r.title}
-                          </h4>
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest shrink-0">
-                            {r.date}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6">
-                          <div>
-                            <p className="text-[9px] font-black uppercase text-gray-400">Facility</p>
-                            <p className="text-xs font-bold text-gray-700">{r.facility}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-black uppercase text-gray-400">
-                              Practitioner
-                            </p>
-                            <p className="text-xs font-bold text-gray-700">{r.doctor}</p>
-                          </div>
-                        </div>
-                        <div className="p-4 bg-white/50 rounded-2xl border border-gray-100">
-                          <p className="text-xs text-gray-500 leading-relaxed italic line-clamp-2">
-                            &quot;{r.content}&quot;
-                          </p>
-                          {r.file_url && (
-                            <a
-                              href={r.file_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-block mt-3 text-xs font-bold text-[#4262ff] hover:underline"
-                            >
-                              Open attached document →
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <footer className="text-center pb-20">
-          <div className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 rounded-full shadow-lg shadow-blue-500/5">
-            <ShieldCheckIcon className="w-4 h-4 text-green-500" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-              Verified & Encrypted • Selorah Health Infrastructure
+            <span className="ml-1 hidden items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-500 sm:inline-flex">
+              <ClockIcon className="h-3.5 w-3.5 text-[#4262ff]" />
+              {formatTime(timeLeft)} left
             </span>
           </div>
-        </footer>
-      </div>
 
-      {showVisitReportModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#0A0B14]/90 backdrop-blur-xl p-4 sm:p-6">
-          <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-white rounded-3xl sm:rounded-[40px] overflow-hidden shadow-2xl my-auto">
-            <div className="p-5 sm:p-8 md:p-10">
-              <div className="flex justify-between items-start gap-4 mb-6 sm:mb-10">
-                <div>
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
-                    Add Visit Report
-                  </h3>
-                  <p className="text-gray-500 font-medium text-sm sm:text-base">
-                    Record a new interaction for {patient?.first_name}.
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3.5 text-[11px] font-bold text-gray-600 transition-colors hover:border-gray-300 hover:text-[#101217] sm:px-4"
+            >
+              <PrinterIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Print</span>
+            </button>
+            {accessMode === 'full' && (
+              <button
+                type="button"
+                onClick={() => setShowVisitReportModal(true)}
+                className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-[#4262ff] px-3.5 text-[11px] font-bold text-white shadow-lg shadow-blue-500/20 transition-colors hover:bg-[#3252DF] sm:px-4"
+              >
+                <DocumentPlusIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Add visit report</span>
+                <span className="sm:hidden">Report</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 print:max-w-none print:px-0 print:py-0">
+        {isGuest && (
+          <div className="flex flex-col gap-3 rounded-3xl border border-amber-100 bg-amber-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+              <div>
+                <p className="text-sm font-bold text-amber-900">Emergency preview only</p>
+                <p className="mt-0.5 text-xs font-medium leading-relaxed text-amber-700">
+                  Clinical history is hidden. Confirm your provider details to open the full record.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAccessMode('gate')}
+              className="min-h-[40px] shrink-0 rounded-full bg-amber-500 px-4 text-[11px] font-bold text-white transition-colors hover:bg-amber-600"
+            >
+              Open full record
+            </button>
+          </div>
+        )}
+
+        <section className="overflow-hidden rounded-[32px] border border-gray-100 bg-white shadow-xl shadow-blue-500/5">
+          <div className="relative h-24 bg-gradient-to-r from-[#EEF2FF] via-[#F5F7FF] to-[#E8FBF7] sm:h-28">
+            <div
+              aria-hidden
+              className="absolute right-6 top-4 h-24 w-24 rounded-full border border-white/60 bg-white/30 backdrop-blur-sm sm:h-32 sm:w-32"
+            />
+          </div>
+
+          <div className="px-5 pb-6 sm:px-8 sm:pb-8">
+            <div className="-mt-10 flex flex-col gap-5 sm:-mt-12 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex items-end gap-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[26px] border-4 border-white bg-gradient-to-tr from-[#6183FF] to-[#14F1D9] text-2xl font-black text-white shadow-lg sm:h-24 sm:w-24 sm:text-3xl">
+                  {initials}
+                </div>
+                <div className="min-w-0 pb-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="truncate text-2xl font-black tracking-tight text-[#0A0B14] sm:text-3xl">
+                      {patient?.full_name}
+                    </h1>
+                    {patient?.singleRecord && (
+                      <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#4262ff]">
+                        Single record
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs font-semibold text-gray-400">
+                    Patient ID {patient?.patientId}
                   </p>
                 </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pb-1">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold ${
+                    accessLogged
+                      ? 'border-green-100 bg-green-50 text-green-700'
+                      : 'border-amber-100 bg-amber-50 text-amber-700'
+                  }`}
+                >
+                  {accessLogged ? (
+                    <CheckCircleIcon className="h-3.5 w-3.5" />
+                  ) : (
+                    <ExclamationTriangleIcon className="h-3.5 w-3.5" />
+                  )}
+                  {accessLogged ? 'Access logged' : 'Session not logged'}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-500">
+                  <UserIcon className="h-3.5 w-3.5 text-[#4262ff]" />
+                  {accessMode === 'guest'
+                    ? 'Guest preview'
+                    : `${ROLE_LABELS[provider.role] || 'Provider'}${
+                        provider.name ? `: ${provider.name.trim()}` : ''
+                      }`}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { label: 'Blood group', value: patient?.bloodGroup, tone: 'text-[#4262ff]' },
+                { label: 'Genotype', value: patient?.genotype, tone: 'text-[#0A0B14]' },
+                {
+                  label: 'Age',
+                  value: patient?.age != null ? `${patient.age} years` : 'Not recorded',
+                  tone: 'text-[#0A0B14]',
+                },
+                {
+                  label: 'Sex',
+                  value: patient?.gender || 'Not recorded',
+                  tone: 'text-[#0A0B14]',
+                },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl bg-[#F8F9FE] px-4 py-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400">
+                    {item.label}
+                  </p>
+                  <p className={`mt-1 text-base font-black ${item.tone}`}>{item.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {patient?.allergies?.length > 0 && (
+              <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-2">
+                  <ExclamationTriangleIcon className="h-4 w-4 shrink-0 text-red-500" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-red-500">
+                    Allergy alert
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {patient.allergies.map((allergy: string) => (
+                    <span
+                      key={allergy}
+                      className="rounded-full border border-red-200 bg-white px-2.5 py-1 text-[11px] font-bold text-red-600"
+                    >
+                      {allergy}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            {isGuest ? (
+              <section className="rounded-[28px] border border-gray-100 bg-white p-6 text-center shadow-sm sm:p-10">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#4262ff]">
+                  <LockClosedIcon className="h-6 w-6" />
+                </div>
+                <h2 className="mt-4 text-xl font-black tracking-tight text-[#0A0B14]">
+                  Clinical history is hidden
+                </h2>
+                <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-relaxed text-gray-500">
+                  Confirm your provider details to view lab results, imaging, prescriptions, and
+                  visit reports.
+                </p>
                 <button
                   type="button"
-                  onClick={() => setShowVisitReportModal(false)}
-                  className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-50 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shrink-0"
-                  aria-label="Close"
+                  onClick={() => setAccessMode('gate')}
+                  className="mt-6 inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-[#4262ff] px-6 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-colors hover:bg-[#3252DF]"
                 >
-                  <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+                  Open full record
+                  <ChevronRightIcon className="h-4 w-4" />
                 </button>
-              </div>
-
-              <div className="space-y-5 sm:space-y-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                      Facility
-                    </label>
-                    <input
-                      type="text"
-                      value={visitFacility}
-                      onChange={(e) => setVisitFacility(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-gray-700 text-base"
-                    />
+              </section>
+            ) : (
+              <section className="rounded-[28px] border border-gray-100 bg-white p-5 shadow-sm sm:p-7">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-black tracking-tight text-[#0A0B14]">
+                      Clinical records
+                    </h2>
+                    <p className="mt-1 text-xs font-medium text-gray-400">
+                      {filteredRecords.length} of {records.length} records
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                      Doctor
-                    </label>
-                    <input
-                      type="text"
-                      value={visitDoctor}
-                      onChange={(e) => setVisitDoctor(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-gray-700 text-base"
-                    />
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                    Observations & Notes
+                  <label className="relative block w-full sm:w-64">
+                    <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
+                    <input
+                      value={recordQuery}
+                      onChange={(event) => setRecordQuery(event.target.value)}
+                      placeholder="Search records"
+                      className="min-h-[42px] w-full rounded-full border border-gray-200 bg-[#F8F9FE] pl-10 pr-4 text-xs font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff] focus:bg-white"
+                    />
                   </label>
-                  <textarea
-                    placeholder="Describe visit details, diagnosis, or recommendations..."
-                    value={visitNotes}
-                    onChange={(e) => setVisitNotes(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl sm:rounded-3xl px-4 sm:px-6 py-3.5 sm:py-4 font-medium text-gray-700 h-32 sm:h-40 focus:outline-none focus:border-[#4262ff] transition-all text-base"
-                  />
                 </div>
 
-                <div className="pt-6 flex gap-4">
-                  <button
-                    onClick={() => setShowVisitReportModal(false)}
-                    className="flex-1 bg-gray-50 text-gray-900 py-5 rounded-2xl font-bold hover:bg-gray-100 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!patient?.profileId) {
-                        toastError('Patient profile not loaded. Cannot save report.');
-                        return;
-                      }
-                      if (!visitNotes.trim()) {
-                        warning('Please add observations or notes before submitting.');
-                        return;
-                      }
-                      setSubmittingReport(true);
-                      try {
-                        const title = `Visit Report - ${visitFacility || 'Clinic'} (${new Date().toLocaleDateString()})`;
-                        // Schema has no notes column — store report body as a text data URL
-                        const reportBody = [
-                          `Visit Report`,
-                          `Facility: ${visitFacility || 'Clinic'}`,
-                          `Doctor: ${visitDoctor || 'Doctor'}`,
-                          `Date: ${new Date().toISOString()}`,
-                          ``,
-                          visitNotes.trim(),
-                        ].join('\n');
-                        const notesDataUrl =
-                          'data:text/plain;charset=utf-8,' + encodeURIComponent(reportBody);
-
-                        const { data: saved, error } = await supabase.rpc(
-                          'add_shared_visit_report',
-                          {
-                            p_token: token,
-                            p_facility: visitFacility || 'Clinic',
-                            p_doctor: visitDoctor || 'Doctor',
-                            p_notes: visitNotes.trim(),
-                          }
-                        );
-
-                        if (error) throw error;
-
-                        const result = saved as {
-                          ok?: boolean;
-                          message?: string;
-                          record?: {
-                            id: string;
-                            title: string;
-                            file_url: string;
-                            created_at: string;
-                          };
-                        } | null;
-
-                        if (!result?.ok || !result.record) {
-                          throw new Error(result?.message || 'The report was not saved.');
-                        }
-
-                        const record = result.record;
-
-                        setRecords((prev) => [
-                          {
-                            id: record.id,
-                            title: record.title || title,
-                            category: 'other',
-                            facility: visitFacility || 'Clinic',
-                            doctor: visitDoctor || 'Doctor',
-                            date: record.created_at
-                              ? new Date(record.created_at).toLocaleDateString(undefined, {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric',
-                                })
-                              : new Date().toLocaleDateString(),
-                            content: visitNotes.trim(),
-                            file_url: record.file_url || notesDataUrl,
-                          },
-                          ...prev,
-                        ]);
-
-                        setVisitNotes('');
-                        setShowVisitReportModal(false);
-                        success('Visit report saved to the patient\'s records.');
-                      } catch (err: any) {
-                        console.error(err);
-                        toastError(err?.message || 'Unknown error', 'Failed to save visit report');
-                      } finally {
-                        setSubmittingReport(false);
-                      }
-                    }}
-                    disabled={submittingReport}
-                    className="flex-[2] bg-[#4262ff] text-white py-5 rounded-2xl font-bold text-lg shadow-xl shadow-blue-500/20 hover:bg-[#3252DF] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                  >
-                    {submittingReport ? 'Saving…' : 'Submit Report'} <ChevronRightIcon className="w-5 h-5" />
-                  </button>
+                <div className="mt-4 flex flex-wrap gap-1.5 rounded-2xl bg-[#F8F9FE] p-1.5">
+                  {[
+                    { id: 'all', label: 'All' },
+                    { id: 'lab', label: 'Labs' },
+                    { id: 'rad', label: 'Imaging' },
+                    { id: 'pres', label: 'Prescriptions' },
+                    { id: 'visit', label: 'Visits' },
+                  ].map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setActiveCategory(category.id as 'all' | RecordCategory)}
+                      className={`min-h-[34px] flex-1 rounded-xl px-2 text-[10px] font-black uppercase tracking-[0.08em] transition-all ${
+                        activeCategory === category.id
+                          ? 'bg-white text-[#4262ff] shadow-sm'
+                          : 'text-gray-400 hover:text-gray-600'
+                      }`}
+                    >
+                      {category.label}
+                    </button>
+                  ))}
                 </div>
+
+                <div className="mt-5 space-y-3">
+                  {filteredRecords.length === 0 && (
+                    <div className="rounded-2xl border border-dashed border-gray-200 px-5 py-10 text-center">
+                      <DocumentTextIcon className="mx-auto h-7 w-7 text-gray-200" />
+                      <p className="mt-3 text-sm font-bold text-gray-500">No records to show</p>
+                      <p className="mt-1 text-xs font-medium text-gray-400">
+                        {recordQuery
+                          ? 'Try a different search term or category.'
+                          : 'This patient has not added a record in this category yet.'}
+                      </p>
+                    </div>
+                  )}
+
+                  {filteredRecords.map((record) => {
+                    const Icon = CATEGORY_ICONS[record.category] || DocumentTextIcon;
+                    const isTextData = (record.file_url || '').startsWith('data:text/plain');
+                    return (
+                      <article
+                        key={record.id}
+                        className="group rounded-2xl border border-gray-100 bg-white p-4 transition-all hover:border-[#4262ff]/25 hover:shadow-lg hover:shadow-blue-500/5 sm:p-5"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#4262ff]">
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                              <h3 className="font-bold leading-snug text-[#0A0B14]">
+                                {record.title}
+                              </h3>
+                              <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400">
+                                {record.date}
+                              </span>
+                            </div>
+
+                            <p className="mt-2 line-clamp-3 whitespace-pre-line text-xs font-medium leading-relaxed text-gray-500">
+                              {record.content}
+                            </p>
+
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <span className="rounded-full bg-[#F8F9FE] px-2.5 py-1 text-[10px] font-semibold text-gray-500">
+                                {record.facility}
+                              </span>
+                              {record.doctor && record.doctor !== 'Not recorded' && (
+                                <span className="rounded-full bg-[#F8F9FE] px-2.5 py-1 text-[10px] font-semibold text-gray-500">
+                                  {record.doctor}
+                                </span>
+                              )}
+                              {record.file_url && !isTextData && (
+                                <a
+                                  href={record.file_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-[#4262ff] hover:underline"
+                                >
+                                  Open document
+                                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+          </div>
+
+          <aside className="space-y-5">
+            <section className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm">
+              <h2 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#4262ff]">
+                <HeartIcon className="h-4 w-4" />
+                Physical vitals
+              </h2>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                {[
+                  { label: 'Height', value: patient?.height },
+                  { label: 'Weight', value: patient?.weight },
+                  { label: 'Blood group', value: patient?.bloodGroup },
+                  { label: 'Genotype', value: patient?.genotype },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-xl bg-[#F8F9FE] px-3 py-2.5">
+                    <p className="text-[9px] font-black uppercase tracking-[0.12em] text-gray-400">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 truncate text-sm font-bold text-[#0A0B14]">{item.value}</p>
+                  </div>
+                ))}
               </div>
+            </section>
+
+            <section className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm">
+              <h2 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-red-500">
+                <ExclamationTriangleIcon className="h-4 w-4" />
+                Allergies
+              </h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {patient?.allergies?.length ? (
+                  patient.allergies.map((allergy: string) => (
+                    <span
+                      key={allergy}
+                      className="rounded-full border border-red-100 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-600"
+                    >
+                      {allergy}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-xs font-medium text-gray-400">None recorded</p>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm">
+              <h2 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#4262ff]">
+                <UserPlusIcon className="h-4 w-4" />
+                Emergency contacts
+              </h2>
+              <div className="mt-4 space-y-3">
+                {patient?.emergencyContacts?.length ? (
+                  patient.emergencyContacts.map((contact: any, index: number) => (
+                    <div
+                      key={`${contact.name}-${index}`}
+                      className="rounded-xl border-l-2 border-[#4262ff] bg-[#F8F9FE] px-3 py-2.5"
+                    >
+                      <p className="text-xs font-bold text-[#0A0B14]">
+                        {contact.name || 'Contact'}
+                      </p>
+                      <p className="mt-0.5 text-[10px] font-semibold text-gray-400">
+                        {contact.relationship}
+                      </p>
+                      {contact.phone && (
+                        <a
+                          href={`tel:${contact.phone.replace(/\s/g, '')}`}
+                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#4262ff]"
+                        >
+                          <PhoneIcon className="h-3.5 w-3.5" />
+                          {contact.phone}
+                        </a>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs font-medium text-gray-400">None recorded</p>
+                )}
+              </div>
+            </section>
+
+            {!isGuest && (
+              <section className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#4262ff]">
+                  <ClipboardDocumentListIcon className="h-4 w-4" />
+                  Medical history
+                </h2>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400">
+                      Family history
+                    </p>
+                    <p className="mt-1 text-xs font-medium leading-relaxed text-gray-600">
+                      {patient?.familyHistory}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400">
+                      Medication history
+                    </p>
+                    <p className="mt-1 text-xs font-medium leading-relaxed text-gray-600">
+                      {patient?.medicationHistory}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+          </aside>
+        </div>
+
+        <footer className="pb-8 print:hidden">
+          <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-5 py-4 text-center sm:flex-row sm:text-left">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400">
+              <ShieldCheckIcon className="h-4 w-4 text-green-500" />
+              Encrypted share, audited access
+            </div>
+            <p className="text-[10px] font-medium text-gray-400">
+              Powered by Selorah Health. The patient can revoke this link at any time.
+            </p>
+          </div>
+        </footer>
+      </main>
+
+      {showVisitReportModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-[#05081A]/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="visit-report-title"
+        >
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
+            <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-gray-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-7 sm:py-5">
+              <div>
+                <h2
+                  id="visit-report-title"
+                  className="text-lg font-black tracking-tight text-[#0A0B14] sm:text-xl"
+                >
+                  Add visit report
+                </h2>
+                <p className="mt-0.5 text-xs font-medium text-gray-400">
+                  Saved to {patient?.first_name || 'the patient'}&apos;s record after you submit.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowVisitReportModal(false)}
+                aria-label="Close"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-colors hover:bg-gray-100"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                    Facility
+                  </span>
+                  <input
+                    value={visitFacility}
+                    onChange={(event) => setVisitFacility(event.target.value)}
+                    placeholder={provider.facility || 'Hospital or clinic'}
+                    className="min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                    Doctor or clinician
+                  </span>
+                  <input
+                    value={visitDoctor}
+                    onChange={(event) => setVisitDoctor(event.target.value)}
+                    placeholder={provider.name || 'Name of the clinician'}
+                    className="min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                  />
+                </label>
+              </div>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                  Observations and notes
+                </span>
+                <textarea
+                  value={visitNotes}
+                  onChange={(event) => setVisitNotes(event.target.value)}
+                  placeholder="Diagnosis, observations, treatment, and follow up."
+                  rows={7}
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium leading-relaxed text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                />
+              </label>
+
+              <p className="flex items-start gap-2 rounded-xl bg-[#F8F9FE] px-3 py-2.5 text-[10px] font-medium leading-relaxed text-gray-500">
+                <ShieldCheckIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#4262ff]" />
+                This report is added to the patient&apos;s medical record and appears in their
+                access history.
+              </p>
+            </div>
+
+            <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-gray-100 bg-white/95 px-5 py-4 backdrop-blur sm:flex-row sm:justify-end sm:px-7">
+              <button
+                type="button"
+                onClick={() => setShowVisitReportModal(false)}
+                className="min-h-[46px] rounded-xl border border-gray-200 px-5 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!visitNotes.trim()) {
+                    warning('Add observations before submitting.');
+                    return;
+                  }
+                  setSubmittingReport(true);
+                  try {
+                    const { data, error } = await supabase.rpc('add_shared_visit_report', {
+                      p_token: token,
+                      p_facility: visitFacility || provider.facility || 'Clinic',
+                      p_doctor: visitDoctor || provider.name || 'Doctor',
+                      p_notes: visitNotes.trim(),
+                    });
+
+                    if (error) throw error;
+
+                    const result = data as {
+                      ok?: boolean;
+                      message?: string;
+                      record?: {
+                        id: string;
+                        title: string;
+                        file_url: string;
+                        created_at: string;
+                        notes?: string;
+                      };
+                    } | null;
+
+                    if (!result?.ok || !result.record) {
+                      throw new Error(result?.message || 'The report was not saved.');
+                    }
+
+                    const saved = result.record;
+                    setRecords((previous) => [
+                      {
+                        id: saved.id,
+                        title: saved.title || 'Visit report',
+                        category: 'visit',
+                        facility: visitFacility || provider.facility || 'Clinic',
+                        doctor: visitDoctor || provider.name || 'Doctor',
+                        date: saved.created_at
+                          ? new Date(saved.created_at).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })
+                          : new Date().toLocaleDateString(),
+                        content: visitNotes.trim(),
+                        file_url: saved.file_url,
+                      },
+                      ...previous,
+                    ]);
+
+                    setVisitNotes('');
+                    setShowVisitReportModal(false);
+                    success('Visit report added to the patient record.');
+                  } catch (error) {
+                    console.error(error);
+                    toastError(
+                      error instanceof Error ? error.message : 'The report could not be saved.',
+                      'Report not saved'
+                    );
+                  } finally {
+                    setSubmittingReport(false);
+                  }
+                }}
+                disabled={submittingReport}
+                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#4262ff] px-6 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-colors hover:bg-[#3252DF] disabled:opacity-60"
+              >
+                {submittingReport ? 'Saving...' : 'Submit report'}
+                {!submittingReport && <ChevronRightIcon className="h-4 w-4" />}
+              </button>
             </div>
           </div>
         </div>

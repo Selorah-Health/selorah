@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { 
-  ArrowRightOnRectangleIcon, 
+import {
+  ArrowRightOnRectangleIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
 
@@ -59,11 +61,19 @@ export default function PortalSidebar({
               </div>
             )}
           </div>
-          <button 
-            className="text-white opacity-80 hover:opacity-100 transition-all hover:scale-110 active:scale-95" 
-            onClick={() => setIsCollapsed(!isCollapsed)}
+          <button
+            type="button"
+            onClick={() => setIsCollapsed((value) => !value)}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!isCollapsed}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-all duration-200 hover:border-white/25 hover:bg-white/[0.12] hover:text-white active:scale-95"
           >
-            <img src="/assets/menu-closed.png" alt="M" className="w-5 h-5 object-contain" />
+            {isCollapsed ? (
+              <ChevronDoubleRightIcon className="h-4 w-4" strokeWidth={2} />
+            ) : (
+              <ChevronDoubleLeftIcon className="h-4 w-4" strokeWidth={2} />
+            )}
           </button>
         </div>
       </div>

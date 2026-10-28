@@ -334,7 +334,7 @@ export default function Home({
                 </p>
                 <button
                   type="button"
-                  onClick={() => navigate('/dashboard/profile')}
+                  onClick={() => navigate('/dashboard/upgrade')}
                   className="mt-4 flex min-h-[40px] items-center gap-2 rounded-full bg-white px-4 text-xs font-bold text-[#020924]"
                 >
                   Upgrade for ₦5,000 a year

@@ -30,6 +30,7 @@ declare global {
 
 const SCRIPT_ID = 'paystack-inline-js';
 const SCRIPT_SRC = 'https://js.paystack.co/v1/inline.js';
+const SCRIPT_TIMEOUT_MS = 15000;
 
 let loader: Promise<void> | null = null;
 
@@ -50,23 +51,60 @@ export function loadPaystack(): Promise<void> {
   if (loader) return loader;
 
   loader = new Promise<void>((resolve, reject) => {
+    let settled = false;
+
+    const finish = (action: () => void) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      action();
+    };
+
+    const timer = window.setTimeout(() => {
+      loader = null;
+      finish(() =>
+        reject(
+          new Error(
+            'Paystack is taking too long to load. Check your connection or disable any blocker and try again.'
+          )
+        )
+      );
+    }, SCRIPT_TIMEOUT_MS);
+
     const existing = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (existing) {
-      existing.addEventListener('load', () => resolve(), { once: true });
-      existing.addEventListener('error', () => reject(new Error('Could not load Paystack.')), {
-        once: true,
-      });
-      return;
+      const state = existing.dataset.state;
+      if (state === 'ready' || state === 'failed') {
+        // The tag finished earlier but the script did not register, or it
+        // failed. Remove it so a retry starts with a fresh request.
+        existing.remove();
+      } else {
+        existing.addEventListener('load', () => finish(() => resolve()), { once: true });
+        existing.addEventListener(
+          'error',
+          () => {
+            existing.dataset.state = 'failed';
+            loader = null;
+            finish(() => reject(new Error('Could not load Paystack. Check your connection.')));
+          },
+          { once: true }
+        );
+        return;
+      }
     }
 
     const script = document.createElement('script');
     script.id = SCRIPT_ID;
     script.src = SCRIPT_SRC;
     script.async = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      script.dataset.state = 'ready';
+      finish(() => resolve());
+    };
     script.onerror = () => {
+      script.dataset.state = 'failed';
       loader = null;
-      reject(new Error('Could not load Paystack. Check your connection and try again.'));
+      finish(() => reject(new Error('Could not load Paystack. Check your connection and try again.')));
     };
     document.head.appendChild(script);
   });

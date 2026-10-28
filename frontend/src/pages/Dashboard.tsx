@@ -36,6 +36,7 @@ import QRCodes from './QRCodes';
 import AccessLogDetails from './AccessLogDetails';
 import Security from './Security';
 import Billing from './Billing';
+import ProUpgrade from './ProUpgrade';
 import Family from './Family';
 
 export type RecentAccess = {
@@ -321,6 +322,7 @@ export default function Dashboard() {
     if (path === '/dashboard/access-log') return 'Access log';
     if (path === '/dashboard/qrcodes') return 'QR codes';
     if (path === '/dashboard/billing') return 'Billing';
+    if (path === '/dashboard/upgrade') return 'Selorah Pro';
     if (path === '/dashboard/security') return 'Security';
     if (path === '/dashboard/family') return 'Family';
     return 'Dashboard';
@@ -635,6 +637,7 @@ export default function Dashboard() {
               <Route path="qrcodes" element={<QRCodes />} />
               <Route path="security" element={<Security />} />
               <Route path="billing" element={<Billing />} />
+              <Route path="upgrade" element={<ProUpgrade />} />
               <Route path="family" element={<Family />} />
             </Routes>
           )}

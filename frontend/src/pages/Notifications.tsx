@@ -8,7 +8,6 @@ import {
   StarIcon,
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
-import ProFeaturesModal from '../components/dashboard/ProFeaturesModal';
 import { createClient } from '../lib/supabase/client';
 import { readProState } from '../lib/pro';
 import { useToast } from '../contexts/ToastContext';
@@ -59,10 +58,19 @@ export default function Notifications() {
   const navigate = useNavigate();
   const supabase = createClient();
   const { success } = useToast();
-  const [showProFeatures, setShowProFeatures] = useState(false);
   const [isPro, setIsPro] = useState(() => readProState().active);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const refreshPro = () => setIsPro(readProState().active);
+    window.addEventListener('selorah:pro-updated', refreshPro);
+    window.addEventListener('storage', refreshPro);
+    return () => {
+      window.removeEventListener('selorah:pro-updated', refreshPro);
+      window.removeEventListener('storage', refreshPro);
+    };
+  }, []);
 
   const loadNotifications = useCallback(async () => {
     const {
@@ -81,7 +89,7 @@ export default function Notifications() {
       // page useful without inventing events.
       const { data, error } = await supabase
         .from('access_logs')
-        .select('id, action, organization_name, hospital_name, accessed_at')
+        .select('id, action, hospital_name, accessed_at')
         .eq('user_id', user.id)
         .order('accessed_at', { ascending: false })
         .limit(30);
@@ -95,7 +103,7 @@ export default function Notifications() {
       setNotifications(
         (data || []).map((row: Record<string, any>) => ({
           id: String(row.id),
-          title: row.organization_name || row.hospital_name || 'Record accessed',
+          title: row.hospital_name || 'Record accessed',
           body: row.action || 'A verified provider viewed your shared medical record.',
           createdAt: row.accessed_at || null,
           isRead: row.accessed_at
@@ -186,7 +194,7 @@ export default function Notifications() {
             </div>
             <button
               type="button"
-              onClick={() => setShowProFeatures(true)}
+              onClick={() => navigate('/dashboard/upgrade')}
               className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-white px-5 text-[11px] font-bold text-[#020924]"
             >
               See Pro features
@@ -264,13 +272,6 @@ export default function Notifications() {
           </div>
         )}
       </div>
-
-      <ProFeaturesModal
-        isOpen={showProFeatures}
-        onClose={() => setShowProFeatures(false)}
-        onUpgraded={() => setIsPro(readProState().active)}
-        source="notifications"
-      />
     </div>
   );
 }

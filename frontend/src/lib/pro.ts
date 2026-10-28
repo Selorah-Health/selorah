@@ -94,10 +94,49 @@ function expiryFromNow() {
   return date.toISOString();
 }
 
+export function withTimeout<T>(promise: PromiseLike<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
+class ProVerificationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ProVerificationError';
+  }
+}
+
+function isVerificationRejection(error: unknown) {
+  if (error instanceof ProVerificationError) return true;
+  const status = (error as { context?: { status?: number } } | null)?.context?.status;
+  return status === 402;
+}
+
+export type ProActivation = {
+  state: ProState;
+  /** True when the Paystack verifier confirmed the payment on the server. */
+  verified: boolean;
+  /** Set when the payment is confirmed locally but server sync is still pending. */
+  pendingMessage?: string;
+};
+
+const VERIFY_TIMEOUT_MS = 20000;
+
 export async function activatePro(
   reference: string,
   options?: { amountKobo?: number; supabase?: SupabaseClient }
-) {
+): Promise<ProActivation> {
   const supabase = options?.supabase || createClient();
   const expiresAt = expiryFromNow();
   const state: ProState = {
@@ -108,61 +147,43 @@ export async function activatePro(
     plan: PRO_PLAN_LABEL,
   };
 
-  // Ask the optional serverless verifier first. If it is not deployed, the
-  // local entitlement still unlocks the app for the current session.
+  // The paystack-verify function checks the transaction with Paystack and
+  // writes the entitlement, receipt, and auth metadata with the service role.
+  // Those writes are not repeated here, so a slow network cannot stall the
+  // upgrade screen with duplicate requests.
+  let verified = false;
+  let pendingMessage: string | undefined;
+
   try {
-    const { data } = await supabase.functions.invoke('paystack-verify', {
-      body: { reference },
-    });
-    if (data && data.verified === false) {
-      throw new Error(data.message || 'Payment could not be verified.');
+    const { data, error } = await withTimeout(
+      supabase.functions.invoke('paystack-verify', { body: { reference } }),
+      VERIFY_TIMEOUT_MS,
+      'Payment verification timed out.'
+    );
+
+    if (error) throw error;
+
+    const payload = data as { verified?: boolean; message?: string } | null;
+    if (payload && payload.verified === false) {
+      throw new ProVerificationError(
+        payload.message || 'Payment could not be verified. Contact support with your receipt.'
+      );
     }
+
+    verified = payload?.verified === true;
   } catch (error) {
-    if (error instanceof Error && /payment could not be verified/i.test(error.message)) {
-      throw error;
+    if (isVerificationRejection(error)) {
+      throw error instanceof Error
+        ? error
+        : new Error('Payment could not be verified. Contact support with your receipt.');
     }
-  }
 
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      await supabase.auth.updateUser({
-        data: {
-          is_pro: true,
-          pro_reference: reference,
-          pro_expires_at: expiresAt,
-        },
-      });
-
-      const updates: Record<string, unknown>[] = [
-        { tier: 'pro', is_pro: true, pro_expires_at: expiresAt, pro_reference: reference },
-        { tier: 'pro' },
-        { is_pro: true },
-      ];
-
-      for (const payload of updates) {
-        const { error } = await supabase
-          .from('patient_profiles')
-          .update(payload)
-          .eq('user_id', user.id);
-        if (!error) break;
-      }
-
-      await supabase.from('payments').insert({
-        user_id: user.id,
-        reference,
-        amount: options?.amountKobo ?? PRO_PRICE_KOBO,
-        currency: 'NGN',
-        status: 'paid',
-        provider: 'paystack',
-        plan: PRO_PLAN_LABEL,
-      });
-    }
-  } catch {
-    // Auth or profile tables may be unavailable offline. The local cache still applies.
+    // Paystack already confirmed the charge if this callback is running. The
+    // signed webhook still grants Pro on the server, so unlock locally now and
+    // tell the patient the server copy is catching up.
+    pendingMessage =
+      'Payment received. Selorah Pro is unlocked on this device while Paystack finishes confirming it.';
+    console.warn('Pro verification is pending:', error);
   }
 
   cachePayment({
@@ -174,5 +195,6 @@ export async function activatePro(
     createdAt: new Date().toISOString(),
   });
   cacheProState(state);
-  return state;
+
+  return { state, verified, pendingMessage };
 }

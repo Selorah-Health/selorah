@@ -152,7 +152,10 @@ export default function Login() {
         phone_number: patientRow?.phone,
         nin: patientRow?.nin,
         org_id: hospitalRow?.org_id,
-        is_pro: patientRow?.tier === 'pro' || patientRow?.is_pro === true,
+        is_pro:
+          patientRow?.tier === 'pro' ||
+          patientRow?.is_pro === true ||
+          authData.user.user_metadata?.is_pro === true,
       };
 
       if (portalMode === 'staff') {

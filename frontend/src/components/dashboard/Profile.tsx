@@ -13,7 +13,6 @@ import {
 import { createClient } from '../../lib/supabase/client';
 import { isValidNin, readLocalSession, writeLocalSession } from '../../lib/auth/session';
 import { readProState, type ProState } from '../../lib/pro';
-import ProFeaturesModal from './ProFeaturesModal';
 
 interface ProfileProps {
   user: any;
@@ -22,7 +21,6 @@ interface ProfileProps {
 }
 
 export default function Profile({ user, avatarGradient, isPro: isProProp }: ProfileProps) {
-  const [showProFeatures, setShowProFeatures] = useState(false);
   const [phone, setPhone] = useState('');
   const [nin, setNin] = useState('');
   const [saving, setSaving] = useState(false);
@@ -170,7 +168,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               {!isPro && (
                 <button
                   type="button"
-                  onClick={() => setShowProFeatures(true)}
+                  onClick={() => navigate('/dashboard/upgrade')}
                   className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#6183FF] transition-colors hover:bg-[#6183FF]/15"
                 >
                   Upgrade
@@ -286,7 +284,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                 <p className="text-sm font-bold text-[#101217]">Selorah Pro is active</p>
                 <p className="mt-1 text-xs font-medium leading-relaxed text-gray-500">
                   {proState.expiresAt
-                    ? `Your plan renews on ${new Date(proState.expiresAt).toLocaleDateString(undefined, {
+                    ? `Active until ${new Date(proState.expiresAt).toLocaleDateString(undefined, {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
@@ -326,7 +324,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
             </div>
             <button
               type="button"
-              onClick={() => setShowProFeatures(true)}
+              onClick={() => navigate('/dashboard/upgrade')}
               className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/25"
             >
               Unlock Pro
@@ -376,13 +374,6 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
           </button>
         ))}
       </div>
-
-      <ProFeaturesModal
-        isOpen={showProFeatures}
-        onClose={() => setShowProFeatures(false)}
-        onUpgraded={() => setProState(readProState())}
-        source="profile"
-      />
     </div>
   );
 }

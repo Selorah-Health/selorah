@@ -11,7 +11,6 @@ import {
   StarIcon,
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
-import ProFeaturesModal from '../components/dashboard/ProFeaturesModal';
 import {
   PRO_FEATURES,
   PRO_PRICE_NAIRA,
@@ -35,7 +34,6 @@ function formatDate(value?: string) {
 
 export default function Billing() {
   const navigate = useNavigate();
-  const [showProModal, setShowProModal] = useState(false);
   const [pro, setPro] = useState<ProState>(() => readProState());
   const [payments, setPayments] = useState<PaymentRecord[]>(() => readPayments());
 
@@ -109,7 +107,7 @@ export default function Billing() {
           <div className="flex w-full flex-col gap-2 md:w-auto">
             <button
               type="button"
-              onClick={() => setShowProModal(true)}
+              onClick={() => navigate('/dashboard/upgrade')}
               className="flex min-h-[50px] items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-6 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-colors hover:bg-[#4D6ED6]"
             >
               {isPro ? (
@@ -169,7 +167,7 @@ export default function Billing() {
           </div>
           <button
             type="button"
-            onClick={() => setShowProModal(true)}
+            onClick={() => navigate('/dashboard/upgrade')}
             className="mt-4 text-[11px] font-bold text-[#6183FF] hover:underline"
           >
             See everything included
@@ -233,13 +231,6 @@ export default function Billing() {
           receipt reference.
         </p>
       </div>
-
-      <ProFeaturesModal
-        isOpen={showProModal}
-        onClose={() => setShowProModal(false)}
-        onUpgraded={refresh}
-        source="billing"
-      />
     </div>
   );
 }
