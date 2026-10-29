@@ -12,6 +12,8 @@ export type UserRole =
   | 'hospital'
   | 'researcher'
   | 'insurer'
+  | 'qa'
+  | 'admin'
   | 'developer'
   | 'partner';
 
@@ -25,6 +27,7 @@ export interface SelorahSession {
   role?: UserRole | string;
   org_id?: string;
   is_pro?: boolean;
+  avatar_url?: string;
 }
 
 export function readLocalSession(): SelorahSession | null {
@@ -51,6 +54,8 @@ export function normalizeRole(role?: string | null): UserRole {
   if (r === 'hospital' || r === 'provider') return 'provider';
   if (r === 'researcher') return 'researcher';
   if (r === 'insurer') return 'insurer';
+  if (r === 'qa') return 'qa';
+  if (r === 'admin') return 'admin';
   return 'patient';
 }
 
@@ -75,10 +80,16 @@ export function resolvePortalAccess(
   const isHospital = path.startsWith('/hospital');
   const isResearcher = path.startsWith('/researcher');
   const isInsurer = path.startsWith('/insurer');
+  const isQa = path.startsWith('/qa');
 
   // Patient portal: everyone logged in may enter
   if (isPatientPortal) {
     return { allowed: true, redirectTo: path };
+  }
+
+  if (isQa) {
+    if (r === 'qa' || r === 'admin') return { allowed: true, redirectTo: path };
+    return { allowed: false, redirectTo: homeForRole(r) };
   }
 
   if (isHospital) {
@@ -102,6 +113,7 @@ export function homeForRole(role?: string | null): string {
   if (r === 'provider') return '/hospital';
   if (r === 'researcher') return '/researcher';
   if (r === 'insurer') return '/insurer';
+  if (r === 'qa' || r === 'admin') return '/qa';
   return '/dashboard';
 }
 

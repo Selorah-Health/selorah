@@ -14,6 +14,7 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
   UserGroupIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { createClient } from '../../lib/supabase/client';
 import { useToast } from '../../contexts/ToastContext';
@@ -138,9 +139,15 @@ export default function AddRecordModal({
 
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const ocrRunRef = useRef(0);
   const autoTitleRef = useRef('');
   const mountedRef = useRef(true);
+
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraBusy, setCameraBusy] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -169,7 +176,29 @@ export default function AddRecordModal({
     setReadingFile(false);
     autoTitleRef.current = '';
     ocrRunRef.current += 1;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setCameraOpen(false);
+    setCameraBusy(false);
+    setCameraError(null);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!cameraOpen) return;
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream) return;
+    video.srcObject = stream;
+    void video.play().catch(() => undefined);
+  }, [cameraOpen, cameraBusy]);
+
+  useEffect(
+    () => () => {
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    },
+    []
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -306,6 +335,73 @@ export default function AddRecordModal({
     setOcrProgress(0);
     setOcrMessage('');
     setErrorMsg(null);
+  };
+
+  const stopCamera = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setCameraOpen(false);
+    setCameraBusy(false);
+  };
+
+  const openCamera = async () => {
+    setCameraError(null);
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      cameraRef.current?.click();
+      return;
+    }
+
+    setCameraBusy(true);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setCameraOpen(true);
+    } catch {
+      setCameraBusy(false);
+      setCameraError(
+        'The in-app camera could not start. Opening your phone camera instead.'
+      );
+      cameraRef.current?.click();
+    }
+  };
+
+  const capturePhoto = async () => {
+    const video = videoRef.current;
+
+    if (!video || !video.videoWidth) {
+      setCameraError('The camera is still starting. Try again in a moment.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      setCameraError('This device could not capture the photo. Choose a file instead.');
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((result) => resolve(result), 'image/jpeg', 0.92)
+    );
+
+    if (!blob) {
+      setCameraError('The photo could not be saved. Try again or choose a file.');
+      return;
+    }
+
+    const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    stopCamera();
+    await handleFile(file);
   };
 
   const buildEntries = () => {
@@ -741,34 +837,46 @@ export default function AddRecordModal({
               />
 
               {!selectedFile ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => cameraRef.current?.click()}
-                    className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-[#6183FF]/40 bg-[#6183FF]/5 p-5 text-[#6183FF] transition-colors hover:bg-[#6183FF]/10"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
-                      <CameraIcon className="h-6 w-6" />
-                    </span>
-                    <span className="text-sm font-bold">Take a photo</span>
-                    <span className="text-[11px] font-medium text-[#6183FF]/70">
-                      Uses your camera on mobile
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-gray-200 bg-[#F8F9FE] p-5 text-gray-600 transition-colors hover:border-[#6183FF]/30 hover:text-[#6183FF]"
-                  >
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#6183FF] shadow-sm">
-                      <ArrowUpTrayIcon className="h-6 w-6" />
-                    </span>
-                    <span className="text-sm font-bold">Choose a file</span>
-                    <span className="text-[11px] font-medium text-gray-400">
-                      Image, PDF, Word, or text
-                    </span>
-                  </button>
-                </div>
+                <>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => void openCamera()}
+                      disabled={cameraBusy}
+                      className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-[#6183FF]/40 bg-[#6183FF]/5 p-5 text-[#6183FF] transition-colors hover:bg-[#6183FF]/10 disabled:opacity-60"
+                    >
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
+                        {cameraBusy ? (
+                          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#6183FF]/30 border-t-[#6183FF]" />
+                        ) : (
+                          <CameraIcon className="h-6 w-6" />
+                        )}
+                      </span>
+                      <span className="text-sm font-bold">Take a photo</span>
+                      <span className="text-[11px] font-medium text-[#6183FF]/70">
+                        Opens the camera inside the app
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-gray-200 bg-[#F8F9FE] p-5 text-gray-600 transition-colors hover:border-[#6183FF]/30 hover:text-[#6183FF]"
+                    >
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#6183FF] shadow-sm">
+                        <ArrowUpTrayIcon className="h-6 w-6" />
+                      </span>
+                      <span className="text-sm font-bold">Choose a file</span>
+                      <span className="text-[11px] font-medium text-gray-400">
+                        Image, PDF, Word, or text
+                      </span>
+                    </button>
+                  </div>
+                  {cameraError && (
+                    <p className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-[11px] font-semibold leading-relaxed text-amber-700">
+                      {cameraError}
+                    </p>
+                  )}
+                </>
               ) : (
                 <div className="overflow-hidden rounded-3xl border border-gray-100 bg-[#F8F9FE]">
                   <div className="relative">
@@ -969,6 +1077,57 @@ export default function AddRecordModal({
           )}
         </div>
       </div>
+
+      {cameraOpen && (
+        <div className="absolute inset-0 z-30 flex flex-col bg-black">
+          <div className="flex items-center justify-between px-5 py-4 text-white">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/50">
+                In-app camera
+              </p>
+              <p className="text-sm font-bold">Take a photo</p>
+            </div>
+            <button
+              type="button"
+              onClick={stopCamera}
+              aria-label="Close camera"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="relative flex-1 overflow-hidden">
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              autoPlay
+              className="h-full w-full object-cover"
+            />
+            <div className="pointer-events-none absolute inset-x-6 inset-y-10 rounded-3xl border-2 border-white/30" />
+          </div>
+
+          <div className="flex items-center justify-center gap-6 px-5 py-6">
+            <button
+              type="button"
+              onClick={stopCamera}
+              className="min-h-[46px] rounded-full px-5 text-xs font-bold text-white/70"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void capturePhoto()}
+              aria-label="Capture photo"
+              className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white/40 bg-white"
+            >
+              <span className="h-12 w-12 rounded-full bg-[#6183FF]" />
+            </button>
+            <span className="w-[70px]" aria-hidden />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

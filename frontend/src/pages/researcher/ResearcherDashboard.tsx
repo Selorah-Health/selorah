@@ -553,7 +553,8 @@ export default function ResearcherDashboard() {
                         </p>
                       </div>
                       <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-bold text-gray-500 shadow-sm">
-                        <CurrencyDollarIcon className="h-3.5 w-3.5 text-[#15955C]" />₦2 per point
+                        <CurrencyDollarIcon className="h-3.5 w-3.5 text-[#15955C]" />1 point per
+                        question
                       </span>
                     </div>
 

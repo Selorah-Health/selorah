@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import WaitlistModal from './WaitlistModal';
 import CTAButton from './CTAButton';
+import ThemeToggle from './ThemeToggle';
 
 interface HeaderProps {
   theme?: 'dark' | 'light';
@@ -330,6 +331,7 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
 
           <div className="flex items-center gap-2.5">
             <div className="hidden items-center gap-2 lg:flex">
+              <ThemeToggle tone={isDark ? 'dark' : 'light'} />
               {isLoggedIn ? (
                 <Link
                   to="/dashboard"
@@ -366,6 +368,8 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
                 </>
               )}
             </div>
+
+            <ThemeToggle tone={isDark ? 'dark' : 'light'} className="lg:hidden" />
 
             <button
               type="button"

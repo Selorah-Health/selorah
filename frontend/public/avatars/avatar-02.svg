@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Mint avatar">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E9FBF6"/>
+      <stop offset="1" stop-color="#BDF3E7"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#15B79E"/>
+      <stop offset="1" stop-color="#0B8F7C"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="32" fill="url(#bg)"/>
+  <circle cx="28" cy="98" r="18" fill="#FFFFFF" opacity=".5"/>
+  <circle cx="64" cy="52" r="22" fill="url(#body)"/>
+  <path d="M22 112c3-25 20-38 42-38s39 13 42 38z" fill="url(#body)"/>
+  <path d="M39 54c0-17 11-29 25-29 15 0 25 12 25 29-6-3-10-9-12-16-7 8-21 13-38 16z" fill="#101217" opacity=".85"/>
+  <circle cx="56" cy="53" r="2.4" fill="#FFFFFF"/>
+  <circle cx="72" cy="53" r="2.4" fill="#FFFFFF"/>
+</svg>

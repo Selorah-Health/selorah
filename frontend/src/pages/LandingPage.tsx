@@ -115,7 +115,7 @@ const FAQS = [
   {
     question: 'What does Selorah Pro add?',
     answer:
-      'Pro is ₦5,000 a year. It unlocks up to 10 emergency contacts, priority record verification, family sharing, ad-free use and early access to research rewards.',
+      'Pro starts at ₦2,000 a month, or ₦20,000 a year with two months free. It unlocks up to 10 emergency contacts, priority record verification, family sharing, ad-free use and early access to research rewards.',
   },
   {
     question: 'Is Selorah available across Africa?',

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Violet avatar">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F4F0FF"/>
+      <stop offset="1" stop-color="#D8CCFF"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8B6CFF"/>
+      <stop offset="1" stop-color="#6646E8"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="32" fill="url(#bg)"/>
+  <rect x="90" y="18" width="20" height="20" rx="6" fill="#FFFFFF" opacity=".6" transform="rotate(18 100 28)"/>
+  <circle cx="64" cy="52" r="22" fill="url(#body)"/>
+  <path d="M22 112c3-25 20-38 42-38s39 13 42 38z" fill="url(#body)"/>
+  <path d="M38 45c3-13 12-20 25-20 14 0 24 9 26 24-6 1-11-1-16-6-6 7-18 11-35 11z" fill="#101217" opacity=".85"/>
+  <circle cx="56" cy="53" r="2.4" fill="#FFFFFF"/>
+  <circle cx="72" cy="53" r="2.4" fill="#FFFFFF"/>
+</svg>

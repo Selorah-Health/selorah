@@ -12,8 +12,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import {
+  DEFAULT_PRO_PLAN,
   PRO_FEATURES,
-  PRO_PRICE_NAIRA,
+  PRO_PLANS,
   PRO_PLAN_LABEL,
   readPayments,
   readProState,
@@ -53,6 +54,7 @@ export default function Billing() {
   }, [refresh]);
 
   const isPro = pro.active;
+  const activePlan = PRO_PLANS[pro.planId || DEFAULT_PRO_PLAN];
 
   return (
     <div className="space-y-6 font-sora">
@@ -100,7 +102,9 @@ export default function Billing() {
                 : 'Free forever for patients. Upgrade to unlock family sharing, priority verification, and more.'}
             </p>
             <p className="mt-4 text-sm font-bold text-white">
-              {isPro ? `₦${PRO_PRICE_NAIRA.toLocaleString('en-NG')} per year` : '₦0 today'}
+              {isPro
+                ? `₦${activePlan.priceNaira.toLocaleString('en-NG')} ${activePlan.billingLabel}`
+                : '₦0 today'}
             </p>
           </div>
 
@@ -123,7 +127,7 @@ export default function Billing() {
               )}
             </button>
             <p className="text-center text-[10px] font-medium text-white/35">
-              One payment of ₦{PRO_PRICE_NAIRA.toLocaleString('en-NG')} for 12 months
+              From ₦2,000 per month or ₦20,000 per year
             </p>
           </div>
         </div>
@@ -226,9 +230,9 @@ export default function Billing() {
 
       <div className="rounded-2xl border border-gray-100 bg-white px-5 py-4">
         <p className="text-[11px] font-medium leading-relaxed text-gray-400">
-          Selorah Pro is a one year plan, not an auto-renewing subscription. You will only be
-          charged when you choose to renew. Need help with a payment? Contact support with your
-          receipt reference.
+          Selorah Pro is sold as a 30 day monthly pass or a 12 month annual pass. It does not renew
+          automatically, and you are only charged when you choose to buy another pass. Need help
+          with a payment? Contact support with your receipt reference.
         </p>
       </div>
     </div>

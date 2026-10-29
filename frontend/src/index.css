@@ -308,3 +308,290 @@ a:hover .btn-arrow-right {
     animation: none !important;
   }
 }
+
+/* ---------------------------------------------------------------
+   Dark mode
+   The app was built with light utility classes throughout. Rather
+   than fork every component, dark mode recolours the shared utility
+   palette here. The selectors use exact class tokens so hover and
+   translucent variants keep working.
+   --------------------------------------------------------------- */
+
+.dark {
+  --background: #070a12;
+  --foreground: #f2f4f8;
+  --muted: #9aa3b5;
+  --border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --sidebar-active: rgba(255, 255, 255, 0.1);
+}
+
+.dark body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Surfaces */
+.dark .bg-white {
+  background-color: #111624 !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #0e1320 !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #171d2c !important;
+}
+
+.dark .bg-gray-200 {
+  background-color: #232b3d !important;
+}
+
+.dark .bg-gray-300 {
+  background-color: #2e374c !important;
+}
+
+.dark [class~='bg-[#F8F9FE]'],
+.dark [class~='bg-[#F8F9FA]'],
+.dark [class~='bg-[#F6F8FC]'],
+.dark [class~='bg-[#FCFDFF]'],
+.dark [class~='bg-[#F5F7FF]'],
+.dark [class~='bg-[#F7F8FC]'],
+.dark [class~='bg-[#F9FAFB]'],
+.dark [class~='bg-[#FAFBFF]'],
+.dark [class~='bg-[#F0F2F5]'] {
+  background-color: #121727 !important;
+}
+
+.dark [class~='bg-[#EEF2FF]'] {
+  background-color: #1b2440 !important;
+}
+
+.dark [class~='bg-[#DCE4FF]'] {
+  background-color: #1e2b4d !important;
+}
+
+.dark [class~='bg-[#EAFBF2]'] {
+  background-color: #10251c !important;
+}
+
+.dark [class~='bg-[#EEF2FF]/60'] {
+  background-color: rgba(27, 36, 64, 0.6) !important;
+}
+
+.dark [class~='bg-[#F8F9FE]/60'] {
+  background-color: rgba(18, 23, 39, 0.6) !important;
+}
+
+.dark [class~='bg-white/70'],
+.dark [class~='bg-white/85'],
+.dark [class~='bg-white/90'],
+.dark [class~='bg-white/95'] {
+  background-color: rgba(17, 22, 36, 0.9) !important;
+}
+
+/* Text */
+.dark .text-black,
+.dark .text-gray-900,
+.dark .text-gray-800 {
+  color: #f3f5fa !important;
+}
+
+.dark .text-gray-700 {
+  color: #dee3ec !important;
+}
+
+.dark .text-gray-600 {
+  color: #c3cad8 !important;
+}
+
+.dark .text-gray-500 {
+  color: #a3acbe !important;
+}
+
+.dark .text-gray-400 {
+  color: #8b95a9 !important;
+}
+
+.dark .text-gray-300 {
+  color: #6f798e !important;
+}
+
+.dark [class~='text-[#101217]'],
+.dark [class~='text-[#0A0B14]'],
+.dark [class~='text-[#020924]'],
+.dark [class~='text-[#050038]'] {
+  color: #f3f5fa !important;
+}
+
+.dark [class~='text-[#4262FF]'],
+.dark [class~='text-[#4D6ED6]'],
+.dark [class~='text-[#2f4fd6]'] {
+  color: #8fa8ff !important;
+}
+
+.dark [class~='text-[#15955C]'],
+.dark [class~='text-[#1A4D2E]'] {
+  color: #5ee0a6 !important;
+}
+
+.dark [class~='text-green-700'],
+.dark [class~='text-emerald-700'],
+.dark [class~='text-green-600'],
+.dark [class~='text-emerald-600'] {
+  color: #6ee7b7 !important;
+}
+
+.dark [class~='text-amber-700'],
+.dark [class~='text-amber-600'] {
+  color: #fcd34d !important;
+}
+
+.dark [class~='text-red-700'],
+.dark [class~='text-red-600'] {
+  color: #fca5a5 !important;
+}
+
+.dark [class~='text-blue-700'],
+.dark [class~='text-blue-600'] {
+  color: #93c5fd !important;
+}
+
+/* Borders and dividers */
+.dark .border-white,
+.dark .border-gray-50 {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.dark .border-gray-100 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .border-gray-200 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.dark .border-gray-300 {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.dark .ring-gray-100 {
+  --tw-ring-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark .ring-gray-200 {
+  --tw-ring-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Hover states */
+.dark .hover\:bg-white:hover {
+  background-color: #171d2c !important;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: #171d2c !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: #1d2436 !important;
+}
+
+.dark .hover\:text-\[\#101217\]:hover,
+.dark .hover\:text-gray-900:hover,
+.dark .hover\:text-gray-700:hover {
+  color: #f3f5fa !important;
+}
+
+.dark .hover\:border-gray-200:hover,
+.dark .hover\:border-gray-300:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Forms */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #121727;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f2f4f8;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7488;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #6183ff;
+}
+
+.dark select option {
+  background-color: #121727;
+  color: #f2f4f8;
+}
+
+/* Shared card helpers */
+.dark .dashboard-card,
+.dark .dashboard-icon-button {
+  background-color: #111624 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Light gradient banners */
+.dark [class~='from-[#EEF2FF]'] {
+  --tw-gradient-from: #1b2440 !important;
+}
+
+.dark [class~='via-[#F5F7FF]'] {
+  --tw-gradient-via: #141a2a !important;
+}
+
+.dark [class~='to-[#E8FBF7]'] {
+  --tw-gradient-to: #10231f !important;
+}
+
+.dark [class~='from-[#F8F9FE]'],
+.dark [class~='from-[#F8F9FA]'] {
+  --tw-gradient-from: #121727 !important;
+}
+
+.dark [class~='to-[#F8F9FE]'],
+.dark [class~='to-[#F8F9FA]'] {
+  --tw-gradient-to: #121727 !important;
+}
+
+/* Charts */
+.dark .recharts-default-tooltip {
+  background-color: #111624 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f2f4f8 !important;
+}
+
+.dark .recharts-cartesian-axis-tick-value {
+  fill: #8b95a9;
+}
+
+.dark .recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+/* Keep printed pages light */
+@media print {
+  .dark body {
+    background: white !important;
+    color: black !important;
+  }
+}
+

@@ -5,8 +5,10 @@ import App from './App';
 import './index.css';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { registerServiceWorker } from './lib/pwa/register';
+import { initTheme } from './lib/theme';
 
 registerServiceWorker();
+initTheme();
 
 // Initialize Google Translate
 // const script = document.createElement('script');

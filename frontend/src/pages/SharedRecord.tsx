@@ -26,6 +26,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 type RecordCategory = 'lab' | 'rad' | 'pres' | 'visit' | 'other';
 
@@ -190,7 +191,7 @@ export default function SharedRecord() {
         const { data: profile, error: profileError } = await supabase
           .from('patient_profiles')
           .select(
-            'id, user_id, full_name, date_of_birth, blood_group, genotype, gender, height, weight, allergies, emergency_contacts'
+            'id, user_id, full_name, date_of_birth, blood_group, genotype, gender, height, weight, allergies, emergency_contacts, avatar_url'
           )
           .eq('user_id', link.user_id)
           .maybeSingle();
@@ -397,6 +398,7 @@ export default function SharedRecord() {
           medicationHistory,
           emergencyContacts,
           patientId: patientIdShort,
+          avatarUrl: profile?.avatar_url || '',
           profileId: profile?.id,
           userId: link.user_id,
           singleRecord: Boolean(link.record_id),
@@ -767,6 +769,7 @@ export default function SharedRecord() {
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle className="h-[40px] w-[40px]" />
             <button
               type="button"
               onClick={() => window.print()}
@@ -821,14 +824,22 @@ export default function SharedRecord() {
           </div>
 
           <div className="px-5 pb-6 sm:px-8 sm:pb-8">
-            <div className="-mt-10 flex flex-col gap-5 sm:-mt-12 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex items-end gap-4">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[26px] border-4 border-white bg-gradient-to-tr from-[#6183FF] to-[#14F1D9] text-2xl font-black text-white shadow-lg sm:h-24 sm:w-24 sm:text-3xl">
-                  {initials}
+            <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex min-w-0 items-end gap-4">
+                <div className="relative z-10 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[24px] border-4 border-white bg-gradient-to-tr from-[#6183FF] to-[#14F1D9] text-2xl font-black text-white shadow-lg sm:h-24 sm:w-24 sm:text-3xl">
+                  {patient?.avatarUrl ? (
+                    <img
+                      src={patient.avatarUrl}
+                      alt={`${patient?.full_name || 'Patient'} profile photo`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
                 </div>
                 <div className="min-w-0 pb-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="truncate text-2xl font-black tracking-tight text-[#0A0B14] sm:text-3xl">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <h1 className="min-w-0 max-w-full truncate text-2xl font-black tracking-tight text-[#0A0B14] sm:text-3xl">
                       {patient?.full_name}
                     </h1>
                     {patient?.singleRecord && (
@@ -837,35 +848,39 @@ export default function SharedRecord() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-xs font-semibold text-gray-400">
+                  <p className="mt-1 truncate text-xs font-semibold text-gray-400">
                     Patient ID {patient?.patientId}
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 pb-1">
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold ${
-                    accessLogged
-                      ? 'border-green-100 bg-green-50 text-green-700'
-                      : 'border-amber-100 bg-amber-50 text-amber-700'
-                  }`}
-                >
-                  {accessLogged ? (
-                    <CheckCircleIcon className="h-3.5 w-3.5" />
-                  ) : (
-                    <ExclamationTriangleIcon className="h-3.5 w-3.5" />
-                  )}
-                  {accessLogged ? 'Access logged' : 'Session not logged'}
-                </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-500">
-                  <UserIcon className="h-3.5 w-3.5 text-[#4262ff]" />
-                  {accessMode === 'guest'
-                    ? 'Guest preview'
-                    : `${ROLE_LABELS[provider.role] || 'Provider'}${
-                        provider.name ? `: ${provider.name.trim()}` : ''
-                      }`}
-                </span>
+              <div className="flex w-full flex-col gap-2 pb-1 sm:w-auto sm:items-end">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold ${
+                      accessLogged
+                        ? 'border-green-100 bg-green-50 text-green-700'
+                        : 'border-amber-100 bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    {accessLogged ? (
+                      <CheckCircleIcon className="h-3.5 w-3.5" />
+                    ) : (
+                      <ExclamationTriangleIcon className="h-3.5 w-3.5" />
+                    )}
+                    {accessLogged ? 'Access logged' : 'Session not logged'}
+                  </span>
+                  <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-500">
+                    <UserIcon className="h-3.5 w-3.5 shrink-0 text-[#4262ff]" />
+                    <span className="truncate">
+                      {accessMode === 'guest'
+                        ? 'Guest preview'
+                        : `${ROLE_LABELS[provider.role] || 'Provider'}${
+                            provider.name ? `: ${provider.name.trim()}` : ''
+                          }`}
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
 

@@ -13,6 +13,7 @@ import {
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import SEOTitle from '../components/SEOTitle';
+import ThemeToggle from '../components/ThemeToggle';
 import { createClient } from '../lib/supabase/client';
 import {
   homeForRole,
@@ -281,26 +282,32 @@ export default function Login() {
               <img src="/logo.svg" alt="Selorah" className="h-9 w-9 object-contain" />
               <span className="text-lg font-bold tracking-tight">Selorah Health</span>
             </Link>
-            <Link
-              to="/"
-              className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-[#101217]"
-            >
-              <ArrowLeftIcon className="h-3.5 w-3.5" />
-              Home
-            </Link>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Link
+                to="/"
+                className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-[#101217]"
+              >
+                <ArrowLeftIcon className="h-3.5 w-3.5" />
+                Home
+              </Link>
+            </div>
           </div>
 
           <div className="hidden items-center justify-between lg:flex">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
               Welcome back
             </p>
-            <Link
-              to="/"
-              className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-[#101217]"
-            >
-              <ArrowLeftIcon className="h-3.5 w-3.5" />
-              Back to site
-            </Link>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Link
+                to="/"
+                className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-[#101217]"
+              >
+                <ArrowLeftIcon className="h-3.5 w-3.5" />
+                Back to site
+              </Link>
+            </div>
           </div>
 
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#101217] sm:text-4xl">

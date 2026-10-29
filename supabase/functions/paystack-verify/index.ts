@@ -20,8 +20,30 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const PRO_AMOUNT_KOBO = 500000;
-const PRO_DURATION_MONTHS = 12;
+type ProPlan = {
+  id: 'monthly' | 'annual';
+  label: string;
+  amountKobo: number;
+  months: number;
+};
+
+const PRO_PLANS: ProPlan[] = [
+  { id: 'annual', label: 'Selorah Pro Annual', amountKobo: 2000000, months: 12 },
+  { id: 'monthly', label: 'Selorah Pro Monthly', amountKobo: 200000, months: 1 },
+];
+
+// The previous annual price. Kept so a checkout that was already open when
+// pricing changed still grants the full year it advertised.
+const LEGACY_ANNUAL_AMOUNT_KOBO = 500000;
+
+// The plan is derived from the amount the patient actually paid. Client
+// metadata is never trusted for duration.
+function resolvePlan(amount: number): ProPlan | null {
+  if (amount >= PRO_PLANS[0].amountKobo) return PRO_PLANS[0];
+  if (amount >= LEGACY_ANNUAL_AMOUNT_KOBO) return PRO_PLANS[0];
+  if (amount >= PRO_PLANS[1].amountKobo) return PRO_PLANS[1];
+  return null;
+}
 
 type PaystackTransaction = {
   reference?: string;
@@ -132,10 +154,11 @@ async function confirmPayment(
   const amount = Number(data?.amount || 0);
   const currency = String(data?.currency || 'NGN').toUpperCase();
 
-  if (amount < PRO_AMOUNT_KOBO) {
+  const plan = resolvePlan(amount);
+  if (!plan) {
     return {
       verified: false,
-      message: 'The payment amount does not match the Selorah Pro plan.',
+      message: 'The payment amount does not match a Selorah Pro plan.',
     };
   }
   if (currency !== 'NGN') {
@@ -150,8 +173,44 @@ async function confirmPayment(
     const userId = await resolveUserId(admin, data, callerId);
 
     if (userId) {
-      const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + PRO_DURATION_MONTHS);
+      // Webhooks can be retried and the app also verifies on return, so a
+      // reference is only allowed to grant time once.
+      const { data: existingPayment } = await admin
+        .from('payments')
+        .select('reference')
+        .eq('reference', reference)
+        .maybeSingle();
+
+      if (existingPayment) {
+        return {
+          verified: true,
+          reference,
+          amount,
+          currency,
+          plan: plan.label,
+          alreadyProcessed: true,
+        };
+      }
+
+      const { data: currentProfile } = await admin
+        .from('patient_profiles')
+        .select('pro_expires_at')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const base = new Date();
+      const currentExpiry = currentProfile?.pro_expires_at
+        ? new Date(currentProfile.pro_expires_at)
+        : null;
+      if (
+        currentExpiry &&
+        !Number.isNaN(currentExpiry.getTime()) &&
+        currentExpiry.getTime() > base.getTime()
+      ) {
+        base.setTime(currentExpiry.getTime());
+      }
+      base.setMonth(base.getMonth() + plan.months);
+      const expiresAt = base;
 
       await admin.from('payments').upsert(
         {
@@ -161,7 +220,7 @@ async function confirmPayment(
           currency,
           status: 'paid',
           provider: 'paystack',
-          plan: 'Selorah Pro',
+          plan: plan.label,
         },
         { onConflict: 'reference' }
       );
@@ -203,6 +262,8 @@ async function confirmPayment(
     reference,
     amount,
     currency,
+    plan: plan.label,
+    months: plan.months,
   };
 }
 

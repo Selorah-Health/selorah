@@ -14,6 +14,19 @@
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      (function () {
+        try {
+          var stored = window.localStorage.getItem('selorah_theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = stored === 'light' || stored === 'dark' ? stored : prefersDark ? 'dark' : 'light';
+          if (theme === 'dark') document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = theme;
+        } catch (error) {
+          // The app still works without a saved theme.
+        }
+      })();
+    </script>
     <!-- Open Graph: absolute image URL required for X/Twitter and Facebook -->
     <meta property="og:site_name" content="Selorah Health" />
     <meta property="og:title" content="Selorah Health | The OS for Health Records" />
@@ -45,8 +58,52 @@
       }
     </script>
     <script type="text/javascript" async defer src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <style>
+      #selorah-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fe;
+        transition: opacity 0.35s ease;
+      }
+      #selorah-splash img {
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+      }
+      #selorah-splash.is-hiding {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
   </head>
   <body class="bg-gray-50 font-sans text-gray-900">
+    <div id="selorah-splash" aria-hidden="true">
+      <img src="/logo.png" alt="" />
+    </div>
+    <script>
+      (function () {
+        var splash = document.getElementById('selorah-splash');
+        function hideSplash() {
+          if (!splash) return;
+          splash.classList.add('is-hiding');
+          window.setTimeout(function () {
+            if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 400);
+        }
+        if (document.readyState === 'complete') {
+          window.setTimeout(hideSplash, 250);
+        } else {
+          window.addEventListener('load', function () {
+            window.setTimeout(hideSplash, 250);
+          });
+        }
+        window.setTimeout(hideSplash, 4000);
+      })();
+    </script>
     <div id="google_translate_element" style="display:none"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

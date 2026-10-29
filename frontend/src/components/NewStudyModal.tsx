@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import {
   BeakerIcon,
   ClockIcon,
-  CurrencyDollarIcon,
   DocumentTextIcon,
   PlusIcon,
   TrashIcon,
@@ -61,7 +60,6 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
     title: '',
     summary: '',
     category: 'General health',
-    points: '60',
     minutes: '4',
   });
   const [questions, setQuestions] = useState<DraftQuestion[]>([newQuestion()]);
@@ -71,7 +69,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
   useEffect(() => {
     if (!isOpen) return;
     document.body.style.overflow = 'hidden';
-    setForm({ title: '', summary: '', category: 'General health', points: '60', minutes: '4' });
+    setForm({ title: '', summary: '', category: 'General health', minutes: '4' });
     setQuestions([newQuestion()]);
     setErrorMsg(null);
     return () => {
@@ -93,7 +91,6 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
 
     const title = form.title.trim();
     const summary = form.summary.trim();
-    const points = Number(form.points);
     const minutes = Number(form.minutes);
 
     if (title.length < 4) {
@@ -102,10 +99,6 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
     }
     if (summary.length < 10) {
       setErrorMsg('Add a short summary so participants know what the survey covers.');
-      return;
-    }
-    if (!Number.isFinite(points) || points < 1 || points > 1000) {
-      setErrorMsg('Points must be between 1 and 1000.');
       return;
     }
     if (!Number.isFinite(minutes) || minutes < 1 || minutes > 60) {
@@ -159,7 +152,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
           summary,
           description: summary,
           category: form.category.trim() || 'General health',
-          points,
+          points: Math.max(prepared.length, 1),
           estimated_minutes: minutes,
           is_active: true,
         })
@@ -189,6 +182,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
 
       onCreated({
         ...(survey as Survey),
+        points: prepared.length,
         questions: (questionRows || []) as SurveyQuestion[],
       });
       onClose();
@@ -257,7 +251,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
             />
           </label>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
                 Category
@@ -268,22 +262,6 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
                 placeholder="Cardiovascular health"
                 className="min-h-[46px] w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[#6183FF]"
               />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
-                Points
-              </span>
-              <div className="relative">
-                <CurrencyDollarIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                <input
-                  type="number"
-                  min={1}
-                  max={1000}
-                  value={form.points}
-                  onChange={(event) => setForm({ ...form, points: event.target.value })}
-                  className="min-h-[46px] w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm font-semibold text-white outline-none transition-colors focus:border-[#6183FF]"
-                />
-              </div>
             </label>
             <label className="block">
               <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
@@ -304,8 +282,9 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-[11px] font-semibold text-gray-400">
-            Participant reward: {Number(form.points) > 0 ? Number(form.points) : 0} points, worth{' '}
-            {formatNaira(pointsToNaira(Number(form.points) || 0))}
+            Participant reward: 1 point per question. {questions.length} question
+            {questions.length === 1 ? '' : 's'}, worth{' '}
+            {formatNaira(pointsToNaira(questions.length))}.
           </div>
 
           <div>

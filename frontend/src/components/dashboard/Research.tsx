@@ -332,7 +332,8 @@ export default function Research() {
             Clinical research
           </h2>
           <p className="mt-1 text-sm font-medium text-gray-400">
-            Answer approved surveys on your terms. Every point is worth ₦2.
+            Answer approved surveys on your terms. Each question earns 1 point, and every point
+            is worth ₦2.
           </p>
         </div>
         <button
@@ -442,7 +443,7 @@ export default function Research() {
             </p>
           </div>
           <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#F8F9FE] px-3 py-1.5 text-[10px] font-bold text-gray-500">
-            <CurrencyDollarIcon className="h-3.5 w-3.5 text-[#15955C]" />₦2 per point
+            <CurrencyDollarIcon className="h-3.5 w-3.5 text-[#15955C]" />1 point per question
           </span>
         </div>
 

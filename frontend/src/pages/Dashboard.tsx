@@ -29,6 +29,8 @@ import Research from '../components/dashboard/Research';
 import Earnings from '../components/dashboard/Earnings';
 import Profile from '../components/dashboard/Profile';
 import AddRecordModal from '../components/dashboard/AddRecordModal';
+import MobileWalkthrough from '../components/MobileWalkthrough';
+import ThemeToggle from '../components/ThemeToggle';
 import Notifications from './Notifications';
 import RecordDetails from './RecordDetails';
 import AccessLog from './AccessLog';
@@ -179,7 +181,22 @@ export default function Dashboard() {
         if (!session?.user) return;
 
         const authUser = session.user;
-        setUser(authUser);
+        const metaAvatar = authUser.user_metadata?.avatar_url || '';
+        let avatarUrl = metaAvatar;
+
+        if (!avatarUrl) {
+          const { data: profile } = await supabase
+            .from('patient_profiles')
+            .select('avatar_url')
+            .eq('user_id', authUser.id)
+            .maybeSingle();
+          avatarUrl = profile?.avatar_url || '';
+        }
+
+        setUser({
+          ...authUser,
+          user_metadata: { ...authUser.user_metadata, avatar_url: avatarUrl },
+        });
 
         const storedPro = readProState();
         const proFromMeta =
@@ -195,6 +212,7 @@ export default function Dashboard() {
           first_name: authUser.user_metadata?.first_name,
           last_name: authUser.user_metadata?.last_name,
           is_pro: storedPro.active || proFromMeta,
+          avatar_url: avatarUrl,
         });
 
         await Promise.all([loadRecords(), loadSummary()]);
@@ -223,6 +241,7 @@ export default function Dashboard() {
                   ...prev.user_metadata,
                   first_name: local.first_name || prev.user_metadata?.first_name,
                   last_name: local.last_name || prev.user_metadata?.last_name,
+                  avatar_url: local.avatar_url || prev.user_metadata?.avatar_url,
                 },
               }
             : prev
@@ -230,11 +249,26 @@ export default function Dashboard() {
       }
     };
 
+    const handleAvatarUpdate = (event: Event) => {
+      const url = (event as CustomEvent<string>).detail;
+      if (!url) return;
+      setUser((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              user_metadata: { ...prev.user_metadata, avatar_url: url },
+            }
+          : prev
+      );
+    };
+
     window.addEventListener('selorah:pro-updated', handleProUpdate);
+    window.addEventListener('selorah:avatar-updated', handleAvatarUpdate);
     window.addEventListener('storage', handleStorage);
     return () => {
       cancelled = true;
       window.removeEventListener('selorah:pro-updated', handleProUpdate);
+      window.removeEventListener('selorah:avatar-updated', handleAvatarUpdate);
       window.removeEventListener('storage', handleStorage);
     };
   }, [supabase, loadRecords, loadSummary]);
@@ -313,7 +347,7 @@ export default function Dashboard() {
 
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/dashboard') return 'Overview';
+    if (path === '/dashboard') return 'Dashboard';
     if (path.startsWith('/dashboard/records')) return 'Medical records';
     if (path === '/dashboard/research') return 'Research';
     if (path === '/dashboard/earnings') return 'Earnings';
@@ -441,7 +475,15 @@ export default function Dashboard() {
                 backgroundPosition: 'center',
               }}
             >
-              <div className={`h-full w-full rounded-full ${avatarGradient}`} />
+              {user?.user_metadata?.avatar_url ? (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="Profile photo"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <div className={`h-full w-full rounded-full ${avatarGradient}`} />
+              )}
               <div
                 className={`absolute ${
                   isCollapsed ? '-bottom-2' : '-bottom-1 -right-1'
@@ -485,14 +527,11 @@ export default function Dashboard() {
               type="button"
               onClick={() => setIsSidebarOpen(true)}
               aria-label="Open menu"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 md:hidden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white p-1.5 md:hidden"
             >
-              <Bars3Icon className="h-5 w-5" />
+              <img src="/logo.svg" alt="" className="h-full w-full object-contain" />
             </button>
             <div className="min-w-0">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#6183FF] md:hidden">
-                Selorah
-              </p>
               <h1 className="truncate text-xl font-bold tracking-tight text-[#101217] md:text-2xl">
                 {getPageTitle()}
               </h1>
@@ -533,6 +572,8 @@ export default function Dashboard() {
               <QrCodeIcon className="h-5 w-5" />
             </button>
 
+            <ThemeToggle className="h-10 w-10" />
+
             <button
               type="button"
               onClick={() => navigate('/dashboard/notifications')}
@@ -559,7 +600,15 @@ export default function Dashboard() {
                 backgroundPosition: 'center',
               }}
             >
-              <div className={`h-full w-full rounded-full ${avatarGradient}`} />
+              {user?.user_metadata?.avatar_url ? (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="Profile photo"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <div className={`h-full w-full rounded-full ${avatarGradient}`} />
+              )}
               {isPro && (
                 <span className="absolute -bottom-1 -right-1 z-10 rounded-full border-2 border-white bg-[#DCE4FF] px-1.5 py-0.5 text-[8px] font-black uppercase text-[#6183FF]">
                   Pro
@@ -801,6 +850,8 @@ export default function Dashboard() {
         onClose={() => setShowAddModal(false)}
         onSaved={refreshData}
       />
+
+      <MobileWalkthrough />
     </div>
   );
 }

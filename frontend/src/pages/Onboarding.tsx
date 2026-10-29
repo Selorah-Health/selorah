@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 interface EmergencyContact {
   name: string;
@@ -70,6 +71,8 @@ export default function Onboarding() {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [roleLocked, setRoleLocked] = useState(false);
+  const [ninState, setNinState] = useState<'idle' | 'loading' | 'verified' | 'error'>('idle');
+  const [ninMessage, setNinMessage] = useState('');
 
   const [formData, setFormData] = useState({
     role: '',
@@ -164,6 +167,69 @@ export default function Onboarding() {
 
   const update = <K extends keyof typeof formData>(key: K, value: (typeof formData)[K]) =>
     setFormData((current) => ({ ...current, [key]: value }));
+
+  const lookupNin = async () => {
+    const nin = formData.nin.trim();
+
+    if (nin.length !== 11) {
+      setNinState('error');
+      setNinMessage('Enter all 11 digits of your NIN first.');
+      return;
+    }
+
+    setNinState('loading');
+    setNinMessage('');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-nin', {
+        body: { nin },
+      });
+
+      if (error) throw error;
+
+      const result = data as {
+        ok?: boolean;
+        configured?: boolean;
+        message?: string;
+        first_name?: string;
+        last_name?: string;
+        date_of_birth?: string;
+        gender?: string;
+      } | null;
+
+      if (!result?.ok) {
+        setNinState(result?.configured === false ? 'idle' : 'error');
+        setNinMessage(
+          result?.message ||
+            'We could not verify this NIN. Check the number or enter your details manually.'
+        );
+        return;
+      }
+
+      const verifiedGender = String(result.gender || '').toLowerCase();
+      setFormData((current) => ({
+        ...current,
+        firstName: result.first_name || current.firstName,
+        lastName: result.last_name || current.lastName,
+        dateOfBirth: result.date_of_birth
+          ? String(result.date_of_birth).slice(0, 10)
+          : current.dateOfBirth,
+        gender:
+          verifiedGender === 'male' || verifiedGender === 'female'
+            ? verifiedGender
+            : current.gender,
+      }));
+      setNinState('verified');
+      setNinMessage('NIN verified. Confirm the name and date of birth below.');
+    } catch (error) {
+      setNinState('error');
+      setNinMessage(
+        error instanceof Error
+          ? error.message
+          : 'NIN lookup is unavailable right now. Enter your details manually.'
+      );
+    }
+  };
 
   const handleUploadClick = (docType: string) => {
     setCurrentUploadDoc(docType);
@@ -260,6 +326,7 @@ export default function Onboarding() {
               role,
               phone: formData.whatsappNumber || undefined,
               nin: formData.nin || undefined,
+              nin_verified: ninState === 'verified',
             },
           });
         } catch {
@@ -405,6 +472,12 @@ export default function Onboarding() {
 
       toastSuccess('Your profile is ready.', 'Setup complete');
 
+      try {
+        localStorage.setItem('selorah_walkthrough_pending', '1');
+      } catch {
+        // The tour is optional.
+      }
+
       if (formData.role === 'provider' || formData.role === 'hospital') {
         navigate('/hospital');
       } else if (formData.role === 'researcher') {
@@ -464,6 +537,7 @@ export default function Onboarding() {
             <span className="hidden text-[10px] font-black uppercase tracking-[0.16em] text-gray-400 sm:inline">
               Step {step} of {totalSteps}
             </span>
+            <ThemeToggle />
             <Link
               to="/dashboard"
               className="rounded-full border border-gray-200 px-3.5 py-2 text-[11px] font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
@@ -620,6 +694,73 @@ export default function Onboarding() {
               <div className="mt-6 space-y-4">
                 {isPatient ? (
                   <>
+                    <div>
+                      <label className="block">
+                        <span className={labelClass}>National Identification Number</span>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <span className="relative block flex-1">
+                            <IdentificationIcon className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-300" />
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={11}
+                              placeholder="11-digit NIN"
+                              className={`${inputClass} pl-11`}
+                              value={formData.nin}
+                              onChange={(event) => {
+                                update('nin', event.target.value.replace(/\D/g, '').slice(0, 11));
+                                if (ninState !== 'idle') {
+                                  setNinState('idle');
+                                  setNinMessage('');
+                                }
+                              }}
+                            />
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void lookupNin()}
+                            disabled={ninState === 'loading' || formData.nin.length !== 11}
+                            className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-xl bg-[#050038] px-5 text-xs font-bold text-white transition-colors hover:bg-black disabled:opacity-50"
+                          >
+                            {ninState === 'loading' ? (
+                              <>
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                Checking
+                              </>
+                            ) : ninState === 'verified' ? (
+                              <>
+                                <CheckCircleIcon className="h-4 w-4 text-[#5FFAB0]" />
+                                Verified
+                              </>
+                            ) : (
+                              'Look up NIN'
+                            )}
+                          </button>
+                        </div>
+                        <span className="mt-1.5 block px-1 text-[10px] font-medium text-gray-400">
+                          Your name and date of birth are pulled from your NIN record, so you do not
+                          have to type them. You can edit them if anything is out of date.
+                        </span>
+                      </label>
+
+                      {ninMessage && (
+                        <p
+                          className={`mt-2 flex items-start gap-1.5 rounded-xl px-3 py-2 text-[11px] font-semibold leading-relaxed ${
+                            ninState === 'verified'
+                              ? 'bg-green-50 text-green-700'
+                              : ninState === 'error'
+                                ? 'bg-red-50 text-red-600'
+                                : 'bg-[#F8F9FE] text-gray-500'
+                          }`}
+                        >
+                          {ninState === 'verified' && (
+                            <CheckCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          )}
+                          {ninMessage}
+                        </p>
+                      )}
+                    </div>
+
                     <div className="grid gap-4 sm:grid-cols-2">
                       <label className="block">
                         <span className={labelClass}>First name</span>
@@ -687,28 +828,6 @@ export default function Onboarding() {
                       </span>
                       <span className="mt-1.5 block px-1 text-[10px] font-medium text-gray-400">
                         Used for phone login and emergency contact matching.
-                      </span>
-                    </label>
-
-                    <label className="block">
-                      <span className={labelClass}>National Identification Number</span>
-                      <span className="relative block">
-                        <IdentificationIcon className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-300" />
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={11}
-                          placeholder="11-digit NIN"
-                          className={`${inputClass} pl-11`}
-                          value={formData.nin}
-                          onChange={(event) =>
-                            update('nin', event.target.value.replace(/\D/g, '').slice(0, 11))
-                          }
-                        />
-                      </span>
-                      <span className="mt-1.5 block px-1 text-[10px] font-medium text-gray-400">
-                        Required for patients. Used for hospital lookup and NIN login. You can update
-                        it later in Profile.
                       </span>
                     </label>
                   </>

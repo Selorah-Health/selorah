@@ -1,10 +1,44 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from './supabase/client';
 
-export const PRO_PRICE_NAIRA = 5000;
-export const PRO_PRICE_KOBO = PRO_PRICE_NAIRA * 100;
 export const PRO_PLAN_LABEL = 'Selorah Pro';
-export const PRO_DURATION_MONTHS = 12;
+
+export type ProPlanId = 'monthly' | 'annual';
+
+export type ProPlan = {
+  id: ProPlanId;
+  label: string;
+  priceNaira: number;
+  priceKobo: number;
+  months: number;
+  durationLabel: string;
+  billingLabel: string;
+  badge?: string;
+};
+
+export const PRO_PLANS: Record<ProPlanId, ProPlan> = {
+  monthly: {
+    id: 'monthly',
+    label: 'Monthly',
+    priceNaira: 2000,
+    priceKobo: 200000,
+    months: 1,
+    durationLabel: '30 days',
+    billingLabel: 'per month',
+  },
+  annual: {
+    id: 'annual',
+    label: 'Annual',
+    priceNaira: 20000,
+    priceKobo: 2000000,
+    months: 12,
+    durationLabel: '12 months',
+    billingLabel: 'per year',
+    badge: 'Save ₦4,000',
+  },
+};
+
+export const DEFAULT_PRO_PLAN: ProPlanId = 'annual';
 
 export const PRO_FEATURES = [
   'Unlimited emergency contacts (up to 10)',
@@ -24,6 +58,8 @@ export type ProState = {
   activatedAt?: string;
   expiresAt?: string;
   plan?: string;
+  planId?: ProPlanId;
+  amountKobo?: number;
 };
 
 export type PaymentRecord = {
@@ -88,9 +124,17 @@ function cachePayment(record: PaymentRecord) {
   }
 }
 
-function expiryFromNow() {
-  const date = new Date();
-  date.setMonth(date.getMonth() + PRO_DURATION_MONTHS);
+function expiryFromMonths(months: number) {
+  const current = readProState();
+  const currentExpiry =
+    current.active && current.expiresAt ? new Date(current.expiresAt) : null;
+  const date =
+    currentExpiry &&
+    !Number.isNaN(currentExpiry.getTime()) &&
+    currentExpiry.getTime() > Date.now()
+      ? currentExpiry
+      : new Date();
+  date.setMonth(date.getMonth() + months);
   return date.toISOString();
 }
 
@@ -135,16 +179,21 @@ const VERIFY_TIMEOUT_MS = 20000;
 
 export async function activatePro(
   reference: string,
-  options?: { amountKobo?: number; supabase?: SupabaseClient }
+  options?: { planId?: ProPlanId; amountKobo?: number; supabase?: SupabaseClient }
 ): Promise<ProActivation> {
   const supabase = options?.supabase || createClient();
-  const expiresAt = expiryFromNow();
+  const planId = options?.planId || DEFAULT_PRO_PLAN;
+  const plan = PRO_PLANS[planId];
+  const expiresAt = expiryFromMonths(plan.months);
+  const planLabel = `${PRO_PLAN_LABEL} ${plan.label}`;
   const state: ProState = {
     active: true,
     reference,
     activatedAt: new Date().toISOString(),
     expiresAt,
-    plan: PRO_PLAN_LABEL,
+    plan: planLabel,
+    planId,
+    amountKobo: options?.amountKobo ?? plan.priceKobo,
   };
 
   // The paystack-verify function checks the transaction with Paystack and
@@ -188,10 +237,10 @@ export async function activatePro(
 
   cachePayment({
     reference,
-    amount: options?.amountKobo ?? PRO_PRICE_KOBO,
+    amount: options?.amountKobo ?? plan.priceKobo,
     currency: 'NGN',
     status: 'paid',
-    plan: PRO_PLAN_LABEL,
+    plan: planLabel,
     createdAt: new Date().toISOString(),
   });
   cacheProState(state);

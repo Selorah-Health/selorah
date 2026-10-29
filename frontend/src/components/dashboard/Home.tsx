@@ -337,7 +337,7 @@ export default function Home({
                   onClick={() => navigate('/dashboard/upgrade')}
                   className="mt-4 flex min-h-[40px] items-center gap-2 rounded-full bg-white px-4 text-xs font-bold text-[#020924]"
                 >
-                  Upgrade for ₦5,000 a year
+                  Upgrade from ₦2,000 a month
                   <ArrowRightIcon className="h-3.5 w-3.5" />
                 </button>
               </div>

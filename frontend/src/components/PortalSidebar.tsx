@@ -6,6 +6,7 @@ import {
   ChevronDoubleRightIcon,
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
+import ThemeToggle from './ThemeToggle';
 
 interface MenuItem {
   name: string;
@@ -14,7 +15,7 @@ interface MenuItem {
 }
 
 interface PortalSidebarProps {
-  role: 'hospital' | 'researcher' | 'insurer' | 'patient';
+  role: 'hospital' | 'researcher' | 'insurer' | 'patient' | 'qa';
   roleTag: string;
   menuItems: MenuItem[];
   user: any;
@@ -99,10 +100,18 @@ export default function PortalSidebar({
       {/* User & Logout */}
       <div className="mt-auto border-t border-white/10 pt-6 pb-6">
         <div className={`mb-6 flex items-center gap-3 transition-all rounded-xl mx-3 p-2 ${isCollapsed ? 'justify-center flex-col' : ''}`}>
-          <div className="relative shrink-0 w-12 h-12 rounded-full flex items-center justify-center p-[2px] shadow-sm bg-white">
-            <div className={`w-full h-full rounded-full ${avatarGradient} flex items-center justify-center font-bold text-white`}>
-              {(user?.user_metadata?.first_name || 'U')[0]}
-            </div>
+          <div className="relative shrink-0 w-12 h-12 rounded-full flex items-center justify-center p-[2px] shadow-sm bg-white overflow-hidden">
+            {user?.user_metadata?.avatar_url ? (
+              <img
+                src={user.user_metadata.avatar_url}
+                alt=""
+                className="h-full w-full rounded-full object-cover"
+              />
+            ) : (
+              <div className={`w-full h-full rounded-full ${avatarGradient} flex items-center justify-center font-bold text-white`}>
+                {(user?.user_metadata?.first_name || 'U')[0]}
+              </div>
+            )}
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
@@ -112,6 +121,9 @@ export default function PortalSidebar({
           )}
         </div>
         <div className={`${isCollapsed ? 'px-3' : 'px-5'}`}>
+          <div className={`mb-3 flex ${isCollapsed ? 'justify-center' : 'justify-end'}`}>
+            <ThemeToggle tone="dark" />
+          </div>
           <button
             onClick={handleLogout}
             title="Logout"
@@ -125,7 +137,10 @@ export default function PortalSidebar({
     </aside>
 
       <nav className="portal-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden">
-        <div className="grid grid-cols-5 items-end px-1 pt-2">
+        <div
+          className="grid items-end px-1 pt-2"
+          style={{ gridTemplateColumns: `repeat(${Math.min(menuItems.length, 4) + 2}, minmax(0, 1fr))` }}
+        >
           {menuItems.slice(0, 4).map((item) => (
             <NavLink
               key={item.name}
@@ -141,6 +156,7 @@ export default function PortalSidebar({
               <span className="text-[10px] font-bold">{item.name}</span>
             </NavLink>
           ))}
+          <ThemeToggle className="mx-auto h-10 w-10" />
           <button
             type="button"
             onClick={handleLogout}

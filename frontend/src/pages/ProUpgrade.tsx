@@ -22,20 +22,18 @@ import { useToast } from '../contexts/ToastContext';
 import { createClient } from '../lib/supabase/client';
 import { readLocalSession } from '../lib/auth/session';
 import {
-  PRO_DURATION_MONTHS,
-  PRO_PRICE_KOBO,
-  PRO_PRICE_NAIRA,
+  DEFAULT_PRO_PLAN,
+  PRO_PLANS,
   PRO_PLAN_LABEL,
   activatePro,
   readProState,
   withTimeout,
+  type ProPlanId,
   type ProState,
 } from '../lib/pro';
 import { isPaystackConfigured, loadPaystack, startPaystackCheckout } from '../lib/paystack';
 
 type CheckoutStatus = 'idle' | 'opening' | 'verifying' | 'done';
-
-const PRICE_LABEL = `₦${PRO_PRICE_NAIRA.toLocaleString('en-NG')}`;
 
 const FEATURE_DETAILS = [
   {
@@ -83,7 +81,12 @@ const FAQ = [
   {
     question: 'Is this a subscription?',
     answer:
-      'No. One payment of ₦5,000 covers twelve months. Nothing renews automatically and no card is charged again without your action.',
+      'No. Pro is sold as a pass, not an auto renewing subscription. A monthly pass covers 30 days and an annual pass covers 12 months. You choose when to renew.',
+  },
+  {
+    question: 'Which plan is better value?',
+    answer:
+      'The annual plan is ₦20,000, which works out to about ₦1,667 a month. It saves ₦4,000 compared with twelve monthly payments.',
   },
   {
     question: 'How is my payment handled?',
@@ -91,14 +94,14 @@ const FAQ = [
       'Paystack processes the card, bank transfer, or USSD payment. Selorah never sees or stores your card details.',
   },
   {
+    question: 'Can I switch plans?',
+    answer:
+      'Yes. You can buy either plan at any time. Any time you have already paid for is added to your current end date, so you never lose days.',
+  },
+  {
     question: 'What happens when Pro ends?',
     answer:
       'Your records stay safe and accessible on the free plan. Pro features pause until you choose to renew.',
-  },
-  {
-    question: 'Can I upgrade later?',
-    answer:
-      'Yes. Your free account keeps working for as long as you need it. Upgrade from this page whenever you are ready.',
   },
 ];
 
@@ -119,12 +122,16 @@ export default function ProUpgrade() {
   const { success, error: toastError, info } = useToast();
 
   const [pro, setPro] = useState<ProState>(() => readProState());
+  const [planId, setPlanId] = useState<ProPlanId>(() => readProState().planId || DEFAULT_PRO_PLAN);
   const [status, setStatus] = useState<CheckoutStatus>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [pendingMsg, setPendingMsg] = useState<string | null>(null);
   const [email, setEmail] = useState(() => readLocalSession()?.email || '');
   const [paystackReady, setPaystackReady] = useState(false);
 
+  const plan = PRO_PLANS[planId];
+  const priceLabel = `₦${plan.priceNaira.toLocaleString('en-NG')}`;
+  const monthlyEquivalent = Math.round(plan.priceNaira / plan.months);
   const isActive = pro.active;
   const expiresOn = formatDate(pro.expiresAt);
   const busy = status === 'opening' || status === 'verifying';
@@ -208,9 +215,10 @@ export default function ProUpgrade() {
     try {
       await startPaystackCheckout({
         email: address,
-        amountKobo: PRO_PRICE_KOBO,
+        amountKobo: plan.priceKobo,
         metadata: {
           source: 'upgrade-page',
+          plan_id: planId,
           user_id: readLocalSession()?.id,
         },
         onSuccess: async (response) => {
@@ -218,7 +226,8 @@ export default function ProUpgrade() {
           setErrorMsg(null);
           try {
             const result = await activatePro(response.reference, {
-              amountKobo: PRO_PRICE_KOBO,
+              planId,
+              amountKobo: plan.priceKobo,
               supabase,
             });
             released = true;
@@ -268,8 +277,8 @@ export default function ProUpgrade() {
       : status === 'verifying'
         ? 'Confirming payment...'
         : isActive
-          ? `Renew for ${PRICE_LABEL}`
-          : `Upgrade for ${PRICE_LABEL}`;
+          ? `Renew for ${priceLabel}`
+          : `Upgrade for ${priceLabel}`;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-10 font-sora">
@@ -312,13 +321,13 @@ export default function ProUpgrade() {
             </h1>
 
             <p className="mt-4 max-w-md text-sm font-medium leading-relaxed text-white/55">
-              One payment of {PRICE_LABEL} covers a full year of every Pro feature. No auto renew,
-              no hidden charges, and your data stays yours the entire time.
+              Start from ₦2,000 a month, or choose the annual plan at ₦20,000 and get two months
+              free. Nothing renews automatically, and your data stays yours the entire time.
             </p>
 
             <div className="mt-7 grid gap-3 sm:grid-cols-3">
               {[
-                { icon: ClockIcon, label: `${PRO_DURATION_MONTHS} months`, detail: 'Full access' },
+                { icon: ClockIcon, label: plan.durationLabel, detail: 'Full access' },
                 { icon: LockClosedIcon, label: 'No auto renew', detail: 'You choose' },
                 { icon: ShieldCheckIcon, label: 'Paystack', detail: 'Protected payment' },
               ].map((item) => (
@@ -338,7 +347,7 @@ export default function ProUpgrade() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#6183FF]">
-                  {isActive ? 'Your plan' : 'Annual plan'}
+                  {isActive ? 'Your plan' : planId === 'annual' ? 'Best value' : 'Flexible plan'}
                 </p>
                 <h2 className="mt-1 text-lg font-black tracking-tight">{PRO_PLAN_LABEL}</h2>
               </div>
@@ -349,8 +358,50 @@ export default function ProUpgrade() {
                     : 'bg-[#EEF2FF] text-[#6183FF]'
                 }`}
               >
-                {isActive ? 'Active' : 'One payment'}
+                {isActive ? 'Active' : planId === 'annual' ? 'Save ₦4,000' : 'Monthly'}
               </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {(Object.keys(PRO_PLANS) as ProPlanId[]).map((id) => {
+                const option = PRO_PLANS[id];
+                const selected = planId === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setPlanId(id)}
+                    disabled={busy}
+                    aria-pressed={selected}
+                    className={`rounded-2xl border px-3 py-3 text-left transition-colors disabled:opacity-60 ${
+                      selected
+                        ? 'border-[#6183FF] bg-[#EEF2FF] ring-1 ring-[#6183FF]/30'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="flex items-center justify-between gap-1">
+                      <span
+                        className={`text-[10px] font-black uppercase tracking-[0.1em] ${
+                          selected ? 'text-[#6183FF]' : 'text-gray-400'
+                        }`}
+                      >
+                        {option.label}
+                      </span>
+                      {option.badge && (
+                        <span className="rounded-full bg-green-50 px-1.5 py-0.5 text-[8px] font-black text-green-600">
+                          {option.badge}
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-1 block text-base font-black tracking-tight text-[#101217]">
+                      ₦{option.priceNaira.toLocaleString('en-NG')}
+                    </span>
+                    <span className="text-[10px] font-semibold text-gray-400">
+                      {option.billingLabel}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {isActive ? (
@@ -360,14 +411,23 @@ export default function ProUpgrade() {
                   {expiresOn ? `Active until ${expiresOn}` : 'All Pro features are unlocked'}
                 </p>
                 <p className="mt-1 text-[11px] font-medium leading-relaxed text-green-600/80">
-                  Renewing adds another twelve months from today.
+                  Renewing adds another {plan.durationLabel} from your current end date.
                 </p>
               </div>
             ) : (
-              <div className="mt-4 flex items-end gap-2">
-                <span className="text-4xl font-black tracking-tight">{PRICE_LABEL}</span>
-                <span className="pb-1.5 text-xs font-semibold text-gray-400">per year</span>
-              </div>
+              <>
+                <div className="mt-4 flex items-end gap-2">
+                  <span className="text-4xl font-black tracking-tight">{priceLabel}</span>
+                  <span className="pb-1.5 text-xs font-semibold text-gray-400">
+                    {plan.billingLabel}
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-400">
+                  {planId === 'annual'
+                    ? `About ₦${monthlyEquivalent.toLocaleString('en-NG')} a month, billed once a year.`
+                    : 'A 30 day pass. Renew whenever you are ready.'}
+                </p>
+              </>
             )}
 
             <div className="mt-5 space-y-2.5 border-t border-gray-100 pt-5">
@@ -525,7 +585,7 @@ export default function ProUpgrade() {
         <div className="rounded-[28px] border border-gray-100 bg-white p-5 shadow-sm sm:p-7">
           <h2 className="text-lg font-black tracking-tight text-[#101217]">Common questions</h2>
           <p className="mt-1 text-xs font-medium text-gray-400">
-            Everything about the yearly plan.
+            Everything about the monthly and annual plans.
           </p>
 
           <div className="mt-4 divide-y divide-gray-100">
@@ -547,7 +607,7 @@ export default function ProUpgrade() {
       <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-5 py-4 sm:flex-row sm:items-center">
         <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.1em] text-gray-400">
           <ShieldCheckIcon className="h-4 w-4 text-green-500" />
-          One payment, twelve months, no auto renew
+          Choose monthly or annual. No auto renew.
         </p>
         <p className="text-[10px] font-medium text-gray-400">
           Need help with a payment? Contact support with your receipt reference.

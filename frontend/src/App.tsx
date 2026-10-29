@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
+import ErrorFallback from './components/ErrorFallback';
 import RoleGuard from './components/RoleGuard';
 import ScrollToTop from './components/ScrollToTop';
 import InstallPrompt from './components/InstallPrompt';
@@ -26,6 +27,7 @@ const DataProcessing = lazy(() => import('./pages/DataProcessing'));
 const HospitalDashboard = lazy(() => import('./pages/hospital/HospitalDashboard'));
 const ResearcherDashboard = lazy(() => import('./pages/researcher/ResearcherDashboard'));
 const InsurerDashboard = lazy(() => import('./pages/insurer/InsurerDashboard'));
+const QaDashboard = lazy(() => import('./pages/qa/QaDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const WaitlistCount = lazy(() => import('./pages/WaitlistCount'));
 
@@ -65,7 +67,9 @@ export default function App() {
               <Route path="/hospital/*" element={<RoleGuard><HospitalDashboard /></RoleGuard>} />
               <Route path="/researcher/*" element={<RoleGuard><ResearcherDashboard /></RoleGuard>} />
               <Route path="/insurer/*" element={<RoleGuard><InsurerDashboard /></RoleGuard>} />
+              <Route path="/qa/*" element={<RoleGuard><QaDashboard /></RoleGuard>} />
               <Route path="/wc" element={<WaitlistCount />} />
+              <Route path="/error" element={<ErrorFallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
