@@ -477,7 +477,7 @@ export default function HospitalDashboard() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 pb-24 md:pb-8 lg:pb-12 pt-4">
+        <div data-scroll-root className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 pb-24 md:pb-8 lg:pb-12 pt-4">
           <Routes>
             <Route index element={
               selectedPatient ? (

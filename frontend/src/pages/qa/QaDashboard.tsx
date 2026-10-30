@@ -468,7 +468,7 @@ export default function QaDashboard() {
           </div>
         </header>
 
-        <div className="flex-1 space-y-8 overflow-y-auto px-4 pb-28 pt-3 scrollbar-hide md:px-8 md:pb-10 lg:px-12">
+        <div data-scroll-root className="flex-1 space-y-8 overflow-y-auto px-4 pb-28 pt-3 scrollbar-hide md:px-8 md:pb-10 lg:px-12">
           {error && (
             <div
               role="alert"

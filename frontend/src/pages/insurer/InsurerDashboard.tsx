@@ -103,7 +103,7 @@ export default function InsurerDashboard() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 pb-24 md:pb-8 lg:pb-12 pt-4">
+        <div data-scroll-root className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 pb-24 md:pb-8 lg:pb-12 pt-4">
           <Routes>
             <Route index element={
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

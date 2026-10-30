@@ -9,10 +9,9 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import {
-  acceptOptionalPrivacy,
-  essentialOnlyPrivacy,
   hasPrivacyDecision,
   listenForPrivacy,
+  PRIVACY_OPEN_EVENT,
   readPrivacy,
   savePrivacy,
 } from '../lib/privacy';
@@ -51,6 +50,7 @@ export default function PrivacyPrompt() {
   const [decided, setDecided] = useState(() => hasPrivacyDecision());
   const [ready, setReady] = useState(false);
   const [open, setOpen] = useState(false);
+  const [forceOpen, setForceOpen] = useState(false);
   const [personalisation, setPersonalisation] = useState(() => readPrivacy().personalisation);
   const [searchHistory, setSearchHistory] = useState(() => readPrivacy().searchHistory);
 
@@ -60,6 +60,16 @@ export default function PrivacyPrompt() {
   useEffect(() => {
     const timer = window.setTimeout(() => setReady(true), 1200);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const onOpen = () => {
+      setForceOpen(true);
+      setOpen(true);
+      setReady(true);
+    };
+    window.addEventListener(PRIVACY_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(PRIVACY_OPEN_EVENT, onOpen);
   }, []);
 
   useEffect(
@@ -76,9 +86,10 @@ export default function PrivacyPrompt() {
   const finish = (personal: boolean, history: boolean) => {
     savePrivacy({ personalisation: personal, searchHistory: history });
     setDecided(true);
+    setForceOpen(false);
   };
 
-  if (hiddenRoute || decided || !ready) return null;
+  if (hiddenRoute || !ready || (decided && !forceOpen)) return null;
 
   return (
     <>
@@ -265,8 +276,7 @@ export default function PrivacyPrompt() {
               <button
                 type="button"
                 onClick={() => {
-                  essentialOnlyPrivacy();
-                  setDecided(true);
+                  finish(false, false);
                 }}
                 className="min-h-[44px] rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-gray-500 transition-colors hover:border-gray-300 hover:text-[#101217]"
               >

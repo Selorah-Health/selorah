@@ -1,4 +1,5 @@
-export const NAIRA_PER_POINT = 2;
+export const NAIRA_PER_POINT = 20;
+export const MIN_SURVEY_QUESTIONS = 15;
 
 export type QuestionType = 'single_choice' | 'multi_choice' | 'short_text' | 'scale';
 

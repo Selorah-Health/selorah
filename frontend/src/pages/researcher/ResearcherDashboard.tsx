@@ -414,7 +414,7 @@ export default function ResearcherDashboard() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 pb-24 pt-4 md:p-8 md:pb-8 lg:p-12 lg:pb-12">
+        <div data-scroll-root className="flex-1 overflow-y-auto p-4 pb-24 pt-4 md:p-8 md:pb-8 lg:p-12 lg:pb-12">
           <Routes>
             <Route
               index

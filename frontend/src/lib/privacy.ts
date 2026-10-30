@@ -8,6 +8,12 @@ export type PrivacyPrefs = {
 
 const STORAGE_KEY = 'selorah_privacy_v1';
 export const PRIVACY_EVENT = 'selorah:privacy-updated';
+export const PRIVACY_OPEN_EVENT = 'selorah:privacy-open';
+
+export function openPrivacyChoices() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(PRIVACY_OPEN_EVENT));
+}
 
 export const DEFAULT_PRIVACY: PrivacyPrefs = {
   version: 1,

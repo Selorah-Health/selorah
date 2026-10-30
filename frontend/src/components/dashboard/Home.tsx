@@ -3,16 +3,30 @@ import {
   BeakerIcon,
   ChevronRightIcon,
   CloudArrowUpIcon,
+  CreditCardIcon,
   DocumentTextIcon,
   LockClosedIcon,
   QrCodeIcon,
   ShieldCheckIcon,
+  SignalSlashIcon,
   SparklesIcon,
   StarIcon,
+  TrophyIcon,
 } from '@heroicons/react/24/outline';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { DashboardSummary } from '../../pages/Dashboard';
 import type { MedicalRecord } from '../../lib/records';
+import { createClient } from '../../lib/supabase/client';
+import {
+  EARNINGS_EVENT,
+  EMPTY_EARNINGS,
+  fetchEarnings,
+  formatNaira,
+  subscribeEarnings,
+  type EarningsSummary,
+} from '../../lib/earnings';
+import { useSync } from '../../contexts/SyncContext';
 
 interface HomeProps {
   user: any;
@@ -31,6 +45,36 @@ function statusClasses(status: string) {
     : 'bg-[#6183FF] text-white';
 }
 
+function greetingFor(rawName: string, gender: string) {
+  const hour = new Date().getHours();
+  const isFemale = /^f/i.test(gender);
+  const fallback = isFemale ? 'queen' : 'champ';
+  const name = rawName && rawName !== 'there' ? rawName : fallback;
+
+  const morning = [
+    `Beautiful morning, ${name}`,
+    `Arise and shine, ${name}!`,
+    `A fresh start today, ${name}`,
+    `Rise and thrive, ${name}`,
+  ];
+  const afternoon = [
+    `Good afternoon, ${name}`,
+    `Hope your day is going well, ${name}`,
+    `What would you like to do today, ${name}?`,
+    `Welcome back, ${name}!`,
+  ];
+  const evening = [
+    `Good evening, ${name}`,
+    `Welcome back, ${name}!`,
+    `You made it through today, ${name}`,
+    `Time to unwind, ${name}`,
+  ];
+
+  const list = hour < 12 ? morning : hour < 17 ? afternoon : evening;
+  const seed = new Date().getDate() + name.length + (isFemale ? 1 : 0);
+  return list[seed % list.length];
+}
+
 export default function Home({
   user,
   displayName,
@@ -42,7 +86,56 @@ export default function Home({
   searchActive,
 }: HomeProps) {
   const navigate = useNavigate();
+  const supabase = createClient();
+  const { online, pending } = useSync();
+  const [earnings, setEarnings] = useState<EarningsSummary>(EMPTY_EARNINGS);
+  const [gender, setGender] = useState('');
   const healthScore = Math.min(100, 40 + records.length * 5);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const next = await fetchEarnings(supabase);
+        if (!cancelled) setEarnings(next);
+      } catch {
+        // Earnings are optional until the patient has a profile.
+      }
+
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase
+          .from('patient_profiles')
+          .select('gender')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (!cancelled) setGender(data?.gender || '');
+      } catch {
+        // Gender only personalises the greeting.
+      }
+    };
+
+    void load();
+    const refresh = () => void load();
+    window.addEventListener(EARNINGS_EVENT, refresh);
+
+    let unsubscribe: (() => void) | undefined;
+    if (earnings.patientId) {
+      unsubscribe = subscribeEarnings(supabase, earnings.patientId, refresh);
+    }
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener(EARNINGS_EVENT, refresh);
+      unsubscribe?.();
+    };
+  }, [supabase, earnings.patientId]);
+
+  const greeting = greetingFor(displayName, gender);
 
   const stats = [
     {
@@ -73,12 +166,15 @@ export default function Home({
       onClick: () => navigate('/dashboard/access-log'),
     },
     {
-      label: 'Research earnings',
-      value: '₦0',
-      hint: 'Opt in to studies to earn',
+      label: 'Available earnings',
+      value: formatNaira(earnings.available),
+      hint:
+        earnings.earnings.length > 0
+          ? `${earnings.earnings.length} reward${earnings.earnings.length === 1 ? '' : 's'} earned`
+          : 'Opt in to studies to earn',
       icon: BeakerIcon,
       tone: 'light' as const,
-      onClick: () => navigate('/dashboard/research'),
+      onClick: () => navigate('/dashboard/earnings'),
     },
   ];
 
@@ -88,7 +184,7 @@ export default function Home({
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
             <h2 className="text-2xl font-bold tracking-tight text-[#101217] sm:text-3xl">
-              Welcome back, {displayName}
+              {greeting}
             </h2>
             {isPro && (
               <span className="rounded-full bg-[#6183FF]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
@@ -159,6 +255,71 @@ export default function Home({
             </button>
           );
         })}
+      </div>
+
+      <div className="rounded-[24px] border border-gray-50 bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-bold tracking-tight text-[#101217]">Quick actions</h3>
+            <p className="text-[11px] font-medium text-gray-400">
+              Add a record or create a QR code even when you are offline.
+            </p>
+          </div>
+          {(!online || pending > 0) && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-orange-500">
+              <SignalSlashIcon className="h-3.5 w-3.5" />
+              {online ? `${pending} waiting to sync` : 'Offline mode'}
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          {[
+            {
+              label: 'Add a record',
+              hint: 'Saves offline',
+              icon: CloudArrowUpIcon,
+              onClick: onAddRecord,
+            },
+            {
+              label: 'Create QR code',
+              hint: 'Share instantly',
+              icon: QrCodeIcon,
+              onClick: () => navigate('/dashboard/qrcodes'),
+            },
+            {
+              label: 'Selorah card',
+              hint: 'Permanent QR',
+              icon: CreditCardIcon,
+              onClick: () => navigate('/dashboard/card'),
+            },
+            {
+              label: 'Rewards',
+              hint: 'Earn points',
+              icon: TrophyIcon,
+              onClick: () => navigate('/dashboard/rewards'),
+            },
+          ].map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              onClick={action.onClick}
+              className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-[#F8F9FE] p-3 text-left transition-colors hover:border-[#6183FF]/30 hover:bg-white"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#6183FF] shadow-sm group-hover:bg-[#6183FF] group-hover:text-white">
+                <action.icon className="h-4.5 w-4.5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-[11px] font-bold text-[#101217]">
+                  {action.label}
+                </span>
+                <span className="mt-0.5 block truncate text-[9px] font-semibold uppercase tracking-[0.06em] text-gray-400">
+                  {action.hint}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">

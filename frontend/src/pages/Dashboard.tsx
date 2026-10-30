@@ -5,12 +5,15 @@ import {
   BeakerIcon,
   BellIcon,
   CloudArrowUpIcon,
+  CreditCardIcon,
   DocumentDuplicateIcon,
+  FingerPrintIcon,
   HomeIcon,
   MagnifyingGlassIcon,
   PlusIcon,
   QrCodeIcon,
   ShieldCheckIcon,
+  TrophyIcon,
   WalletIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
@@ -20,6 +23,7 @@ import SEOTitle from '../components/SEOTitle';
 import { clearLocalSession, readLocalSession, writeLocalSession } from '../lib/auth/session';
 import { fetchMedicalRecords, type MedicalRecord } from '../lib/records';
 import { readProState } from '../lib/pro';
+import { formatNaira } from '../lib/earnings';
 import { prewarmOcr } from '../lib/ocr';
 
 // Tab Components
@@ -40,6 +44,11 @@ import Security from './Security';
 import Billing from './Billing';
 import ProUpgrade from './ProUpgrade';
 import Family from './Family';
+import SearchResults from './SearchResults';
+import SelorahCard from './SelorahCard';
+import Resilience from './Resilience';
+import Rewards from './Rewards';
+import KeyboardShortcuts from '../components/KeyboardShortcuts';
 
 export type RecentAccess = {
   id: string;
@@ -53,12 +62,14 @@ export type DashboardSummary = {
   activeGrants: number;
   recentAccess: RecentAccess[];
   unreadNotifications: number;
+  earningsAvailable: number;
 };
 
 const EMPTY_SUMMARY: DashboardSummary = {
   activeGrants: 0,
   recentAccess: [],
   unreadNotifications: 0,
+  earningsAvailable: 0,
 };
 
 export default function Dashboard() {
@@ -135,6 +146,38 @@ export default function Dashboard() {
       ).length;
     } catch {
       // Notifications are optional on older projects.
+    }
+
+    try {
+      const { data: profile } = await supabase
+        .from('patient_profiles')
+        .select('id')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+
+      if (profile?.id) {
+        const [earningsRes, withdrawalsRes] = await Promise.all([
+          supabase
+            .from('earnings')
+            .select('amount_local, status')
+            .eq('patient_id', profile.id),
+          supabase
+            .from('withdrawals')
+            .select('amount_local, status')
+            .eq('patient_id', profile.id),
+        ]);
+
+        const cleared = (earningsRes.data || [])
+          .filter((row: { status?: string }) => ['available', 'cleared'].includes(String(row.status)))
+          .reduce((sum: number, row: { amount_local?: number }) => sum + Number(row.amount_local || 0), 0);
+        const reserved = (withdrawalsRes.data || [])
+          .filter((row: { status?: string }) => ['pending', 'processing'].includes(String(row.status)))
+          .reduce((sum: number, row: { amount_local?: number }) => sum + Number(row.amount_local || 0), 0);
+
+        next.earningsAvailable = Math.max(0, cleared - reserved);
+      }
+    } catch {
+      // Earnings are optional until the patient has a profile.
     }
 
     setSummary(next);
@@ -274,6 +317,35 @@ export default function Dashboard() {
   }, [supabase, loadRecords, loadSummary]);
 
   useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+
+    void supabase.auth.getUser().then(({ data }) => {
+      if (cancelled || !data.user) return;
+      channel = supabase
+        .channel(`dashboard-notifications:${data.user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${data.user.id}`,
+          },
+          () => {
+            void loadSummary();
+          }
+        )
+        .subscribe();
+    });
+
+    return () => {
+      cancelled = true;
+      if (channel) void supabase.removeChannel(channel);
+    };
+  }, [supabase, loadSummary]);
+
+  useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
@@ -315,7 +387,11 @@ export default function Dashboard() {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    if (location.pathname !== '/dashboard' && location.pathname !== '/dashboard/records') {
+    if (
+      location.pathname !== '/dashboard' &&
+      location.pathname !== '/dashboard/records' &&
+      location.pathname !== '/dashboard/search'
+    ) {
       navigate('/dashboard/records');
     }
   };
@@ -330,6 +406,9 @@ export default function Dashboard() {
   const secondaryItems = [
     { name: 'Access log', icon: ShieldCheckIcon, path: '/dashboard/access-log' },
     { name: 'QR codes', icon: QrCodeIcon, path: '/dashboard/qrcodes' },
+    { name: 'Selorah card', icon: CreditCardIcon, path: '/dashboard/card' },
+    { name: 'Rewards', icon: TrophyIcon, path: '/dashboard/rewards' },
+    { name: 'Resilience', icon: FingerPrintIcon, path: '/dashboard/resilience' },
   ];
 
   const filteredRecords = search.trim()
@@ -355,6 +434,10 @@ export default function Dashboard() {
     if (path === '/dashboard/notifications') return 'Notifications';
     if (path === '/dashboard/access-log') return 'Access log';
     if (path === '/dashboard/qrcodes') return 'QR codes';
+    if (path === '/dashboard/card') return 'Selorah card';
+    if (path === '/dashboard/rewards') return 'Rewards';
+    if (path === '/dashboard/resilience') return 'Resilience';
+    if (path === '/dashboard/search') return 'Search';
     if (path === '/dashboard/billing') return 'Billing';
     if (path === '/dashboard/upgrade') return 'Selorah Pro';
     if (path === '/dashboard/security') return 'Security';
@@ -374,7 +457,7 @@ export default function Dashboard() {
 
       <aside
         className={`relative z-50 hidden h-full shrink-0 flex-col bg-[#6183FF] text-white transition-all duration-300 md:flex ${
-          isCollapsed ? 'w-[84px]' : 'w-[264px]'
+          isCollapsed ? 'w-[84px]' : 'w-[248px] xl:w-[264px]'
         }`}
       >
         <div className={`border-b border-white/10 p-5 pb-4 ${isCollapsed ? 'px-4' : ''}`}>
@@ -545,6 +628,12 @@ export default function Dashboard() {
                 type="search"
                 value={search}
                 onChange={(event) => handleSearchChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && search.trim()) {
+                    event.preventDefault();
+                    navigate(`/dashboard/search?q=${encodeURIComponent(search.trim())}`);
+                  }
+                }}
                 placeholder="Search records..."
                 className="min-h-[44px] w-full rounded-full border border-gray-200 bg-white py-2.5 pl-11 pr-4 text-sm font-medium text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-[#6183FF]"
               />
@@ -561,6 +650,16 @@ export default function Dashboard() {
               ) : (
                 <MagnifyingGlassIcon className="h-5 w-5" />
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/earnings')}
+              title="Available earnings"
+              className="hidden h-10 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 text-[11px] font-bold text-[#101217] transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] sm:flex"
+            >
+              <WalletIcon className="h-4 w-4 text-[#6183FF]" />
+              {formatNaira(summary.earningsAvailable)}
             </button>
 
             <button
@@ -627,6 +726,12 @@ export default function Dashboard() {
                 autoFocus
                 value={search}
                 onChange={(event) => handleSearchChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && search.trim()) {
+                    event.preventDefault();
+                    navigate(`/dashboard/search?q=${encodeURIComponent(search.trim())}`);
+                  }
+                }}
                 placeholder="Search records by name or type"
                 className="min-h-[46px] w-full rounded-2xl border border-gray-200 bg-white py-2.5 pl-11 pr-4 text-sm font-medium outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
               />
@@ -634,7 +739,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="flex-1 space-y-8 overflow-y-auto px-4 pb-28 pt-3 scrollbar-hide md:px-8 md:pb-10 lg:px-12">
+        <div
+          data-scroll-root
+          className="flex-1 space-y-8 overflow-y-auto px-4 pb-28 pt-3 scrollbar-hide md:px-8 md:pb-10 lg:px-12"
+        >
           {loading ? (
             <div className="space-y-5">
               <div className="h-24 animate-pulse rounded-[24px] bg-white" />
@@ -684,6 +792,10 @@ export default function Dashboard() {
               <Route path="access-log" element={<AccessLog />} />
               <Route path="access-log/:id" element={<AccessLogDetails />} />
               <Route path="qrcodes" element={<QRCodes />} />
+              <Route path="card" element={<SelorahCard />} />
+              <Route path="rewards" element={<Rewards />} />
+              <Route path="resilience" element={<Resilience />} />
+              <Route path="search" element={<SearchResults />} />
               <Route path="security" element={<Security />} />
               <Route path="billing" element={<Billing />} />
               <Route path="upgrade" element={<ProUpgrade />} />
@@ -753,7 +865,7 @@ export default function Dashboard() {
             className="absolute inset-0 bg-[#05081A]/60 backdrop-blur-sm"
             onClick={() => setIsSidebarOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 flex w-[82%] max-w-[320px] flex-col bg-[#020924] text-white shadow-2xl">
+          <div className="absolute inset-y-0 left-0 flex w-[88%] max-w-[340px] flex-col bg-[#020924] text-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
               <div className="flex items-center gap-2.5">
                 <img src="/logo.svg" alt="" className="h-9 w-9 object-contain" />
@@ -851,6 +963,7 @@ export default function Dashboard() {
         onSaved={refreshData}
       />
 
+      <KeyboardShortcuts onAddRecord={() => setShowAddModal(true)} />
       <MobileWalkthrough />
     </div>
   );
