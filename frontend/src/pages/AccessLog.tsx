@@ -10,6 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
+import { confirmDialog } from '../lib/dialogs';
 
 type AccessEntry = {
   id: string;
@@ -22,8 +23,9 @@ type AccessEntry = {
   status: 'Active' | 'Revoked' | 'Expired';
   device: string;
   verified: boolean;
-  kind: 'provider' | 'link';
+  kind: 'provider' | 'link' | 'device';
   linkToken?: string;
+  grantId?: string;
   isRevoked?: boolean;
 };
 
@@ -98,6 +100,8 @@ export default function AccessLog() {
             providerNames.get(row.provider_id) ||
             'Verified provider';
           const createdAt = row.accessed_at ? new Date(row.accessed_at).getTime() : 0;
+          const status =
+            row.status === 'revoked' ? 'Revoked' : row.status === 'expired' ? 'Expired' : 'Active';
 
           entries.push({
             id: String(row.id),
@@ -107,10 +111,11 @@ export default function AccessLog() {
             date: dateLabel(row.accessed_at),
             sortAt: createdAt,
             color: row.color || 'bg-[#6183FF]',
-            status: 'Active',
-            device: 'Provider portal',
+            status,
+            device: row.device_label || 'Provider portal',
             verified: Boolean(row.provider_id || row.organization_name),
             kind: 'provider',
+            isRevoked: status !== 'Active',
           });
         });
       }
@@ -121,7 +126,7 @@ export default function AccessLog() {
     try {
       const { data: links } = await supabase
         .from('shared_links')
-        .select('id, token, is_active, expires_at, created_at')
+        .select('id, token, is_active, expires_at, created_at, revoked_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -130,7 +135,7 @@ export default function AccessLog() {
         const expired = link.expires_at
           ? new Date(link.expires_at).getTime() < now
           : false;
-        const live = link.is_active && !expired;
+        const live = link.is_active && !expired && !link.revoked_at;
         const createdAt = link.created_at ? new Date(link.created_at).getTime() : 0;
 
         entries.push({
@@ -140,7 +145,7 @@ export default function AccessLog() {
             ? 'Anyone with the code can view the records you selected.'
             : expired
               ? 'This shared link expired.'
-              : 'This shared link was revoked.',
+              : 'This shared link was deleted.',
           time: timeLabel(link.created_at),
           date: dateLabel(link.created_at),
           sortAt: createdAt,
@@ -157,6 +162,44 @@ export default function AccessLog() {
       // Older projects may not have shared_links.
     }
 
+    try {
+      const { data: grants } = await supabase
+        .from('qr_device_grants')
+        .select(
+          'id, token, device_id, device_label, permanent, granted_at, last_seen_at, revoked_at'
+        )
+        .eq('user_id', user.id)
+        .order('last_seen_at', { ascending: false });
+
+      (grants || []).forEach((grant: Record<string, any>) => {
+        const revoked = Boolean(grant.revoked_at);
+        const seenAt = grant.last_seen_at || grant.granted_at;
+
+        entries.push({
+          id: `grant-${grant.id}`,
+          title: grant.device_label
+            ? `Device access: ${grant.device_label}`
+            : 'Device access',
+          action: grant.permanent
+            ? 'This device was granted access to your permanent Selorah card QR.'
+            : 'This device opened one of your temporary QR codes.',
+          time: timeLabel(seenAt),
+          date: dateLabel(seenAt),
+          sortAt: seenAt ? new Date(seenAt).getTime() : 0,
+          color: revoked ? 'bg-red-400' : 'bg-[#5FFAB0]',
+          status: revoked ? 'Revoked' : 'Active',
+          device: grant.device_label || 'QR scanner',
+          verified: true,
+          kind: 'device',
+          grantId: grant.id,
+          linkToken: grant.token,
+          isRevoked: revoked,
+        });
+      });
+    } catch {
+      // Older projects may not have qr_device_grants.
+    }
+
     setLogs(entries.sort((a, b) => b.sortAt - a.sortAt));
     setLoading(false);
   }, [supabase]);
@@ -167,17 +210,22 @@ export default function AccessLog() {
 
   const handleRevoke = async (entry: AccessEntry) => {
     if (!entry.linkToken) return;
-    if (!window.confirm('Revoke this QR link? Anyone holding it loses access immediately.')) {
-      return;
-    }
+    const confirmed = await confirmDialog({
+      title: 'Delete this QR code?',
+      message: 'Anyone holding this code loses access immediately. This cannot be undone.',
+      confirmLabel: 'Delete code',
+      tone: 'danger',
+      icon: 'shield',
+    });
+    if (!confirmed) return;
 
     const { error } = await supabase
       .from('shared_links')
-      .update({ is_active: false })
+      .update({ is_active: false, revoked_at: new Date().toISOString() })
       .eq('token', entry.linkToken);
 
     if (error) {
-      toastError(error.message, 'Could not revoke access');
+      toastError(error.message, 'Could not delete access');
       return;
     }
 
@@ -187,7 +235,7 @@ export default function AccessLog() {
           ? {
               ...item,
               title: 'QR access link',
-              action: 'This shared link was revoked.',
+              action: 'This shared link was deleted.',
               color: 'bg-red-400',
               status: 'Revoked' as const,
               isRevoked: true,
@@ -195,7 +243,45 @@ export default function AccessLog() {
           : item
       )
     );
-    success('Access has been revoked. The link will not work again.');
+    success('Code deleted. It will not work again.');
+  };
+
+  const handleRevokeDevice = async (entry: AccessEntry) => {
+    if (!entry.grantId) return;
+    const confirmed = await confirmDialog({
+      title: 'Revoke this device?',
+      message:
+        'This device will not be able to reopen your record with the same QR code. You can grant it again by scanning your card.',
+      confirmLabel: 'Revoke device',
+      tone: 'danger',
+      icon: 'shield',
+    });
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from('qr_device_grants')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('id', entry.grantId);
+
+    if (error) {
+      toastError(error.message, 'Could not revoke this device');
+      return;
+    }
+
+    setLogs((previous) =>
+      previous.map((item) =>
+        item.id === entry.id
+          ? {
+              ...item,
+              action: 'Access from this device was revoked.',
+              color: 'bg-red-400',
+              status: 'Revoked' as const,
+              isRevoked: true,
+            }
+          : item
+      )
+    );
+    success('Device access revoked.');
   };
 
   return (
@@ -211,7 +297,8 @@ export default function AccessLog() {
                 Access audit log
               </h2>
               <p className="mt-1 max-w-lg text-sm font-medium leading-relaxed text-gray-400">
-                Every time a provider opens your record or a QR link is used, it is recorded here.
+                Every time a provider opens your record, a QR code is used, or a device is
+                granted access, it is recorded here.
               </p>
             </div>
           </div>
@@ -239,7 +326,7 @@ export default function AccessLog() {
           <h3 className="mt-4 text-lg font-bold text-[#101217]">No access activity yet</h3>
           <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-relaxed text-gray-400">
             When you share a record with a clinic, their access will appear here with a
-            timestamp. You can revoke a share at any time.
+            timestamp. You can revoke a share or a device at any time.
           </p>
           <button
             type="button"
@@ -254,6 +341,7 @@ export default function AccessLog() {
         <div className="space-y-3">
           {logs.map((entry) => {
             const isQr = entry.kind === 'link';
+            const isDevice = entry.kind === 'device';
             const isMobile = entry.device.toLowerCase().includes('iphone');
             const revoked = entry.status !== 'Active';
             return (
@@ -267,7 +355,7 @@ export default function AccessLog() {
               >
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-                    isQr
+                    isQr || isDevice
                       ? 'bg-[#EEF2FF] text-[#6183FF]'
                       : isMobile
                         ? 'bg-orange-50 text-orange-500'
@@ -276,6 +364,12 @@ export default function AccessLog() {
                 >
                   {isQr ? (
                     <QrCodeIcon className="h-5 w-5" />
+                  ) : isDevice ? (
+                    isMobile ? (
+                      <DevicePhoneMobileIcon className="h-5 w-5" />
+                    ) : (
+                      <ComputerDesktopIcon className="h-5 w-5" />
+                    )
                   ) : isMobile ? (
                     <DevicePhoneMobileIcon className="h-5 w-5" />
                   ) : (
@@ -319,20 +413,31 @@ export default function AccessLog() {
                 </div>
 
                 <div className="flex w-full items-center gap-2 sm:w-auto">
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/dashboard/access-log/${entry.id}`)}
-                    className="flex min-h-[40px] flex-1 items-center justify-center rounded-full bg-gray-50 px-4 text-[11px] font-bold text-[#101217] transition-colors hover:bg-gray-100 sm:flex-none"
-                  >
-                    Details
-                  </button>
+                  {entry.kind !== 'device' && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/dashboard/access-log/${entry.id}`)}
+                      className="flex min-h-[40px] flex-1 items-center justify-center rounded-full bg-gray-50 px-4 text-[11px] font-bold text-[#101217] transition-colors hover:bg-gray-100 sm:flex-none"
+                    >
+                      Details
+                    </button>
+                  )}
                   {isQr && !revoked && (
                     <button
                       type="button"
                       onClick={() => handleRevoke(entry)}
                       className="flex min-h-[40px] flex-1 items-center justify-center rounded-full bg-red-50 px-4 text-[11px] font-bold text-red-500 transition-colors hover:bg-red-500 hover:text-white sm:flex-none"
                     >
-                      Revoke
+                      Delete code
+                    </button>
+                  )}
+                  {isDevice && !revoked && (
+                    <button
+                      type="button"
+                      onClick={() => handleRevokeDevice(entry)}
+                      className="flex min-h-[40px] flex-1 items-center justify-center rounded-full bg-red-50 px-4 text-[11px] font-bold text-red-500 transition-colors hover:bg-red-500 hover:text-white sm:flex-none"
+                    >
+                      Revoke device
                     </button>
                   )}
                 </div>

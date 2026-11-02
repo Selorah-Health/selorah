@@ -293,8 +293,7 @@ export default function Dashboard() {
     };
 
     const handleAvatarUpdate = (event: Event) => {
-      const url = (event as CustomEvent<string>).detail;
-      if (!url) return;
+      const url = (event as CustomEvent<string>).detail || '';
       setUser((prev: any) =>
         prev
           ? {
@@ -452,7 +451,7 @@ export default function Dashboard() {
     'there';
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F9FE] font-sora selection:bg-primary/30">
+    <div className="flex app-shell overflow-hidden bg-[#F8F9FE] font-sora selection:bg-primary/30">
       <SEOTitle title={getPageTitle()} />
 
       <aside
@@ -603,7 +602,7 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <header className="z-10 flex shrink-0 items-center justify-between gap-3 px-4 pb-3 pt-5 md:px-8 md:pb-4 md:pt-6 lg:px-12">
           <div className="flex min-w-0 items-center gap-3">
             <button

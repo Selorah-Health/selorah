@@ -194,7 +194,7 @@ async function confirmPayment(
 
       const { data: currentProfile } = await admin
         .from('patient_profiles')
-        .select('pro_expires_at')
+        .select('pro_expires_at, full_name')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -254,6 +254,27 @@ async function confirmPayment(
       } catch {
         // The profile row is the source of truth. Metadata is a convenience.
       }
+
+      // Queue the upgrade receipt email. Delivery is handled by the
+      // send-email function once a provider is configured.
+      const email = data?.customer?.email || (await resolveUserEmail(admin, userId));
+      if (email) {
+        const firstName = firstNameFrom(currentProfile?.full_name) || firstNameFrom(email);
+        try {
+          await admin.rpc('enqueue_email', {
+            p_to: email,
+            p_template: 'upgrade',
+            p_subject: 'Your Selorah Pro plan is active',
+            p_payload: {
+              first_name: firstName,
+              plan: plan.label,
+              expires_at: expiresAt.toISOString(),
+            },
+          });
+        } catch {
+          // The Pro grant already succeeded; a queued email is best effort.
+        }
+      }
     }
   }
 
@@ -292,6 +313,20 @@ async function resolveUserId(
     .maybeSingle();
 
   return userRow?.id || null;
+}
+
+async function resolveUserEmail(
+  admin: ReturnType<typeof createClient>,
+  userId: string
+): Promise<string | null> {
+  const { data } = await admin.from('users').select('email').eq('id', userId).maybeSingle();
+  return data?.email || null;
+}
+
+function firstNameFrom(value: string | null | undefined): string {
+  const clean = (value || '').trim();
+  if (!clean) return '';
+  return clean.split(/\s+/)[0];
 }
 
 async function verifySignature(body: string, signature: string, secret: string) {

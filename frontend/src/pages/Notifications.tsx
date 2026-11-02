@@ -3,6 +3,8 @@ import {
   BellIcon,
   CheckCircleIcon,
   ChevronRightIcon,
+  CreditCardIcon,
+  QrCodeIcon,
   ShieldCheckIcon,
   SparklesIcon,
   StarIcon,
@@ -11,15 +13,14 @@ import { useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
 import { readProState } from '../lib/pro';
 import { useToast } from '../contexts/ToastContext';
-
-type NotificationRow = {
-  id: string;
-  title: string;
-  body: string;
-  createdAt: string | null;
-  isRead: boolean;
-  kind: 'access' | 'system' | 'billing';
-};
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  subscribeNotifications,
+  type NotificationKind,
+  type NotificationRow,
+} from '../lib/notifications';
 
 function relativeTime(value?: string | null) {
   if (!value) return 'Just now';
@@ -36,29 +37,20 @@ function relativeTime(value?: string | null) {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function iconFor(kind: NotificationRow['kind']) {
+function iconFor(kind: NotificationKind) {
   if (kind === 'access') return ShieldCheckIcon;
-  if (kind === 'billing') return StarIcon;
+  if (kind === 'billing') return CreditCardIcon;
+  if (kind === 'card') return QrCodeIcon;
+  if (kind === 'security') return ShieldCheckIcon;
   return SparklesIcon;
-}
-
-const SEEN_KEY = 'selorah_notifications_seen_at';
-
-function readSeenAt() {
-  try {
-    const raw = localStorage.getItem(SEEN_KEY);
-    const value = raw ? Number(raw) : 0;
-    return Number.isFinite(value) ? value : 0;
-  } catch {
-    return 0;
-  }
 }
 
 export default function Notifications() {
   const navigate = useNavigate();
   const supabase = createClient();
-  const { success } = useToast();
+  const { success, error: toastError } = useToast();
   const [isPro, setIsPro] = useState(() => readProState().active);
+  const [userId, setUserId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,77 +64,99 @@ export default function Notifications() {
     };
   }, []);
 
-  const loadNotifications = useCallback(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const loadNotifications = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
 
-    if (!user) {
-      setNotifications([]);
-      setLoading(false);
-      return;
-    }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    try {
-      // Access activity is the notification source of truth. Older projects do
-      // not have a notifications table, so deriving from access_logs keeps the
-      // page useful without inventing events.
-      const { data, error } = await supabase
-        .from('access_logs')
-        .select('id, action, hospital_name, accessed_at')
-        .eq('user_id', user.id)
-        .order('accessed_at', { ascending: false })
-        .limit(30);
-
-      if (error) {
+      if (!user) {
         setNotifications([]);
+        setUserId(null);
+        setLoading(false);
         return;
       }
 
-      const seenAt = readSeenAt();
-      setNotifications(
-        (data || []).map((row: Record<string, any>) => ({
-          id: String(row.id),
-          title: row.hospital_name || 'Record accessed',
-          body: row.action || 'A verified provider viewed your shared medical record.',
-          createdAt: row.accessed_at || null,
-          isRead: row.accessed_at
-            ? new Date(row.accessed_at).getTime() <= seenAt
-            : false,
-          kind: 'access' as const,
-        }))
-      );
-    } catch {
-      setNotifications([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+      setUserId(user.id);
+
+      try {
+        setNotifications(await fetchNotifications(supabase));
+      } catch (error) {
+        // Older projects may not have the notifications table yet. Fall back
+        // to real access-log entries so the page still shows genuine activity.
+        console.warn('Notifications table unavailable:', error);
+        try {
+          const { data } = await supabase
+            .from('access_logs')
+            .select('id, action, hospital_name, accessed_at')
+            .eq('user_id', user.id)
+            .order('accessed_at', { ascending: false })
+            .limit(30);
+
+          setNotifications(
+            (data || []).map((row: Record<string, any>) => ({
+              id: String(row.id),
+              kind: 'access' as const,
+              title: row.hospital_name || 'Record accessed',
+              body: row.action || 'A verified provider viewed your shared medical record.',
+              href: `/dashboard/access-log/${row.id}`,
+              is_read: true,
+              created_at: row.accessed_at || new Date().toISOString(),
+            }))
+          );
+        } catch {
+          setNotifications([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase]
+  );
 
   useEffect(() => {
-    loadNotifications();
-    const refreshPro = () => setIsPro(readProState().active);
-    window.addEventListener('selorah:pro-updated', refreshPro);
-    window.addEventListener('storage', refreshPro);
-    return () => {
-      window.removeEventListener('selorah:pro-updated', refreshPro);
-      window.removeEventListener('storage', refreshPro);
-    };
+    void loadNotifications();
   }, [loadNotifications]);
 
-  const unread = notifications.filter((item) => !item.isRead).length;
+  // Realtime updates from scans, card orders, billing, and withdrawals.
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeNotifications(supabase, userId, () => {
+      void loadNotifications(true);
+    });
+  }, [userId, supabase, loadNotifications]);
+
+  const unread = notifications.filter((item) => !item.is_read).length;
 
   const markAllRead = async () => {
     if (!unread) return;
 
     try {
-      localStorage.setItem(SEEN_KEY, String(Date.now()));
-    } catch {
-      // Private mode can block storage. The in-memory state still updates.
+      await markAllNotificationsRead(supabase);
+      setNotifications((previous) => previous.map((item) => ({ ...item, is_read: true })));
+      success('You are all caught up.');
+    } catch (error) {
+      toastError(
+        error instanceof Error ? error.message : 'Could not mark notifications as read.'
+      );
+    }
+  };
+
+  const openNotification = async (item: NotificationRow) => {
+    if (!item.is_read) {
+      try {
+        await markNotificationRead(supabase, item.id);
+        setNotifications((previous) =>
+          previous.map((row) => (row.id === item.id ? { ...row, is_read: true } : row))
+        );
+      } catch {
+        // A failed read receipt should not block navigation.
+      }
     }
 
-    setNotifications((previous) => previous.map((item) => ({ ...item, isRead: true })));
-    success('You are all caught up.');
+    if (item.href) navigate(item.href);
   };
 
   return (
@@ -160,7 +174,7 @@ export default function Notifications() {
             )}
           </div>
           <p className="mt-1 text-sm font-medium text-gray-400">
-            Access activity, account updates, and product news.
+            QR scans, card updates, billing, and account activity.
           </p>
         </div>
         <button
@@ -218,55 +232,70 @@ export default function Notifications() {
             </div>
             <h3 className="mt-4 text-base font-bold text-[#101217]">No notifications yet</h3>
             <p className="mx-auto mt-1.5 max-w-sm text-xs font-medium leading-relaxed text-gray-400">
-              When a provider opens your shared record, or your account changes, you will see it
-              here.
+              When someone scans your QR code, orders a card, or your account changes, you will
+              see it here.
             </p>
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard/access-log')}
-              className="mt-4 inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-[#6183FF] px-4 text-[11px] font-bold text-white"
-            >
-              Check your access log
-              <ChevronRightIcon className="h-3.5 w-3.5" />
-            </button>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard/access-log')}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-[#6183FF] px-4 text-[11px] font-bold text-white"
+              >
+                Check your access log
+                <ChevronRightIcon className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard/card')}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 text-[11px] font-bold text-gray-500"
+              >
+                <QrCodeIcon className="h-3.5 w-3.5" />
+                Get your Selorah card
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-2.5">
             {notifications.map((item) => {
               const Icon = iconFor(item.kind);
               return (
-                <div
+                <button
                   key={item.id}
-                  className={`flex items-start gap-3 rounded-2xl border p-4 transition-colors ${
-                    item.isRead
-                      ? 'border-gray-100 bg-white'
-                      : 'border-[#6183FF]/15 bg-[#EEF2FF]/60'
+                  type="button"
+                  onClick={() => void openNotification(item)}
+                  className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition-colors ${
+                    item.is_read
+                      ? 'border-gray-100 bg-white hover:border-gray-200'
+                      : 'border-[#6183FF]/15 bg-[#EEF2FF]/60 hover:border-[#6183FF]/30'
                   }`}
                 >
                   <span
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                      item.isRead ? 'bg-gray-50 text-gray-400' : 'bg-white text-[#6183FF]'
+                      item.is_read ? 'bg-gray-50 text-gray-400' : 'bg-white text-[#6183FF]'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm font-bold text-[#101217]">{item.title}</p>
-                      {!item.isRead && (
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="text-sm font-bold text-[#101217]">{item.title}</span>
+                      {!item.is_read && (
                         <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#6183FF]" />
                       )}
-                    </div>
+                    </span>
                     {item.body && (
-                      <p className="mt-1 text-xs font-medium leading-relaxed text-gray-500">
+                      <span className="mt-1 block text-xs font-medium leading-relaxed text-gray-500">
                         {item.body}
-                      </p>
+                      </span>
                     )}
-                    <p className="mt-1.5 text-[9px] font-black uppercase tracking-[0.1em] text-gray-300">
-                      {relativeTime(item.createdAt)}
-                    </p>
-                  </div>
-                </div>
+                    <span className="mt-1.5 block text-[9px] font-black uppercase tracking-[0.1em] text-gray-300">
+                      {relativeTime(item.created_at)}
+                    </span>
+                  </span>
+                  {item.href && (
+                    <ChevronRightIcon className="mt-1 h-4 w-4 shrink-0 text-gray-300" />
+                  )}
+                </button>
               );
             })}
           </div>

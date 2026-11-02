@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Male avatar 5">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EEF2FF"/><stop offset="1" stop-color="#C7D2FE"/></linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="32" fill="url(#bg)"/>
+  <circle cx="99" cy="28" r="12" fill="#FFFFFF" opacity=".55"/>
+  <path d="M18 116c4-26 22-40 46-40s42 14 46 40z" fill="#3F5ED8"/>
+  <rect x="56" y="65" width="16" height="18" rx="8" fill="#E3B18F"/>
+  <circle cx="64" cy="50" r="22" fill="#F3C6A5"/>
+  
+  <path d="M41 50c0-16 10-27 23-27s23 11 23 27c-5-1-9-4-12-9-6 7-17 10-34 9z" fill="#0B0B0F"/>
+  <circle cx="56" cy="51" r="2.4" fill="#101217"/><circle cx="72" cy="51" r="2.4" fill="#101217"/>
+  <path d="M57.5 60c2.2 3.2 4.4 4.6 6.5 4.6s4.3-1.4 6.5-4.6" fill="none" stroke="#101217" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -24,7 +24,7 @@ const STEPS = [
   {
     icon: BeakerIcon,
     title: 'Earn from research surveys',
-    body: 'Answer short, approved surveys. Each question earns 1 point, and every point is worth ₦2 in your research balance.',
+    body: 'Answer short, approved surveys. Each question earns 1 point, and every point is worth ₦20 in your research balance.',
   },
   {
     icon: ShieldCheckIcon,

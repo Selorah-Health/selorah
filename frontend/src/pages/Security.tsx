@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
+import { confirmDialog } from '../lib/dialogs';
 
 type TotpFactor = {
   id: string;
@@ -193,7 +194,14 @@ export default function Security() {
   const disableMfa = async () => {
     const factor = factors[0];
     if (!factor) return;
-    if (!window.confirm('Turn off two-factor authentication for this account?')) return;
+    const confirmed = await confirmDialog({
+      title: 'Turn off two-factor authentication?',
+      message: 'This account will be protected by your password only.',
+      confirmLabel: 'Turn off 2FA',
+      tone: 'danger',
+      icon: 'shield',
+    });
+    if (!confirmed) return;
 
     const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
     if (error) {

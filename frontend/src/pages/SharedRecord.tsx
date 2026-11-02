@@ -26,6 +26,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
+import { getDeviceId } from '../lib/qr';
 import ThemeToggle from '../components/ThemeToggle';
 
 type RecordCategory = 'lab' | 'rad' | 'pres' | 'visit' | 'other';
@@ -149,55 +150,67 @@ export default function SharedRecord() {
       }
 
       try {
-        const { data: link, error: linkError } = await supabase
-          .from('shared_links')
-          .select('id, user_id, token, is_active, expires_at, created_at, record_id')
-          .eq('token', token)
-          .maybeSingle();
+        // The security-definer RPC resolves temporary links and the permanent
+        // Selorah card token, and it refuses a device whose grant was revoked.
+        const { data, error: shareError } = await supabase.rpc('get_shared_record', {
+          share_token: token,
+          p_device_id: getDeviceId(),
+        });
 
-        if (linkError) {
-          setLoadError(linkError.message);
+        if (shareError) {
+          setLoadError(shareError.message);
           setLoading(false);
           return;
         }
 
-        if (!link) {
+        const result = data as {
+          status?: string;
+          message?: string;
+          link?: Record<string, any>;
+          patient?: Record<string, any> | null;
+          records?: Array<Record<string, any>>;
+        } | null;
+
+        if (!result || result.status === 'not_found') {
           setLoadError('This share link was not found. Ask the patient for a new link.');
           setLoading(false);
           return;
         }
 
-        if (!link.is_active) {
+        if (result.status === 'revoked') {
           setIsRevoked(true);
           setLoading(false);
           return;
         }
 
-        const expiresMs = new Date(link.expires_at).getTime() - Date.now();
-        if (expiresMs <= 0) {
+        if (result.status === 'expired') {
           setIsExpired(true);
           setTimeLeft(0);
           setLoading(false);
           return;
         }
 
-        const TEN_YEARS_MS = 9 * 365 * 24 * 60 * 60 * 1000;
-        if (expiresMs < TEN_YEARS_MS) {
-          setTimeLeft(Math.floor(expiresMs / 1000));
+        const link = result.link || {};
+        const profile = result.patient || null;
+        const dbRecords = result.records || [];
+
+        if (link.expires_at) {
+          const expiresMs = new Date(link.expires_at).getTime() - Date.now();
+          if (expiresMs <= 0) {
+            setIsExpired(true);
+            setTimeLeft(0);
+            setLoading(false);
+            return;
+          }
+
+          const TEN_YEARS_MS = 9 * 365 * 24 * 60 * 60 * 1000;
+          if (expiresMs < TEN_YEARS_MS) {
+            setTimeLeft(Math.floor(expiresMs / 1000));
+          } else {
+            setTimeLeft(null);
+          }
         } else {
           setTimeLeft(null);
-        }
-
-        const { data: profile, error: profileError } = await supabase
-          .from('patient_profiles')
-          .select(
-            'id, user_id, full_name, date_of_birth, blood_group, genotype, gender, height, weight, allergies, emergency_contacts, avatar_url'
-          )
-          .eq('user_id', link.user_id)
-          .maybeSingle();
-
-        if (profileError) {
-          console.warn('patient_profiles read failed:', profileError.message);
         }
 
         let fullName = (profile?.full_name && String(profile.full_name).trim()) || '';
@@ -254,21 +267,7 @@ export default function SharedRecord() {
         let mappedRecords: SharedRecordItem[] = [];
 
         if (profile?.id) {
-          let query = supabase
-            .from('medical_records')
-            .select(
-              'id, title, record_type, file_url, status, created_at, notes, ocr_text'
-            )
-            .eq('patient_id', profile.id)
-            .order('created_at', { ascending: false });
-
-          if (link.record_id) {
-            query = query.eq('id', link.record_id);
-          }
-
-          const { data: dbRecords } = await query;
-
-          if (dbRecords && dbRecords.length > 0) {
+          if (dbRecords.length > 0) {
             for (const row of dbRecords) {
               const title = (row.title || '').toLowerCase();
               const type = (row.record_type || '').toLowerCase();
@@ -452,8 +451,15 @@ export default function SharedRecord() {
         p_role: mode === 'full' ? provider.role : 'guest',
         p_license: mode === 'full' ? provider.license.trim() : null,
         p_facility: mode === 'full' ? provider.facility.trim() || null : null,
+        p_device_id: getDeviceId(),
       });
-      const result = data as { ok?: boolean } | null;
+      const result = data as { ok?: boolean; revoked?: boolean; message?: string } | null;
+
+      if (result?.revoked) {
+        setIsRevoked(true);
+        return;
+      }
+
       logged = Boolean(result?.ok) && !error;
     } catch {
       logged = false;

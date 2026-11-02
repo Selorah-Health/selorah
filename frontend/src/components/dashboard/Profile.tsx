@@ -7,14 +7,17 @@ import {
   CheckCircleIcon,
   ChevronRightIcon,
   CreditCardIcon,
+  FingerPrintIcon,
   HeartIcon,
   IdentificationIcon,
   PhoneIcon,
   PlusIcon,
+  QrCodeIcon,
   ShieldCheckIcon,
   SparklesIcon,
   StarIcon,
   TrashIcon,
+  TrophyIcon,
   UserCircleIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
@@ -22,6 +25,7 @@ import { createClient } from '../../lib/supabase/client';
 import { isValidNin, readLocalSession, writeLocalSession } from '../../lib/auth/session';
 import { readProState, type ProState } from '../../lib/pro';
 import { markReleaseSeen, readSeenRelease } from '../../lib/releases';
+import { openPrivacyChoices } from '../../lib/privacy';
 import WhatsNewModal from './WhatsNewModal';
 
 interface ProfileProps {
@@ -36,14 +40,44 @@ type EmergencyContact = {
   phone: string;
 };
 
-const AVATAR_PRESETS = [
-  '/avatars/avatar-01.svg',
-  '/avatars/avatar-02.svg',
-  '/avatars/avatar-03.svg',
-  '/avatars/avatar-04.svg',
-  '/avatars/avatar-05.svg',
-  '/avatars/avatar-06.svg',
-];
+type AvatarGender = 'female' | 'male' | 'neutral';
+
+const AVATAR_PRESETS: Record<AvatarGender, string[]> = {
+  female: [
+    '/avatars/avatar-female-01.svg',
+    '/avatars/avatar-female-02.svg',
+    '/avatars/avatar-female-03.svg',
+    '/avatars/avatar-female-04.svg',
+    '/avatars/avatar-female-05.svg',
+    '/avatars/avatar-female-06.svg',
+  ],
+  male: [
+    '/avatars/avatar-male-01.svg',
+    '/avatars/avatar-male-02.svg',
+    '/avatars/avatar-male-03.svg',
+    '/avatars/avatar-male-04.svg',
+    '/avatars/avatar-male-05.svg',
+    '/avatars/avatar-male-06.svg',
+  ],
+  neutral: [
+    '/avatars/avatar-01.svg',
+    '/avatars/avatar-02.svg',
+    '/avatars/avatar-03.svg',
+    '/avatars/avatar-04.svg',
+    '/avatars/avatar-05.svg',
+    '/avatars/avatar-06.svg',
+  ],
+};
+
+export function avatarGender(value: string): AvatarGender {
+  if (value === 'female') return 'female';
+  if (value === 'male') return 'male';
+  return 'neutral';
+}
+
+export function defaultAvatarForGender(value: string) {
+  return AVATAR_PRESETS[avatarGender(value)][0];
+}
 
 function ageFromDob(value: string) {
   if (!value) return null;
@@ -74,6 +108,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarPanelOpen, setAvatarPanelOpen] = useState(false);
+  const [showAllAvatars, setShowAllAvatars] = useState(false);
   const [confirmRemoveAvatar, setConfirmRemoveAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -94,7 +129,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
   const [bioMessage, setBioMessage] = useState<string | null>(null);
   const [bioTone, setBioTone] = useState<'success' | 'error'>('success');
   const [releaseSeen, setReleaseSeen] = useState(() => readSeenRelease());
-  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(() => !readSeenRelease());
   const navigate = useNavigate();
   const supabase = createClient();
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -102,6 +137,12 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
   const isPro = Boolean(isProProp || proState.active);
   const age = ageFromDob(dateOfBirth);
   const contactLimit = isPro ? 10 : 3;
+  const suggestedPresets = AVATAR_PRESETS[avatarGender(gender)];
+  const defaultAvatar = gender ? defaultAvatarForGender(gender) : '';
+  const displayAvatar = avatarUrl || defaultAvatar;
+  const visiblePresets = showAllAvatars
+    ? [...AVATAR_PRESETS.female, ...AVATAR_PRESETS.male, ...AVATAR_PRESETS.neutral]
+    : suggestedPresets;
 
   const loadProfile = useCallback(async () => {
     const local = readLocalSession();
@@ -160,12 +201,6 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
       window.removeEventListener('storage', refreshPro);
     };
   }, [loadProfile]);
-
-  useEffect(() => {
-    if (releaseSeen) return;
-    const timer = window.setTimeout(() => setWhatsNewOpen(true), 500);
-    return () => window.clearTimeout(timer);
-  }, [releaseSeen]);
 
   const saveContactDetails = async () => {
     setMessage(null);
@@ -277,29 +312,42 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
     }
   };
 
-  const chooseAvatar = async (url: string) => {
+  const chooseAvatar = async (url: string, options?: { silent?: boolean }) => {
+    // Apply the avatar immediately so it shows even on a slow or offline connection.
+    setAvatarUrl(url);
+    setAvatarPanelOpen(false);
+    setConfirmRemoveAvatar(false);
     setAvatarUploading(true);
     setMessage(null);
+    writeLocalSession({ avatar_url: url });
+    window.dispatchEvent(new CustomEvent('selorah:avatar-updated', { detail: url }));
+
     try {
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Sign in again to change your photo.');
 
-      await supabase.auth.updateUser({ data: { avatar_url: url } });
-      await supabase.from('patient_profiles').update({ avatar_url: url }).eq('user_id', authUser.id);
+      const { error: profileError } = await supabase
+        .from('patient_profiles')
+        .update({ avatar_url: url })
+        .eq('user_id', authUser.id);
+      const { error: authError } = await supabase.auth.updateUser({ data: { avatar_url: url } });
 
-      writeLocalSession({ avatar_url: url });
-      setAvatarUrl(url);
-      setAvatarPanelOpen(false);
-      setConfirmRemoveAvatar(false);
-      window.dispatchEvent(new CustomEvent('selorah:avatar-updated', { detail: url }));
+      if (profileError && authError) {
+        throw new Error(profileError.message || authError.message);
+      }
 
-      setMessageTone('success');
-      setMessage('Profile photo updated.');
+      if (!options?.silent) {
+        setMessageTone('success');
+        setMessage('Profile photo updated.');
+      }
     } catch (err) {
       setMessageTone('error');
-      setMessage(err instanceof Error ? err.message : 'The avatar could not be saved.');
+      setMessage(
+        'Avatar saved on this device. It will finish syncing when you are online.'
+      );
+      console.warn('Avatar sync failed:', err);
     } finally {
       setAvatarUploading(false);
     }
@@ -398,6 +446,11 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
       setEmergencyContacts(contacts);
       setBioTone('success');
       setBioMessage('Personal and health details saved.');
+
+      // Give new profiles an avatar that matches the gender they selected.
+      if (!avatarUrl && gender) {
+        void chooseAvatar(defaultAvatarForGender(gender), { silent: true });
+      }
     } catch (err) {
       setBioTone('error');
       setBioMessage(err instanceof Error ? err.message : 'Could not save your details.');
@@ -423,8 +476,29 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
     );
   };
 
-  const removeEmergencyContact = (index: number) => {
-    setEmergencyContacts((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  const removeEmergencyContact = async (index: number) => {
+    const next = emergencyContacts.filter((_, itemIndex) => itemIndex !== index);
+    setEmergencyContacts(next);
+
+    // Persist immediately so saved contacts can be removed without pressing Save.
+    setBioMessage(null);
+    try {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Sign in again to update contacts.');
+      const { error } = await supabase
+        .from('patient_profiles')
+        .update({ emergency_contacts: next })
+        .eq('user_id', authUser.id);
+      if (error) throw error;
+      setBioTone('success');
+      setBioMessage('Emergency contact removed.');
+    } catch (err) {
+      setEmergencyContacts(emergencyContacts);
+      setBioTone('error');
+      setBioMessage(err instanceof Error ? err.message : 'Could not remove the contact.');
+    }
   };
 
   const closeWhatsNew = () => {
@@ -490,9 +564,9 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                 backgroundPosition: 'center',
               }}
             >
-              {avatarUrl ? (
+              {displayAvatar ? (
                 <img
-                  src={avatarUrl}
+                  src={displayAvatar}
                   alt={`${displayName} profile photo`}
                   className="h-full w-full rounded-full object-cover"
                 />
@@ -609,22 +683,37 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               <div>
                 <p className="text-xs font-bold text-[#101217]">Choose an avatar</p>
                 <p className="mt-0.5 text-[10px] font-medium text-gray-400">
-                  Pick a preset or upload your own photo.
+                  {showAllAvatars
+                    ? 'Showing every avatar style.'
+                    : gender === 'female'
+                      ? 'Showing avatars selected for women.'
+                      : gender === 'male'
+                        ? 'Showing avatars selected for men.'
+                        : 'Add your gender to see matching avatars, or browse all.'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                disabled={avatarUploading}
-                className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-[#101217] px-3 text-[9px] font-black uppercase tracking-[0.1em] text-white disabled:opacity-60"
-              >
-                <CameraIcon className="h-3.5 w-3.5" />
-                Upload
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAllAvatars((value) => !value)}
+                  className="min-h-[34px] rounded-full border border-gray-200 px-3 text-[9px] font-black uppercase tracking-[0.1em] text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                >
+                  {showAllAvatars ? 'Match my gender' : 'Show all'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full bg-[#101217] px-3 text-[9px] font-black uppercase tracking-[0.1em] text-white disabled:opacity-60"
+                >
+                  <CameraIcon className="h-3.5 w-3.5" />
+                  Upload
+                </button>
+              </div>
             </div>
-            <div className="mt-3 grid grid-cols-6 gap-2 sm:max-w-sm">
-              {AVATAR_PRESETS.map((preset) => {
-                const selected = avatarUrl === preset;
+            <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {visiblePresets.map((preset) => {
+                const selected = avatarUrl ? avatarUrl === preset : defaultAvatar === preset;
                 return (
                   <button
                     key={preset}
@@ -639,7 +728,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                         : 'border-transparent hover:border-gray-200'
                     }`}
                   >
-                    <img src={preset} alt="" className="h-full w-full rounded-xl" />
+                    <img src={preset} alt="" className="aspect-square h-full w-full rounded-xl" />
                   </button>
                 );
               })}
@@ -1086,8 +1175,26 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
         </section>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[
+          {
+            title: 'Selorah card',
+            subtitle: 'Order and share your card',
+            icon: QrCodeIcon,
+            path: '/dashboard/card',
+          },
+          {
+            title: 'Rewards',
+            subtitle: 'Tasks, points, and levels',
+            icon: TrophyIcon,
+            path: '/dashboard/rewards',
+          },
+          {
+            title: 'Resilience',
+            subtitle: 'Encrypted emergency backup',
+            icon: FingerPrintIcon,
+            path: '/dashboard/resilience',
+          },
           {
             title: 'Security',
             subtitle: 'Password and sessions',
@@ -1126,6 +1233,23 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
           </button>
         ))}
       </div>
+
+      <button
+        type="button"
+        onClick={() => openPrivacyChoices()}
+        className="flex w-full items-center gap-3 rounded-[24px] border border-gray-50 bg-white p-4 text-left shadow-sm transition-colors hover:border-[#6183FF]/25"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-gray-400">
+          <ShieldCheckIcon className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold text-[#101217]">Privacy choices</span>
+          <span className="mt-0.5 block text-[11px] font-medium text-gray-400">
+            Review what Selorah stores on this device.
+          </span>
+        </span>
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-gray-300" />
+      </button>
     </div>
   );
 }

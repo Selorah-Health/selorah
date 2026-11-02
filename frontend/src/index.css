@@ -70,6 +70,35 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/*
+ * App shells use the dynamic viewport height so iOS Safari does not leave a
+ * blank strip behind the collapsing URL bar. 100vh stays as the fallback for
+ * browsers without dvh support.
+ */
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/*
+ * iOS WebKit occasionally paints a white hole over a nested overflow container
+ * while the viewport settles. Painting the scroll root itself and isolating its
+ * layer keeps the content visible. These hints are limited to iOS so desktop
+ * scrolling behaviour is unchanged.
+ */
+[data-scroll-root] {
+  background-color: var(--background);
+  overscroll-behavior: contain;
+}
+
+@supports (font: -apple-system-body) {
+  [data-scroll-root] {
+    -webkit-overflow-scrolling: touch;
+    isolation: isolate;
+    will-change: scroll-position;
+  }
+}
+
 button,
 a,
 [role='button'] {

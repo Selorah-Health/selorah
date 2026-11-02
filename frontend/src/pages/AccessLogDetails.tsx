@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
+import { confirmDialog } from '../lib/dialogs';
 
 type DetailEntry = {
   title: string;
@@ -129,11 +130,18 @@ export default function AccessLogDetails() {
 
   const revokeLink = async () => {
     if (!entry?.token) return;
-    if (!window.confirm('Revoke this QR link now? It will stop working immediately.')) return;
+    const confirmed = await confirmDialog({
+      title: 'Delete this QR code?',
+      message: 'It will stop working immediately. This cannot be undone.',
+      confirmLabel: 'Delete code',
+      tone: 'danger',
+      icon: 'shield',
+    });
+    if (!confirmed) return;
 
     const { error } = await supabase
       .from('shared_links')
-      .update({ is_active: false })
+      .update({ is_active: false, revoked_at: new Date().toISOString() })
       .eq('token', entry.token);
 
     if (error) {

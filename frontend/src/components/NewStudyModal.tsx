@@ -11,6 +11,8 @@ import { createClient } from '../lib/supabase/client';
 import {
   pointsToNaira,
   formatNaira,
+  MIN_SURVEY_QUESTIONS,
+  NAIRA_PER_POINT,
   type QuestionType,
   type Survey,
   type SurveyQuestion,
@@ -120,8 +122,10 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
       }))
       .filter((question) => question.prompt.length > 0);
 
-    if (prepared.length === 0) {
-      setErrorMsg('Add at least one question.');
+    if (prepared.length < MIN_SURVEY_QUESTIONS) {
+      setErrorMsg(
+        `A survey needs at least ${MIN_SURVEY_QUESTIONS} questions before it can be published. You have ${prepared.length}.`
+      );
       return;
     }
 
@@ -152,9 +156,11 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
           summary,
           description: summary,
           category: form.category.trim() || 'General health',
-          points: Math.max(prepared.length, 1),
+          points: prepared.length,
           estimated_minutes: minutes,
-          is_active: true,
+          // Insert unpublished so a failed question insert never exposes a
+          // survey without its questions. publish_survey enforces 15 questions.
+          is_active: false,
         })
         .select('*')
         .single();
@@ -180,9 +186,27 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
         throw questionError;
       }
 
+      const { data: published, error: publishError } = await supabase.rpc('publish_survey', {
+        p_survey_id: survey.id,
+      });
+
+      if (publishError) {
+        await supabase.from('surveys').delete().eq('id', survey.id);
+        throw publishError;
+      }
+
+      const publishResult = published as { ok?: boolean; message?: string } | null;
+      if (!publishResult?.ok) {
+        await supabase.from('surveys').delete().eq('id', survey.id);
+        throw new Error(
+          publishResult?.message || 'The survey could not be published. Try again.'
+        );
+      }
+
       onCreated({
         ...(survey as Survey),
         points: prepared.length,
+        is_active: true,
         questions: (questionRows || []) as SurveyQuestion[],
       });
       onClose();
@@ -222,7 +246,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
 
         <p className="mt-3 text-xs font-medium leading-relaxed text-gray-400">
           Participants see the reward, the questions, and what is collected before they consent.
-          Every point is worth {formatNaira(2)}.
+          Every point is worth {formatNaira(NAIRA_PER_POINT)}.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
@@ -284,7 +308,8 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
           <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-[11px] font-semibold text-gray-400">
             Participant reward: 1 point per question. {questions.length} question
             {questions.length === 1 ? '' : 's'}, worth{' '}
-            {formatNaira(pointsToNaira(questions.length))}.
+            {formatNaira(pointsToNaira(questions.length))}. A survey needs at least{' '}
+            {MIN_SURVEY_QUESTIONS} questions to publish.
           </div>
 
           <div>

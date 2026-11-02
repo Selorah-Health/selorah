@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useToast } from '../../contexts/ToastContext';
 import { createClient } from '../../lib/supabase/client';
+import { notifyEarningsChanged, subscribeEarnings } from '../../lib/earnings';
 import {
   formatNaira,
   normalizeOptions,
@@ -64,6 +65,7 @@ export default function Research() {
   });
 
   const [identity, setIdentity] = useState<Identity>({ name: 'Research participant', email: '' });
+  const [patientId, setPatientId] = useState<string | null>(null);
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
 
@@ -73,8 +75,8 @@ export default function Research() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const loadResearch = useCallback(async () => {
-    setLoading(true);
+  const loadResearch = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setLoadError(null);
 
     try {
@@ -96,7 +98,7 @@ export default function Research() {
         await Promise.all([
           supabase
             .from('patient_profiles')
-            .select('full_name')
+            .select('id, full_name')
             .eq('user_id', user.id)
             .maybeSingle(),
           supabase
@@ -117,6 +119,7 @@ export default function Research() {
 
       const name = profile?.full_name || metaName || user.email?.split('@')[0] || 'Research participant';
       setIdentity({ name, email: user.email || '' });
+      setPatientId(profile?.id || null);
 
       const rows = (surveyRows || []) as Survey[];
       const ids = rows.map((row) => row.id);
@@ -170,6 +173,15 @@ export default function Research() {
   useEffect(() => {
     void loadResearch();
   }, [loadResearch]);
+
+  // Keep the research balance in sync when a survey reward or withdrawal is
+  // written from another tab or by the dashboard.
+  useEffect(() => {
+    if (!patientId) return;
+    return subscribeEarnings(supabase, patientId, () => {
+      void loadResearch(true);
+    });
+  }, [patientId, supabase, loadResearch]);
 
   const completedIds = useMemo(
     () => new Set(responses.map((response) => response.survey_id)),
@@ -307,6 +319,7 @@ export default function Research() {
         ...previous,
       ]);
 
+      notifyEarningsChanged();
       success(
         `${awarded} points added. That is ${formatNaira(reward)} in your research balance.`,
         'Survey complete'
@@ -333,7 +346,7 @@ export default function Research() {
           </h2>
           <p className="mt-1 text-sm font-medium text-gray-400">
             Answer approved surveys on your terms. Each question earns 1 point, and every point
-            is worth ₦2.
+            is worth ₦20.
           </p>
         </div>
         <button

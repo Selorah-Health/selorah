@@ -383,7 +383,7 @@ export default function ResearcherDashboard() {
   const surveyDetailStats = activeSurvey ? stats[activeSurvey.id] : undefined;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F9FE] font-sora selection:bg-primary/30">
+    <div className="flex app-shell overflow-hidden bg-[#F8F9FE] font-sora selection:bg-primary/30">
       <SEOTitle title={`${getPageTitle()} | Researcher Portal`} />
 
       <PortalSidebar
@@ -397,7 +397,7 @@ export default function ResearcherDashboard() {
         roleDescription={identity.verified ? 'Verified researcher' : 'Researcher'}
       />
 
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <header className="z-10 flex h-[70px] shrink-0 items-center justify-between px-4 md:px-8 lg:px-12">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold tracking-tight text-[#101217]">{getPageTitle()}</h1>

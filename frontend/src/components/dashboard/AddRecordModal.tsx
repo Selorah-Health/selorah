@@ -26,6 +26,8 @@ import {
 } from '../../lib/records';
 import { dataUrlToBlob, prepareImageFile, readFileAsDataUrl } from '../../lib/images';
 import { correctOcrText, extractTextFromImage, prewarmOcr } from '../../lib/ocr';
+import { enqueueAction } from '../../lib/offline/queue';
+import { cacheRecord } from '../../lib/offline/records';
 
 type Mode = 'profile' | 'file';
 
@@ -96,6 +98,18 @@ function titleFromOcr(text: string) {
     .map((line) => line.trim())
     .find((line) => line.length > 2);
   return firstLine ? firstLine.slice(0, 80) : '';
+}
+
+function isOfflineError(message?: string) {
+  return /Failed to fetch|NetworkError|Load failed|fetch failed|network request failed|timeout|offline/i.test(
+    message || ''
+  );
+}
+
+function localId() {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `local-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function friendlyInsertError(message: string) {
@@ -458,6 +472,64 @@ export default function AddRecordModal({
     return entries;
   };
 
+  const queueRecord = async (input: {
+    title: string;
+    recordType: string;
+    fileUrl?: string;
+    fileName?: string;
+    mimeType?: string;
+    ocrText?: string;
+    notes?: string;
+    capturedVia?: 'camera' | 'upload' | 'manual';
+  }) => {
+    const id = localId();
+    await enqueueAction({
+      type: 'record.create',
+      payload: {
+        title: input.title,
+        recordType: input.recordType,
+        fileUrl: input.fileUrl,
+        fileName: input.fileName,
+        mimeType: input.mimeType,
+        ocrText: input.ocrText,
+        notes: input.notes,
+        capturedVia: input.capturedVia,
+        localId: id,
+        createdAt: new Date().toISOString(),
+      },
+    });
+
+    await cacheRecord({
+      id,
+      name: input.title,
+      date: new Date().toLocaleDateString(),
+      status: 'Waiting to sync',
+      icon: '/assets/total-records-card-icon.png',
+      document_url: input.fileUrl || null,
+      record_type: input.recordType,
+      created_at: new Date().toISOString(),
+      pending: true,
+      ocrText: input.ocrText,
+      notes: input.notes,
+      capturedVia: input.capturedVia,
+    });
+  };
+
+  const queueProfileEntries = async (entries: ReturnType<typeof buildEntries>) => {
+    for (const entry of entries) {
+      const contentUrl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(entry.content);
+      await queueRecord({
+        title: entry.title,
+        recordType: entry.recordType,
+        fileUrl: contentUrl,
+        fileName: `${entry.title.replace(/\s+/g, '-').toLowerCase()}.txt`,
+        mimeType: 'text/plain',
+        notes: entry.content,
+        capturedVia: 'manual',
+      });
+    }
+  };
+
   const getProfile = async (user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }) => {
     let profile = await ensurePatientProfile(supabase as SupabaseClient, {
       id: user.id,
@@ -487,6 +559,25 @@ export default function AddRecordModal({
     const entries = buildEntries();
     if (!entries.length) {
       warning('Fill in at least one field before saving.');
+      return;
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setSaving(true);
+      try {
+        await queueProfileEntries(entries);
+        toastSuccess(
+          'Saved on this device. Your health fields will sync when you reconnect.',
+          'Queued for sync'
+        );
+        onClose();
+      } catch (error) {
+        setErrorMsg(
+          error instanceof Error ? error.message : 'Could not save these fields offline.'
+        );
+      } finally {
+        setSaving(false);
+      }
       return;
     }
 
@@ -604,6 +695,39 @@ export default function AddRecordModal({
       return;
     }
 
+    const queuedPayload = {
+      title: title.trim(),
+      recordType: FILE_CATEGORY_TO_TYPE[category] || 'Clinical Document',
+      fileUrl: preparedUrl,
+      fileName: selectedFile.name,
+      mimeType: preparedMime || selectedFile.type,
+      ocrText: ocrText.trim() || undefined,
+      notes: notes.trim() || undefined,
+      capturedVia: selectedFile.type.startsWith('image/')
+        ? ('camera' as const)
+        : ('upload' as const),
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setSaving(true);
+      ocrRunRef.current += 1;
+      try {
+        await queueRecord(queuedPayload);
+        toastSuccess(
+          'Saved on this device. It will upload and sync when you reconnect.',
+          'Queued for sync'
+        );
+        onClose();
+      } catch (error) {
+        setErrorMsg(
+          error instanceof Error ? error.message : 'Could not save this record offline.'
+        );
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     setSaving(true);
     ocrRunRef.current += 1;
 
@@ -648,6 +772,23 @@ export default function AddRecordModal({
       onClose();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not save this record.';
+
+      // A dropped connection should not lose the record. Queue the exact file
+      // and text and let the background sync upload it later.
+      if (isOfflineError(message)) {
+        try {
+          await queueRecord(queuedPayload);
+          toastSuccess(
+            'The connection dropped. Your record is saved on this device and will sync later.',
+            'Queued for sync'
+          );
+          onClose();
+          return;
+        } catch {
+          // Fall through to the normal error below.
+        }
+      }
+
       setErrorMsg(friendlyInsertError(message));
       toastError(friendlyInsertError(message), 'Record not saved');
     } finally {

@@ -579,6 +579,7 @@ end;
 $$;
 
 revoke all on function public.enqueue_email(text, text, text, jsonb) from public;
+grant execute on function public.enqueue_email(text, text, text, jsonb) to service_role;
 
 -- Welcome email when a new auth user is created.
 create or replace function public.enqueue_welcome_email()

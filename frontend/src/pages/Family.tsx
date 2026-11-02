@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
+import { confirmDialog } from '../lib/dialogs';
 
 type FamilyMember = {
   id: string;
@@ -162,7 +163,14 @@ export default function Family() {
   };
 
   const removeMember = async (member: FamilyMember) => {
-    if (!window.confirm(`Remove ${member.name} from your family group?`)) return;
+    const confirmed = await confirmDialog({
+      title: `Remove ${member.name}?`,
+      message: 'They will lose the access you granted from your family group.',
+      confirmLabel: 'Remove member',
+      tone: 'danger',
+      icon: 'shield',
+    });
+    if (!confirmed) return;
 
     try {
       await persistMembers(members.filter((item) => item.id !== member.id));

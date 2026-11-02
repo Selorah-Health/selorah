@@ -81,7 +81,7 @@ export default function InsurerDashboard() {
   ];
 
   return (
-    <div className="flex h-screen bg-[#F8F9FE] overflow-hidden font-sora selection:bg-primary/30">
+    <div className="flex app-shell bg-[#F8F9FE] overflow-hidden font-sora selection:bg-primary/30">
       <SEOTitle title={`${getPageTitle()} | Insurer Portal`} />
       
       {/* Sidebar - Reusable Component */}
@@ -96,7 +96,7 @@ export default function InsurerDashboard() {
         roleDescription="Claims Department"
       />
 
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <header className="h-[70px] bg-transparent flex items-center justify-between px-4 md:px-8 lg:px-12 shrink-0 z-10">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold text-[#101217] tracking-tight">{getPageTitle()}</h1>

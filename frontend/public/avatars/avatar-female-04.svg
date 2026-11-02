@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Female avatar 4">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FEF3C7"/><stop offset="1" stop-color="#FDE68A"/></linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="32" fill="url(#bg)"/>
+  <circle cx="99" cy="28" r="12" fill="#FFFFFF" opacity=".55"/>
+  <path d="M27 58c0-24 16-41 37-41s37 17 37 41v30c0 7-5 11-11 11h-5V58H43v41h-5c-6 0-11-4-11-11z" fill="#1F2937"/>
+  <path d="M20 116c4-25 21-39 44-39s40 14 44 39z" fill="#7C3AED"/>
+  <rect x="56" y="65" width="16" height="18" rx="8" fill="#4A2812"/>
+  <circle cx="64" cy="50" r="22" fill="#5C3317"/>
+  <path d="M42 47c3-15 11-24 22-24 12 0 20 8 22 24-5 2-9 2-13-1-4 4-11 6-18 5-4 2-8 1-13-4z" fill="#1F2937"/>
+  <circle cx="56" cy="51" r="2.4" fill="#101217"/><circle cx="72" cy="51" r="2.4" fill="#101217"/>
+  <path d="M57.5 60c2.2 3.2 4.4 4.6 6.5 4.6s4.3-1.4 6.5-4.6" fill="none" stroke="#101217" stroke-width="2" stroke-linecap="round"/>
+</svg>
