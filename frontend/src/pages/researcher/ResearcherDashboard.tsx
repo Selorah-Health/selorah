@@ -26,6 +26,7 @@ import NewStudyModal from '../../components/NewStudyModal';
 import {
   formatNaira,
   normalizeOptions,
+  normalizeSurveyReward,
   pointsToNaira,
   type Survey,
   type SurveyQuestion,
@@ -213,7 +214,10 @@ export default function ResearcherDashboard() {
           survey_id: row.survey_id,
           responses: Number(row.responses || 0),
           points_awarded: Number(row.points_awarded || 0),
-          reward_naira: Number(row.reward_naira || 0),
+          reward_naira: normalizeSurveyReward({
+            points_awarded: row.points_awarded,
+            reward_naira: row.reward_naira,
+          }),
         };
       }
       setStats(statMap);

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   ArrowRightOnRectangleIcon,
-  Bars3Icon,
   BeakerIcon,
   BellIcon,
   CloudArrowUpIcon,
@@ -20,10 +19,11 @@ import {
 import { createClient } from '../lib/supabase/client';
 import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import SEOTitle from '../components/SEOTitle';
+import SidebarPanelIcon from '../components/SidebarPanelIcon';
 import { clearLocalSession, readLocalSession, writeLocalSession } from '../lib/auth/session';
 import { fetchMedicalRecords, type MedicalRecord } from '../lib/records';
-import { readProState } from '../lib/pro';
-import { formatNaira } from '../lib/earnings';
+import { readProState, refreshProFromProfile } from '../lib/pro';
+import { fetchEarnings, formatNaira } from '../lib/earnings';
 import { prewarmOcr } from '../lib/ocr';
 
 // Tab Components
@@ -156,25 +156,8 @@ export default function Dashboard() {
         .maybeSingle();
 
       if (profile?.id) {
-        const [earningsRes, withdrawalsRes] = await Promise.all([
-          supabase
-            .from('earnings')
-            .select('amount_local, status')
-            .eq('patient_id', profile.id),
-          supabase
-            .from('withdrawals')
-            .select('amount_local, status')
-            .eq('patient_id', profile.id),
-        ]);
-
-        const cleared = (earningsRes.data || [])
-          .filter((row: { status?: string }) => ['available', 'cleared'].includes(String(row.status)))
-          .reduce((sum: number, row: { amount_local?: number }) => sum + Number(row.amount_local || 0), 0);
-        const reserved = (withdrawalsRes.data || [])
-          .filter((row: { status?: string }) => ['pending', 'processing'].includes(String(row.status)))
-          .reduce((sum: number, row: { amount_local?: number }) => sum + Number(row.amount_local || 0), 0);
-
-        next.earningsAvailable = Math.max(0, cleared - reserved);
+        const earnings = await fetchEarnings(supabase);
+        next.earningsAvailable = earnings.available;
       }
     } catch {
       // Earnings are optional until the patient has a profile.
@@ -249,6 +232,17 @@ export default function Dashboard() {
             : false);
         setIsPro(storedPro.active || proFromMeta);
 
+        // Reconcile in the background. A server grant can exist even when the
+        // local cache or auth metadata is stale, for example after a webhook.
+        void refreshProFromProfile(supabase).then((serverPro) => {
+          if (cancelled || !serverPro) return;
+          setIsPro(serverPro.active);
+          const local = readLocalSession();
+          if (local) {
+            writeLocalSession({ ...local, is_pro: serverPro.active });
+          }
+        });
+
         writeLocalSession({
           id: authUser.id,
           email: authUser.email,
@@ -304,14 +298,22 @@ export default function Dashboard() {
       );
     };
 
+    const handleFocus = () => {
+      void refreshProFromProfile(supabase).then((serverPro) => {
+        if (!cancelled && serverPro) setIsPro(serverPro.active);
+      });
+    };
+
     window.addEventListener('selorah:pro-updated', handleProUpdate);
     window.addEventListener('selorah:avatar-updated', handleAvatarUpdate);
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', handleFocus);
     return () => {
       cancelled = true;
       window.removeEventListener('selorah:pro-updated', handleProUpdate);
       window.removeEventListener('selorah:avatar-updated', handleAvatarUpdate);
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', handleFocus);
     };
   }, [supabase, loadRecords, loadSummary]);
 
@@ -477,7 +479,7 @@ export default function Dashboard() {
               onClick={() => setIsCollapsed((value) => !value)}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
             >
-              <Bars3Icon className="h-4 w-4" />
+              <SidebarPanelIcon className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -609,9 +611,9 @@ export default function Dashboard() {
               type="button"
               onClick={() => setIsSidebarOpen(true)}
               aria-label="Open menu"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white p-1.5 md:hidden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-gray-200 bg-white p-2 md:hidden"
             >
-              <img src="/logo.svg" alt="" className="h-full w-full object-contain" />
+              <SidebarPanelIcon className="h-5 w-5 text-[#101217]" />
             </button>
             <div className="min-w-0">
               <h1 className="truncate text-xl font-bold tracking-tight text-[#101217] md:text-2xl">

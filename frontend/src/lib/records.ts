@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isOffline, readSnapshot, writeSnapshot } from './offlineSnapshot';
 
 export type MedicalRecord = {
   id: string;
@@ -172,39 +173,63 @@ export async function ensurePatientProfile(
 export async function fetchMedicalRecords(
   supabase: SupabaseClient
 ): Promise<MedicalRecord[]> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
+  const cached = readSnapshot<MedicalRecord[]>('medical_records');
+  if (isOffline()) return cached || [];
 
-  const patientId = await getPatientProfileId(supabase, user.id);
-  if (!patientId) return [];
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return cached || [];
 
-  const { data, error } = await supabase
-    .from('medical_records')
-    .select('*')
-    .eq('patient_id', patientId)
-    .order('created_at', { ascending: false });
+    const patientId = await getPatientProfileId(supabase, user.id);
+    if (!patientId) return cached || [];
 
-  if (error || !data) return [];
+    const { data, error } = await supabase
+      .from('medical_records')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('created_at', { ascending: false });
 
-  return data
-    .filter((record: Record<string, unknown>) => !isProfileField(record))
-    .map((record: Record<string, unknown>) => ({
-      id: String(record.id),
-      name: String(record.title || record.name || 'Clinical document'),
-      date: formatRecordDate(
-        (record.created_at as string | null) || (record.date as string | null)
-      ),
-      status:
-        record.status === 'active' || record.status === 'Active'
-          ? 'Encrypted'
-          : String(record.status || 'Private'),
-      icon: '/assets/total-records-card-icon.png',
-      document_url: (record.file_url as string) || (record.document_url as string) || null,
-      record_type: (record.record_type as string) || null,
-      created_at: (record.created_at as string) || null,
-      ocr_text: (record.ocr_text as string) || null,
-      notes: (record.notes as string) || null,
-    }));
+    if (error || !data) return cached || [];
+
+    const records = data
+      .filter((record: Record<string, unknown>) => !isProfileField(record))
+      .map((record: Record<string, unknown>) => ({
+        id: String(record.id),
+        name: String(record.title || record.name || 'Clinical document'),
+        date: formatRecordDate(
+          (record.created_at as string | null) || (record.date as string | null)
+        ),
+        status:
+          record.status === 'active' || record.status === 'Active'
+            ? 'Encrypted'
+            : String(record.status || 'Private'),
+        icon: '/assets/total-records-card-icon.png',
+        document_url: (record.file_url as string) || (record.document_url as string) || null,
+        record_type: (record.record_type as string) || null,
+        created_at: (record.created_at as string) || null,
+        ocr_text: (record.ocr_text as string) || null,
+        notes: (record.notes as string) || null,
+      }));
+
+    // Keep the offline copy to display fields only. Full OCR text and notes
+    // stay in the encrypted vault and are not duplicated in local storage.
+    writeSnapshot(
+      'medical_records',
+      records.map((record) => ({
+        id: record.id,
+        name: record.name,
+        date: record.date,
+        status: record.status,
+        icon: record.icon,
+        record_type: record.record_type,
+        created_at: record.created_at,
+      }))
+    );
+
+    return records;
+  } catch {
+    return cached || [];
+  }
 }

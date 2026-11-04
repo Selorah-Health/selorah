@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import SEOTitle from '../components/SEOTitle';
 import ThemeToggle from '../components/ThemeToggle';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 import { createClient } from '../lib/supabase/client';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -133,7 +134,7 @@ export default function Signup() {
         email: signupEmail,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/onboarding`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             first_name: displayFirst,
             last_name: displayLast,
@@ -277,6 +278,32 @@ export default function Signup() {
                   Log in
                 </Link>
               </p>
+
+              {formData.role === 'patient' && (
+                <>
+                  <div className="mt-6">
+                    <GoogleAuthButton label="Sign up with Google" />
+                  </div>
+                  <p className="mt-2 px-1 text-[10px] font-medium leading-relaxed text-gray-400">
+                    By continuing with Google you agree to the{' '}
+                    <Link to="/terms" className="font-bold text-[#6183FF] hover:underline">
+                      Terms
+                    </Link>{' '}
+                    and{' '}
+                    <Link to="/privacy" className="font-bold text-[#6183FF] hover:underline">
+                      Privacy Policy
+                    </Link>
+                    . Google sign up creates a patient account.
+                  </p>
+                  <div className="mt-5 flex items-center gap-3">
+                    <span className="h-px flex-1 bg-gray-100" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-300">
+                      or sign up with email
+                    </span>
+                    <span className="h-px flex-1 bg-gray-100" />
+                  </div>
+                </>
+              )}
 
               {error && (
                 <div
@@ -558,8 +585,8 @@ export default function Signup() {
               </p>
               <p className="mt-1 break-all text-sm font-bold text-[#101217]">{submittedEmail}</p>
               <p className="mx-auto mt-4 max-w-sm text-xs font-medium leading-relaxed text-gray-400">
-                Open the email and confirm your address, then log in to finish setting up your
-                profile. Check spam if it does not arrive in a minute.
+                Open the email and confirm your address. You will be taken to onboarding to finish
+                your profile. Check spam if it does not arrive in a minute.
               </p>
 
               <Link

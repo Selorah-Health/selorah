@@ -1,4 +1,4 @@
-export const CURRENT_RELEASE = '2026.10.29';
+export const CURRENT_RELEASE = '2026.11.04.1';
 
 export type ReleaseNote = {
   title: string;
@@ -8,34 +8,39 @@ export type ReleaseNote = {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
-    tag: 'Look and feel',
-    title: 'Dark mode is here',
-    body: 'Switch between light and dark from the theme button in your dashboard, portal, or shared record.',
+    tag: 'Emergency card',
+    title: 'Download the real card design',
+    body: 'Your front and back card images now download at full size with your QR code and health details. The layout, colours, and card finish stay exactly the same.',
   },
   {
-    tag: 'Profile',
-    title: 'Pick or upload your photo',
-    body: 'Choose one of the new preset avatars, upload your own, or remove your photo at any time from settings.',
+    tag: 'Offline',
+    title: 'Your last values stay visible',
+    body: 'When you lose connection, the dashboard keeps showing your last known records, health score, survey balance, cash earned, rewards, and level instead of empty screens.',
   },
   {
-    tag: 'Health profile',
-    title: 'More of your story in settings',
-    body: 'Add your date of birth, age, gender, height, weight, blood group, genotype, allergies, medical conditions, and emergency contacts.',
+    tag: 'Research',
+    title: 'Survey rewards corrected to ₦20 per point',
+    body: 'Every survey point is worth ₦20. Older responses that were saved at a lower rate are corrected automatically, and any genuine bonus already on an account is kept.',
   },
   {
     tag: 'Pro',
-    title: 'Monthly and annual plans',
-    body: 'Pro now starts at ₦2,000 a month. The annual plan is ₦20,000 and gives you two months free.',
+    title: 'Upgrade recovery after a reload',
+    body: 'If Paystack returns a pending bank transfer or you close the tab, Selorah now restores the pending payment, checks it again, and repairs Pro access without charging you twice.',
   },
   {
-    tag: 'Reliability',
-    title: 'Updates without reinstalling',
-    body: 'The installed app now updates itself in the background. A refresh prompt appears when a new version is ready.',
+    tag: 'Rewards',
+    title: 'Health points and cash are clearly separate',
+    body: 'Health points track your progress and level. They are not cash. Survey points remain the only cash reward and are paid at ₦20 per point in Earnings.',
   },
   {
-    tag: 'Privacy',
-    title: 'You control privacy choices',
-    body: 'Review and manage optional storage from settings or the privacy prompt. Selorah does not sell your data.',
+    tag: 'Support',
+    title: 'A contact page that works',
+    body: 'Reach the Selorah team from the new Contact page, copy a ready-to-send message, or use the monitored support inbox for privacy and security requests.',
+  },
+  {
+    tag: 'Account',
+    title: 'Sign in with Google',
+    body: 'Use Google to log in or create a patient account. New accounts go straight to onboarding once Google confirms your email, and existing accounts land in the right portal.',
   },
 ];
 

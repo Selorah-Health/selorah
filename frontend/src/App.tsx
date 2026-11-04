@@ -18,12 +18,14 @@ const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const SharedRecord = lazy(() => import('./pages/SharedRecord'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const About = lazy(() => import('./pages/About'));
+const Contact = lazy(() => import('./pages/Contact'));
 const Careers = lazy(() => import('./pages/Careers'));
 const CookiePolicy = lazy(() => import('./pages/CookiePolicy'));
 const DataProcessing = lazy(() => import('./pages/DataProcessing'));
@@ -61,12 +63,14 @@ export default function App() {
               <Route path="/dashboard/*" element={<RoleGuard><Dashboard /></RoleGuard>} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/shared/:token" element={<SharedRecord />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/cookie-policy" element={<CookiePolicy />} />
               <Route path="/dpa" element={<DataProcessing />} />

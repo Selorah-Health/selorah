@@ -27,6 +27,7 @@ import {
   type EarningsSummary,
 } from '../../lib/earnings';
 import { useSync } from '../../contexts/SyncContext';
+import { getGreeting } from '../../lib/greetings';
 
 interface HomeProps {
   user: any;
@@ -43,36 +44,6 @@ function statusClasses(status: string) {
   return status === 'Shared Once'
     ? 'bg-[#EEF2FF] text-[#6183FF]'
     : 'bg-[#6183FF] text-white';
-}
-
-function greetingFor(rawName: string, gender: string) {
-  const hour = new Date().getHours();
-  const isFemale = /^f/i.test(gender);
-  const fallback = isFemale ? 'queen' : 'champ';
-  const name = rawName && rawName !== 'there' ? rawName : fallback;
-
-  const morning = [
-    `Beautiful morning, ${name}`,
-    `Arise and shine, ${name}!`,
-    `A fresh start today, ${name}`,
-    `Rise and thrive, ${name}`,
-  ];
-  const afternoon = [
-    `Good afternoon, ${name}`,
-    `Hope your day is going well, ${name}`,
-    `What would you like to do today, ${name}?`,
-    `Welcome back, ${name}!`,
-  ];
-  const evening = [
-    `Good evening, ${name}`,
-    `Welcome back, ${name}!`,
-    `You made it through today, ${name}`,
-    `Time to unwind, ${name}`,
-  ];
-
-  const list = hour < 12 ? morning : hour < 17 ? afternoon : evening;
-  const seed = new Date().getDate() + name.length + (isFemale ? 1 : 0);
-  return list[seed % list.length];
 }
 
 export default function Home({
@@ -135,7 +106,7 @@ export default function Home({
     };
   }, [supabase, earnings.patientId]);
 
-  const greeting = greetingFor(displayName, gender);
+  const greeting = getGreeting(displayName, gender);
 
   const stats = [
     {

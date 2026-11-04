@@ -19,6 +19,7 @@ import {
   type PointEvent,
 } from '../lib/points';
 import { useToast } from '../contexts/ToastContext';
+import { isOffline, readSnapshot, writeSnapshot } from '../lib/offlineSnapshot';
 
 type Criteria = Record<string, boolean>;
 
@@ -33,6 +34,9 @@ export default function Rewards() {
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    const cachedCriteria = readSnapshot<Criteria>('rewards_criteria');
+    if (cachedCriteria) setCriteria(cachedCriteria);
+
     try {
       const [pointData, records] = await Promise.all([
         fetchPointEvents(supabase),
@@ -41,6 +45,8 @@ export default function Rewards() {
 
       setEvents(pointData.events);
       setTotal(pointData.total);
+
+      if (isOffline()) return;
 
       const {
         data: { user },
@@ -61,6 +67,8 @@ export default function Rewards() {
           .eq('user_id', user.id),
       ]);
 
+      if (!profile) return;
+
       let hasVault = false;
       if (profile?.id) {
         const { data: vault } = await supabase
@@ -77,7 +85,7 @@ export default function Rewards() {
       const family = Array.isArray(profile?.family_members) ? profile.family_members.length : 0;
       const allergies = Array.isArray(profile?.allergies) ? profile.allergies.length : 0;
 
-      setCriteria({
+      const nextCriteria: Criteria = {
         'profile-complete': Boolean(
           profile?.date_of_birth &&
             profile?.blood_group &&
@@ -93,9 +101,16 @@ export default function Rewards() {
         'resilience-vault': hasVault,
         'first-survey': (surveyCount || 0) > 0,
         'family-member': family > 0,
-      });
+      };
+
+      setCriteria(nextCriteria);
+      writeSnapshot('rewards_criteria', nextCriteria);
     } catch (err) {
-      toastError(err instanceof Error ? err.message : 'Rewards could not be loaded.');
+      if (cachedCriteria) {
+        setCriteria(cachedCriteria);
+      } else {
+        toastError(err instanceof Error ? err.message : 'Rewards could not be loaded.');
+      }
     } finally {
       setLoading(false);
     }
@@ -158,6 +173,18 @@ export default function Rewards() {
         </p>
       </div>
 
+      <div className="flex items-start gap-3 rounded-2xl border border-[#6183FF]/15 bg-[#EEF2FF] p-4">
+        <SparklesIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#6183FF]" />
+        <div>
+          <p className="text-xs font-bold text-[#101217]">Two different point systems</p>
+          <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-600">
+            Health points on this page measure your progress and unlock levels. They are not cash
+            and cannot be withdrawn. Survey points are separate: they are paid in Earnings at N20
+            per point.
+          </p>
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-[24px] border border-transparent bg-[#6183FF] p-5 text-white shadow-lg shadow-[#6183FF]/20 sm:col-span-2">
           <div className="flex items-start justify-between gap-4">
@@ -191,8 +218,9 @@ export default function Rewards() {
             Rewards claimed
           </p>
           <p className="mt-1 text-2xl font-bold text-[#101217]">{events.length}</p>
-          <p className="mt-1 text-[11px] font-medium text-gray-400">
-            Survey points pay N20 each in Earnings.
+          <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-400">
+            Health points track your level and are not cash. Survey points are separate and pay N20
+            each in Earnings.
           </p>
           <button
             type="button"

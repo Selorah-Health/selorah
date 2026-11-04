@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeftIcon,
@@ -26,7 +26,12 @@ import {
   PRO_PLANS,
   PRO_PLAN_LABEL,
   activatePro,
+  clearPendingPayment,
+  readPendingPayment,
   readProState,
+  refreshProFromProfile,
+  savePendingPayment,
+  verifyProReference,
   withTimeout,
   type ProPlanId,
   type ProState,
@@ -128,6 +133,11 @@ export default function ProUpgrade() {
   const [pendingMsg, setPendingMsg] = useState<string | null>(null);
   const [email, setEmail] = useState(() => readLocalSession()?.email || '');
   const [paystackReady, setPaystackReady] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [recoveryRef, setRecoveryRef] = useState('');
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState<string | null>(null);
+  const recoveryStarted = useRef(false);
 
   const plan = PRO_PLANS[planId];
   const priceLabel = `₦${plan.priceNaira.toLocaleString('en-NG')}`;
@@ -175,6 +185,66 @@ export default function ProUpgrade() {
     };
   }, [configured, supabase]);
 
+  // Recover a payment whose callback never reached this tab, for example after
+  // a bank transfer opened the banking app and the browser discarded the page.
+  useEffect(() => {
+    if (recoveryStarted.current) return;
+    recoveryStarted.current = true;
+
+    let active = true;
+
+    const checkPending = async (reference: string) => {
+      try {
+        const result = await verifyProReference(reference, { supabase });
+        if (!active) return;
+        if (result.verified) {
+          setPro(result.state);
+          setStatus('done');
+          success('Your payment is confirmed and Selorah Pro is active.', 'Payment verified');
+        } else if (result.pendingMessage) {
+          setPendingMsg(result.pendingMessage);
+        }
+      } catch (error) {
+        if (!active) return;
+        setRecoveryMessage(
+          error instanceof Error
+            ? error.message
+            : 'We could not verify that payment yet. Check again in a moment.'
+        );
+      }
+    };
+
+    const reconcile = async () => {
+      const serverState = await refreshProFromProfile(supabase, { clearInactive: false });
+      if (!active) return;
+      if (serverState?.active) setPro(serverState);
+
+      const pending = readPendingPayment();
+      if (!pending) return;
+
+      const age = Date.now() - new Date(pending.createdAt).getTime();
+      if (Number.isNaN(age) || age > 24 * 60 * 60 * 1000) {
+        clearPendingPayment(pending.reference);
+        return;
+      }
+
+      // Give the checkout callback a moment to finish before retrying.
+      if (age < 6000) {
+        window.setTimeout(() => {
+          if (active) void checkPending(pending.reference);
+        }, 6500 - age);
+        return;
+      }
+
+      void checkPending(pending.reference);
+    };
+
+    void reconcile();
+    return () => {
+      active = false;
+    };
+  }, [supabase, success]);
+
   const resolveEmail = async () => {
     if (email.trim()) return email.trim();
     const local = readLocalSession()?.email;
@@ -185,6 +255,56 @@ export default function ProUpgrade() {
     } catch {
       return '';
     }
+  };
+
+  const runVerification = async (reference: string) => {
+    setRecovering(true);
+    setRecoveryMessage(null);
+    setPendingMsg(null);
+    setErrorMsg(null);
+
+    try {
+      const result = await verifyProReference(reference, { supabase });
+      if (result.verified) {
+        setPro(result.state);
+        setStatus('done');
+        clearPendingPayment(reference);
+        success('Payment verified. Selorah Pro is active.', 'Welcome to Pro');
+      } else if (result.pendingMessage) {
+        setPendingMsg(result.pendingMessage);
+      } else {
+        setRecoveryMessage(
+          'That reference is not showing a successful payment yet. Check it and try again.'
+        );
+      }
+    } catch (error) {
+      setRecoveryMessage(
+        error instanceof Error ? error.message : 'Could not verify that reference.'
+      );
+    } finally {
+      setRecovering(false);
+    }
+  };
+
+  const handleRecovery = () => {
+    const reference = recoveryRef.trim();
+    if (!reference) {
+      setRecoveryMessage('Enter the reference from your Paystack receipt.');
+      return;
+    }
+    void runVerification(reference);
+  };
+
+  const handleCheckPending = () => {
+    const pending = readPendingPayment();
+    if (!pending) {
+      setShowRecovery(true);
+      setRecoveryMessage(
+        'No pending payment is stored on this device. Enter your receipt reference below.'
+      );
+      return;
+    }
+    void runVerification(pending.reference);
   };
 
   const handleUpgrade = async () => {
@@ -221,6 +341,15 @@ export default function ProUpgrade() {
           plan_id: planId,
           user_id: readLocalSession()?.id,
         },
+        onReference: (reference) => {
+          savePendingPayment({
+            reference,
+            planId,
+            amountKobo: plan.priceKobo,
+            createdAt: new Date().toISOString(),
+            email: address,
+          });
+        },
         onSuccess: async (response) => {
           setStatus('verifying');
           setErrorMsg(null);
@@ -236,8 +365,14 @@ export default function ProUpgrade() {
             setStatus('done');
             if (result.pendingMessage) {
               setPendingMsg(result.pendingMessage);
+              success(
+                'Payment received. Pro is unlocked while we finish confirming it.',
+                'Payment received'
+              );
+            } else {
+              clearPendingPayment(response.reference);
+              success('Selorah Pro is active on your account.', 'Welcome to Pro');
             }
-            success('Selorah Pro is active on your account.', 'Welcome to Pro');
           } catch (error) {
             released = true;
             window.clearTimeout(release);
@@ -254,6 +389,7 @@ export default function ProUpgrade() {
           released = true;
           window.clearTimeout(release);
           setStatus('idle');
+          clearPendingPayment();
           info('Payment cancelled. You have not been charged.');
         },
       });
@@ -452,10 +588,76 @@ export default function ProUpgrade() {
             )}
 
             {pendingMsg && (
-              <p className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-100 bg-amber-50 px-3.5 py-3 text-[11px] font-semibold leading-relaxed text-amber-700">
-                <ClockIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                {pendingMsg}
-              </p>
+              <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-3.5 py-3">
+                <p className="flex items-start gap-2 text-[11px] font-semibold leading-relaxed text-amber-700">
+                  <ClockIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                  {pendingMsg}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCheckPending}
+                  disabled={recovering}
+                  className="mt-2 text-[10px] font-black uppercase tracking-[0.08em] text-amber-700 underline underline-offset-2 disabled:opacity-50"
+                >
+                  {recovering ? 'Checking...' : 'Check payment status'}
+                </button>
+              </div>
+            )}
+
+            {status !== 'done' && (
+              <div className="mt-4 rounded-2xl border border-gray-100 bg-[#F8F9FE] p-3.5">
+                <button
+                  type="button"
+                  onClick={() => setShowRecovery((value) => !value)}
+                  className="flex w-full items-center justify-between gap-2 text-left"
+                  aria-expanded={showRecovery}
+                >
+                  <span className="text-[11px] font-bold text-[#101217]">
+                    Already paid? Verify a reference
+                  </span>
+                  <ChevronDownIcon
+                    className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${
+                      showRecovery ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {showRecovery && (
+                  <div className="mt-3 space-y-2">
+                    <input
+                      value={recoveryRef}
+                      onChange={(event) => setRecoveryRef(event.target.value)}
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder="Paste the reference from your Paystack receipt"
+                      className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3.5 text-xs font-semibold text-[#101217] outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                    />
+                    {recoveryMessage && (
+                      <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-red-600">
+                        {recoveryMessage}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleRecovery}
+                      disabled={recovering || !recoveryRef.trim()}
+                      className="min-h-[42px] w-full rounded-xl bg-[#101217] px-4 text-xs font-bold text-white transition-colors hover:bg-black disabled:opacity-50"
+                    >
+                      {recovering ? 'Verifying...' : 'Verify payment'}
+                    </button>
+                    {readPendingPayment() && (
+                      <button
+                        type="button"
+                        onClick={handleCheckPending}
+                        disabled={recovering}
+                        className="min-h-[38px] w-full rounded-xl text-[10px] font-bold text-[#6183FF] transition-colors hover:bg-white disabled:opacity-50"
+                      >
+                        Check the pending payment on this device
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
             {status === 'done' ? (

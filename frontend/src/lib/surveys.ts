@@ -47,6 +47,20 @@ export function pointsToNaira(points: number) {
   return points * NAIRA_PER_POINT;
 }
 
+/**
+ * Older survey responses stored the reward at the old per-point rate. The
+ * current rate is the source of truth, so never show less than points x 20.
+ * A higher stored value is kept because some studies may add a bonus.
+ */
+export function normalizeSurveyReward(row: {
+  points_awarded?: number | string | null;
+  reward_naira?: number | string | null;
+}) {
+  const points = Number(row.points_awarded || 0);
+  const stored = Number(row.reward_naira || 0);
+  return Math.max(stored, points * NAIRA_PER_POINT);
+}
+
 export function formatNaira(value: number) {
   return `₦${Math.round(value).toLocaleString('en-NG')}`;
 }

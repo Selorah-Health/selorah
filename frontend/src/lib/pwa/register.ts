@@ -8,7 +8,7 @@ export function registerServiceWorker() {
 
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/service-worker.js', { scope: '/' })
+      .register('/service-worker.js', { scope: '/', updateViaCache: 'none' })
       .then((registration) => {
         registration.addEventListener('updatefound', () => {
           const worker = registration.installing;

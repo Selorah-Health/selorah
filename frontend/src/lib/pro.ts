@@ -51,6 +51,7 @@ export const PRO_FEATURES = [
 
 const PRO_CACHE_KEY = 'selorah_pro_state';
 const PAYMENTS_KEY = 'selorah_payments';
+const PENDING_PAYMENT_KEY = 'selorah_pending_payment';
 
 export type ProState = {
   active: boolean;
@@ -70,6 +71,44 @@ export type PaymentRecord = {
   plan: string;
   createdAt: string;
 };
+
+export type PendingPayment = {
+  reference: string;
+  planId: ProPlanId;
+  amountKobo: number;
+  createdAt: string;
+  email?: string;
+};
+
+export function readPendingPayment(): PendingPayment | null {
+  try {
+    const raw = localStorage.getItem(PENDING_PAYMENT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PendingPayment;
+    if (!parsed?.reference) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function savePendingPayment(payment: PendingPayment) {
+  try {
+    localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify(payment));
+  } catch {
+    // Storage can be unavailable in private mode.
+  }
+}
+
+export function clearPendingPayment(reference?: string) {
+  try {
+    const current = readPendingPayment();
+    if (reference && current && current.reference !== reference) return;
+    localStorage.removeItem(PENDING_PAYMENT_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
 
 export function readProState(): ProState {
   try {
@@ -167,6 +206,73 @@ function isVerificationRejection(error: unknown) {
   return status === 402;
 }
 
+type ProProfileRow = {
+  tier?: string | null;
+  is_pro?: boolean | null;
+  pro_reference?: string | null;
+  pro_expires_at?: string | null;
+};
+
+/**
+ * Reconcile the device cache with the server. patient_profiles is the source of
+ * truth for Pro, so the dashboard does not depend on auth metadata being fresh.
+ */
+export async function refreshProFromProfile(
+  supabase: SupabaseClient,
+  options?: { clearInactive?: boolean }
+): Promise<ProState | null> {
+  try {
+    const { data: authData } = await withTimeout(
+      supabase.auth.getUser(),
+      8000,
+      'Session lookup timed out.'
+    );
+    const user = authData?.user;
+    if (!user) return null;
+
+    const { data, error } = await withTimeout(
+      supabase
+        .from('patient_profiles')
+        .select('tier, is_pro, pro_reference, pro_expires_at')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      10000,
+      'Pro lookup timed out.'
+    );
+    if (error) return null;
+
+    const row = data as ProProfileRow | null;
+    if (!row) return null;
+
+    const expiry = row.pro_expires_at ? new Date(row.pro_expires_at) : null;
+    const active = Boolean(row.is_pro) && (!expiry || expiry.getTime() > Date.now());
+
+    if (active) {
+      const state: ProState = {
+        active: true,
+        reference: row.pro_reference || undefined,
+        expiresAt: row.pro_expires_at || undefined,
+        plan: PRO_PLAN_LABEL,
+        activatedAt: new Date().toISOString(),
+      };
+      cacheProState(state);
+      return state;
+    }
+
+    // Keep a local unlock while a payment is still settling. The pending
+    // reference is the guard, so a brief server lag cannot revoke Pro.
+    if (options?.clearInactive === false || readPendingPayment()) {
+      return { active: false };
+    }
+
+    const inactive: ProState = { active: false };
+    cacheProState(inactive);
+    return inactive;
+  } catch {
+    return null;
+  }
+}
+
 export type ProActivation = {
   state: ProState;
   /** True when the Paystack verifier confirmed the payment on the server. */
@@ -176,6 +282,16 @@ export type ProActivation = {
 };
 
 const VERIFY_TIMEOUT_MS = 20000;
+
+type VerifyPayload = {
+  verified?: boolean;
+  pending?: boolean;
+  message?: string;
+  plan?: string;
+  months?: number;
+  amount?: number;
+  expiresAt?: string;
+};
 
 export async function activatePro(
   reference: string,
@@ -202,6 +318,7 @@ export async function activatePro(
   // upgrade screen with duplicate requests.
   let verified = false;
   let pendingMessage: string | undefined;
+  let serverExpiresAt: string | undefined;
 
   try {
     const { data, error } = await withTimeout(
@@ -212,11 +329,18 @@ export async function activatePro(
 
     if (error) throw error;
 
-    const payload = data as { verified?: boolean; message?: string } | null;
-    if (payload && payload.verified === false) {
+    const payload = data as VerifyPayload | null;
+    if (payload?.verified === false && payload.pending !== true) {
       throw new ProVerificationError(
         payload.message || 'Payment could not be verified. Contact support with your receipt.'
       );
+    }
+
+    if (payload?.pending) {
+      pendingMessage =
+        payload.message ||
+        'Payment received. Paystack is still confirming it, and Pro will stay unlocked while that finishes.';
+      serverExpiresAt = payload.expiresAt;
     }
 
     verified = payload?.verified === true;
@@ -235,15 +359,108 @@ export async function activatePro(
     console.warn('Pro verification is pending:', error);
   }
 
+  const serverState = await refreshProFromProfile(supabase, { clearInactive: false });
+  const finalState: ProState = serverState?.active
+    ? {
+        ...state,
+        ...serverState,
+        reference: serverState.reference || reference,
+        planId,
+        amountKobo: state.amountKobo,
+      }
+    : { ...state, expiresAt: serverExpiresAt || state.expiresAt };
+
   cachePayment({
     reference,
     amount: options?.amountKobo ?? plan.priceKobo,
     currency: 'NGN',
-    status: 'paid',
+    status: pendingMessage && !verified ? 'pending' : 'paid',
     plan: planLabel,
     createdAt: new Date().toISOString(),
   });
-  cacheProState(state);
+  cacheProState(finalState);
+  if (verified) clearPendingPayment(reference);
 
-  return { state, verified, pendingMessage };
+  return { state: finalState, verified, pendingMessage };
+}
+
+/**
+ * Verify a reference the patient copied from a Paystack receipt. This is the
+ * recovery path when the checkout callback never reached the app, for example
+ * after a bank transfer opened a different banking app.
+ */
+export async function verifyProReference(
+  reference: string,
+  options?: { supabase?: SupabaseClient; localUnlockOnPending?: boolean }
+): Promise<ProActivation> {
+  const supabase = options?.supabase || createClient();
+  const clean = reference.trim();
+  if (!clean) {
+    throw new Error('Enter the payment reference from your Paystack receipt.');
+  }
+
+  let payload: VerifyPayload | null = null;
+  try {
+    const { data, error } = await withTimeout(
+      supabase.functions.invoke('paystack-verify', { body: { reference: clean } }),
+      VERIFY_TIMEOUT_MS,
+      'Payment verification timed out.'
+    );
+    if (error) throw error;
+    payload = data as VerifyPayload | null;
+  } catch (error) {
+    if (isVerificationRejection(error)) {
+      throw error instanceof Error
+        ? error
+        : new Error('Payment could not be verified. Check the reference and try again.');
+    }
+    throw new Error(
+      'Could not reach the payment verifier. Check your connection and try the reference again.'
+    );
+  }
+
+  if (payload?.verified === false && payload.pending !== true) {
+    throw new Error(
+      payload.message || 'Payment could not be verified. Check the reference and try again.'
+    );
+  }
+
+  const serverState = await refreshProFromProfile(supabase, { clearInactive: false });
+  if (serverState?.active) {
+    clearPendingPayment(clean);
+    return { state: serverState, verified: true };
+  }
+
+  const pendingMessage = payload?.pending
+    ? payload.message || 'Payment is still being confirmed. Check again in a moment.'
+    : undefined;
+
+  if (payload?.verified === true) {
+    // The server confirmed the charge. If the profile read lagged, keep a local
+    // unlock so the patient is not stuck on the upgrade screen.
+    const state: ProState = {
+      active: true,
+      reference: clean,
+      activatedAt: new Date().toISOString(),
+      expiresAt: payload.expiresAt,
+      plan: payload.plan || PRO_PLAN_LABEL,
+      amountKobo: payload.amount,
+    };
+    cacheProState(state);
+    clearPendingPayment(clean);
+    return { state, verified: true };
+  }
+
+  if (pendingMessage && options?.localUnlockOnPending) {
+    const state: ProState = {
+      active: true,
+      reference: clean,
+      activatedAt: new Date().toISOString(),
+      plan: PRO_PLAN_LABEL,
+    };
+    cacheProState(state);
+    return { state, verified: false, pendingMessage };
+  }
+
+  return { state: readProState(), verified: false, pendingMessage };
 }

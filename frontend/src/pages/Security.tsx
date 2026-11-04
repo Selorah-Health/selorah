@@ -45,6 +45,10 @@ export default function Security() {
   const [challengeId, setChallengeId] = useState('');
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [showDisable, setShowDisable] = useState(false);
+  const [disableCode, setDisableCode] = useState('');
+  const [disableError, setDisableError] = useState<string | null>(null);
+  const [disabling, setDisabling] = useState(false);
 
   const loadFactors = useCallback(async () => {
     setLoadingFactors(true);
@@ -191,25 +195,80 @@ export default function Security() {
     }
   };
 
-  const disableMfa = async () => {
+  const openDisableMfa = async () => {
     const factor = factors[0];
     if (!factor) return;
+
     const confirmed = await confirmDialog({
       title: 'Turn off two-factor authentication?',
-      message: 'This account will be protected by your password only.',
-      confirmLabel: 'Turn off 2FA',
+      message:
+        'This account will be protected by your password only. You will need your authenticator code to confirm.',
+      confirmLabel: 'Continue',
       tone: 'danger',
       icon: 'shield',
     });
     if (!confirmed) return;
 
-    const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
-    if (error) {
-      toastError(error.message, 'Could not turn off 2FA');
+    setDisableCode('');
+    setDisableError(null);
+    setShowDisable(true);
+  };
+
+  const closeDisableMfa = () => {
+    if (disabling) return;
+    setShowDisable(false);
+    setDisableCode('');
+    setDisableError(null);
+  };
+
+  const disableMfa = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const factor = factors[0];
+    if (!factor) {
+      setShowDisable(false);
       return;
     }
-    info('Two-factor authentication has been turned off.');
-    await loadFactors();
+
+    const cleanCode = disableCode.replace(/\s/g, '');
+    if (cleanCode.length !== 6) {
+      setDisableError('Enter the 6-digit code from your authenticator app.');
+      return;
+    }
+
+    setDisabling(true);
+    setDisableError(null);
+
+    try {
+      // Unenrolling a verified factor requires an AAL2 session. Challenge and
+      // verify the TOTP factor first so Supabase elevates this session.
+      const challenge = await supabase.auth.mfa.challenge({ factorId: factor.id });
+      if (challenge.error) throw challenge.error;
+
+      const verified = await supabase.auth.mfa.verify({
+        factorId: factor.id,
+        challengeId: challenge.data.id,
+        code: cleanCode,
+      });
+      if (verified.error) throw verified.error;
+
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      if (error) throw error;
+
+      info('Two-factor authentication has been turned off.');
+      setShowDisable(false);
+      setDisableCode('');
+      await loadFactors();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Could not turn off two-factor authentication.';
+      const friendly = /aal2|assurance level/i.test(message)
+        ? 'This session needs a fresh authenticator check. Enter the current 6-digit code and try again.'
+        : message;
+      setDisableError(friendly);
+      toastError(friendly, 'Could not turn off 2FA');
+    } finally {
+      setDisabling(false);
+    }
   };
 
   return (
@@ -340,7 +399,7 @@ export default function Security() {
               {factors.length > 0 ? (
                 <button
                   type="button"
-                  onClick={disableMfa}
+                  onClick={openDisableMfa}
                   className="min-h-[44px] rounded-xl border border-red-100 bg-red-50 px-5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100"
                 >
                   Turn off 2FA
@@ -453,6 +512,89 @@ export default function Security() {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {showDisable && (
+        <div
+          className="fixed inset-0 z-[150] flex items-end justify-center bg-[#05081A]/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="disable-mfa-title"
+        >
+          <div className="w-full max-w-md rounded-t-[28px] bg-white p-6 shadow-2xl sm:rounded-[28px] sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 id="disable-mfa-title" className="text-lg font-bold text-[#101217]">
+                  Confirm it is you
+                </h3>
+                <p className="mt-1 text-xs font-medium leading-relaxed text-gray-400">
+                  Enter the current 6-digit code from your authenticator app. We use it to verify
+                  this session before removing the factor.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeDisableMfa}
+                disabled={disabling}
+                aria-label="Close"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 disabled:opacity-50"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={disableMfa} className="mt-5 space-y-4">
+              <label className="block">
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                  6-digit code
+                </span>
+                <input
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  maxLength={6}
+                  value={disableCode}
+                  onChange={(event) =>
+                    setDisableCode(event.target.value.replace(/\D/g, '').slice(0, 6))
+                  }
+                  placeholder="000000"
+                  className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-center text-lg font-bold tracking-[0.3em] text-[#101217] outline-none focus:border-[#6183FF] focus:bg-white"
+                />
+              </label>
+
+              {disableError && (
+                <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold leading-relaxed text-red-600">
+                  {disableError}
+                </p>
+              )}
+
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={closeDisableMfa}
+                  disabled={disabling}
+                  className="min-h-[44px] rounded-xl border border-gray-200 bg-white px-4 text-xs font-bold text-gray-500 transition-colors hover:border-gray-300 hover:text-[#101217] disabled:opacity-50"
+                >
+                  Keep 2FA on
+                </button>
+                <button
+                  type="submit"
+                  disabled={disabling || disableCode.length !== 6}
+                  className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-red-600 px-5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                >
+                  {disabling ? (
+                    <>
+                      <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                      Removing...
+                    </>
+                  ) : (
+                    'Turn off 2FA'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

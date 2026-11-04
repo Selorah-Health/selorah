@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import SEOTitle from '../components/SEOTitle';
 import ThemeToggle from '../components/ThemeToggle';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 import { createClient } from '../lib/supabase/client';
 import {
   homeForRole,
@@ -320,7 +321,19 @@ export default function Login() {
             </Link>
           </p>
 
-          <div className="mt-7 flex rounded-2xl bg-gray-50 p-1">
+          <div className="mt-6">
+            <GoogleAuthButton />
+          </div>
+
+          <div className="mt-5 flex items-center gap-3">
+            <span className="h-px flex-1 bg-gray-100" />
+            <span className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-300">
+              or use another method
+            </span>
+            <span className="h-px flex-1 bg-gray-100" />
+          </div>
+
+          <div className="mt-5 flex rounded-2xl bg-gray-50 p-1">
             <button
               type="button"
               onClick={() => setPortalMode('patient')}

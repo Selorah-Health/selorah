@@ -36,6 +36,10 @@ const PRO_PLANS: ProPlan[] = [
 // pricing changed still grants the full year it advertised.
 const LEGACY_ANNUAL_AMOUNT_KOBO = 500000;
 
+// Paystack reports bank transfers as pending or processing until the bank
+// settles them. That is not a failed payment, so the app must be able to retry.
+const PENDING_STATUSES = new Set(['pending', 'ongoing', 'processing', 'queued']);
+
 // The plan is derived from the amount the patient actually paid. Client
 // metadata is never trusted for duration.
 function resolvePlan(amount: number): ProPlan | null {
@@ -128,7 +132,8 @@ Deno.serve(async (request) => {
   }
 
   const result = await confirmPayment(secret, payload.reference, null, callerId);
-  return json(result, result.verified ? 200 : 402);
+  const status = result.pending ? 202 : result.verified ? 200 : 402;
+  return json(result, status);
 });
 
 async function confirmPayment(
@@ -146,8 +151,22 @@ async function confirmPayment(
     | { status?: boolean; data?: PaystackTransaction; message?: string }
     | null;
 
-  const data = body?.data || webhookData;
-  if (!response.ok || !body?.status || data?.status !== 'success') {
+  const data = webhookData || body?.data;
+  if (!data || (!webhookData && (!response.ok || !body?.status))) {
+    return { verified: false, message: 'Payment could not be verified.' };
+  }
+
+  const paymentStatus = String(data.status || '').toLowerCase();
+  if (paymentStatus !== 'success') {
+    if (PENDING_STATUSES.has(paymentStatus)) {
+      return {
+        verified: false,
+        pending: true,
+        reference,
+        message:
+          'Payment is still being confirmed. Bank transfers can take a moment. Check again shortly.',
+      };
+    }
     return { verified: false, message: 'Payment could not be verified.' };
   }
 
@@ -168,6 +187,14 @@ async function confirmPayment(
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+  if (!supabaseUrl || !serviceKey) {
+    return {
+      verified: false,
+      message:
+        'Pro activation is not configured on the server. Contact support with your payment reference.',
+    };
+  }
+
   if (supabaseUrl && serviceKey) {
     const admin = createClient(supabaseUrl, serviceKey);
     const userId = await resolveUserId(admin, data, callerId);
@@ -177,26 +204,55 @@ async function confirmPayment(
       // reference is only allowed to grant time once.
       const { data: existingPayment } = await admin
         .from('payments')
-        .select('reference')
+        .select('reference, created_at')
         .eq('reference', reference)
         .maybeSingle();
-
-      if (existingPayment) {
-        return {
-          verified: true,
-          reference,
-          amount,
-          currency,
-          plan: plan.label,
-          alreadyProcessed: true,
-        };
-      }
 
       const { data: currentProfile } = await admin
         .from('patient_profiles')
         .select('pro_expires_at, full_name')
         .eq('user_id', userId)
         .maybeSingle();
+
+      if (existingPayment) {
+        // The payment exists, but a previous grant may have failed before the
+        // profile was updated. Re-apply the entitlement idempotently using the
+        // original payment date, so a retry repairs the account without
+        // extending the plan twice.
+        const paymentBase = new Date(existingPayment.created_at || Date.now());
+        paymentBase.setMonth(paymentBase.getMonth() + plan.months);
+        const currentExpiry = currentProfile?.pro_expires_at
+          ? new Date(currentProfile.pro_expires_at)
+          : null;
+        const expiresAt =
+          currentExpiry && currentExpiry.getTime() > paymentBase.getTime()
+            ? currentExpiry
+            : paymentBase;
+
+        const repaired = await applyEntitlement(admin, userId, {
+          tier: 'pro',
+          is_pro: true,
+          pro_reference: reference,
+          pro_expires_at: expiresAt.toISOString(),
+        });
+
+        await updateAuthMetadata(admin, userId, reference, expiresAt);
+
+        return {
+          verified: true,
+          reference,
+          amount,
+          currency,
+          plan: plan.label,
+          months: plan.months,
+          expiresAt: expiresAt.toISOString(),
+          alreadyProcessed: true,
+          entitlementRepaired: repaired,
+          message: repaired
+            ? undefined
+            : 'Payment verified, but we could not update your account. Contact support with this reference.',
+        };
+      }
 
       const base = new Date();
       const currentExpiry = currentProfile?.pro_expires_at
@@ -225,35 +281,20 @@ async function confirmPayment(
         { onConflict: 'reference' }
       );
 
-      const entitlement = {
-        tier: 'pro',
-        is_pro: true,
-        pro_reference: reference,
-        pro_expires_at: expiresAt.toISOString(),
-      };
+      const repaired = await applyEntitlement(
+        admin,
+        userId,
+        {
+          tier: 'pro',
+          is_pro: true,
+          pro_reference: reference,
+          pro_expires_at: expiresAt.toISOString(),
+        },
+        currentProfile?.full_name,
+        data?.customer?.email
+      );
 
-      const { error } = await admin
-        .from('patient_profiles')
-        .update(entitlement)
-        .eq('user_id', userId);
-
-      // Older projects may not have the Pro columns yet. `tier` exists, so
-      // activation still works while the migration is being applied.
-      if (error) {
-        await admin.from('patient_profiles').update({ tier: 'pro' }).eq('user_id', userId);
-      }
-
-      try {
-        await admin.auth.admin.updateUserById(userId, {
-          user_metadata: {
-            is_pro: true,
-            pro_reference: reference,
-            pro_expires_at: expiresAt.toISOString(),
-          },
-        });
-      } catch {
-        // The profile row is the source of truth. Metadata is a convenience.
-      }
+      await updateAuthMetadata(admin, userId, reference, expiresAt);
 
       // Queue the upgrade receipt email. Delivery is handled by the
       // send-email function once a provider is configured.
@@ -275,17 +316,87 @@ async function confirmPayment(
           // The Pro grant already succeeded; a queued email is best effort.
         }
       }
+
+      return {
+        verified: true,
+        reference,
+        amount,
+        currency,
+        plan: plan.label,
+        months: plan.months,
+        expiresAt: expiresAt.toISOString(),
+        entitlementRepaired: repaired,
+        message: repaired
+          ? undefined
+          : 'Payment verified, but we could not update your account. Contact support with this reference.',
+      };
     }
   }
 
   return {
-    verified: true,
-    reference,
-    amount,
-    currency,
-    plan: plan.label,
-    months: plan.months,
+    verified: false,
+    message:
+      'We could not match this payment to a Selorah account. Sign in with the email used at checkout and try again.',
   };
+}
+
+async function applyEntitlement(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+  entitlement: {
+    tier: string;
+    is_pro: boolean;
+    pro_reference: string;
+    pro_expires_at: string;
+  },
+  fullName?: string | null,
+  email?: string | null
+): Promise<boolean> {
+  const { data: updatedRows, error } = await admin
+    .from('patient_profiles')
+    .update(entitlement)
+    .eq('user_id', userId)
+    .select('id');
+
+  if (!error && updatedRows && updatedRows.length > 0) return true;
+
+  // The profile row may be missing for an older account. Create a minimal one
+  // so a paid upgrade is never lost just because onboarding did not finish.
+  const { error: insertError } = await admin.from('patient_profiles').insert({
+    user_id: userId,
+    full_name: fullName || firstNameFrom(email) || 'Selorah patient',
+    ...entitlement,
+  });
+  if (!insertError) return true;
+
+  // Older projects may not have the Pro columns yet. `tier` exists, so
+  // activation still works while the migration is being applied.
+  const { data: tierRows, error: tierError } = await admin
+    .from('patient_profiles')
+    .update({ tier: 'pro' })
+    .eq('user_id', userId)
+    .select('id');
+
+  return !tierError && Boolean(tierRows?.length);
+}
+
+async function updateAuthMetadata(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+  reference: string,
+  expiresAt: Date
+) {
+  try {
+    await admin.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        is_pro: true,
+        pro_reference: reference,
+        pro_expires_at: expiresAt.toISOString(),
+      },
+    });
+  } catch {
+    // The profile row is the source of truth. Metadata is a convenience.
+  }
 }
 
 async function resolveUserId(
@@ -320,7 +431,14 @@ async function resolveUserEmail(
   userId: string
 ): Promise<string | null> {
   const { data } = await admin.from('users').select('email').eq('id', userId).maybeSingle();
-  return data?.email || null;
+  if (data?.email) return data.email;
+
+  try {
+    const { data: authData } = await admin.auth.admin.getUserById(userId);
+    return authData?.user?.email || null;
+  } catch {
+    return null;
+  }
 }
 
 function firstNameFrom(value: string | null | undefined): string {

@@ -119,6 +119,8 @@ export type PaystackCheckout = {
   metadata?: Record<string, unknown>;
   onSuccess: (response: PaystackResponse) => void;
   onCancel?: () => void;
+  /** Called with the generated reference before checkout opens. */
+  onReference?: (reference: string) => void;
 };
 
 export async function startPaystackCheckout({
@@ -128,6 +130,7 @@ export async function startPaystackCheckout({
   metadata,
   onSuccess,
   onCancel,
+  onReference,
 }: PaystackCheckout) {
   const key = getPaystackKey();
   if (!key) {
@@ -142,6 +145,7 @@ export async function startPaystackCheckout({
   }
 
   const reference = `SEL-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  onReference?.(reference);
 
   const handler = window.PaystackPop.setup({
     key,

@@ -327,6 +327,9 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
             <Link to="/pricing" className={navLink}>
               Pricing
             </Link>
+            <Link to="/contact" className={navLink}>
+              Contact
+            </Link>
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -411,9 +414,17 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
               <Link
                 to="/pricing"
                 onClick={() => setIsMenuOpen(false)}
-                className="flex min-h-[52px] w-full items-center justify-between px-4 text-left text-[15px] font-semibold text-white/85 hover:bg-white/[0.04]"
+                className="flex min-h-[52px] w-full items-center justify-between border-b border-white/[0.06] px-4 text-left text-[15px] font-semibold text-white/85 hover:bg-white/[0.04]"
               >
                 Pricing
+                <ArrowRightIcon className="h-4 w-4 text-white/30" />
+              </Link>
+              <Link
+                to="/contact"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex min-h-[52px] w-full items-center justify-between px-4 text-left text-[15px] font-semibold text-white/85 hover:bg-white/[0.04]"
+              >
+                Contact
                 <ArrowRightIcon className="h-4 w-4 text-white/30" />
               </Link>
             </div>

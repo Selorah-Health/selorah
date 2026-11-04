@@ -1,165 +1,301 @@
-import LegalLayout from '../components/LegalLayout';
-import SEOTitle from '../components/SEOTitle';
+import {
+  AcademicCapIcon,
+  ArrowRightIcon,
+  BanknotesIcon,
+  BriefcaseIcon,
+  ClockIcon,
+  EnvelopeIcon,
+  GlobeAltIcon,
+  HeartIcon,
+  MapPinIcon,
+  SparklesIcon,
+} from '@heroicons/react/24/outline';
+import StaticPage from '../components/StaticPage';
+
+const CAREERS_EMAIL = 'selorahealth@gmail.com';
+
+type Role = {
+  title: string;
+  location: string;
+  type: string;
+  summary: string;
+  skills: string[];
+};
+
+const ROLES: Role[] = [
+  {
+    title: 'Senior Fullstack Engineer',
+    location: 'Remote',
+    type: 'Full-time',
+    summary:
+      'Build the secure record vault, sharing flows, and provider integrations. You will work across React, TypeScript, Postgres, and Supabase edge functions.',
+    skills: ['React', 'TypeScript', 'Postgres', 'Supabase', 'Security'],
+  },
+  {
+    title: 'Product Designer',
+    location: 'Lagos or remote',
+    type: 'Full-time',
+    summary:
+      'Own the end-to-end product experience for patients, clinicians, researchers, and insurers. Turn dense medical workflows into calm, clear screens.',
+    skills: ['Product design', 'Design systems', 'Research', 'Prototyping'],
+  },
+  {
+    title: 'Medical Data Analyst',
+    location: 'Remote',
+    type: 'Part-time',
+    summary:
+      'Help us structure clinical data, review record quality, and build privacy-preserving insights for research partners.',
+    skills: ['Clinical data', 'SQL', 'Data quality', 'Privacy'],
+  },
+  {
+    title: 'Blockchain Engineer',
+    location: 'Remote',
+    type: 'Full-time',
+    summary:
+      'Design auditable, privacy-preserving record anchoring and consent proofs without putting patient data on chain.',
+    skills: ['Solidity', 'Cryptography', 'Distributed systems', 'Security'],
+  },
+  {
+    title: 'Frontend Engineer (React)',
+    location: 'Remote',
+    type: 'Full-time',
+    summary:
+      'Make Selorah feel instant on low-bandwidth devices. You will own performance, accessibility, offline states, and the patient dashboard experience.',
+    skills: ['React', 'TypeScript', 'Tailwind', 'PWA', 'Accessibility'],
+  },
+  {
+    title: 'DevOps and Security Engineer',
+    location: 'Remote',
+    type: 'Full-time',
+    summary:
+      'Keep patient data safe and the platform reliable. You will own infrastructure, monitoring, incident response, and compliance automation.',
+    skills: ['Cloud infrastructure', 'CI/CD', 'Security', 'Observability'],
+  },
+];
+
+const PERKS = [
+  {
+    title: 'Remote first',
+    body: 'Work from anywhere in Nigeria or across Africa. We optimise for deep work and clear written communication.',
+    icon: GlobeAltIcon,
+  },
+  {
+    title: 'Health cover',
+    body: 'Comprehensive health insurance for you and your dependants, because we build for health and should live it.',
+    icon: HeartIcon,
+  },
+  {
+    title: 'Fair pay',
+    body: 'Competitive salary, equity in the company, and transparent bands so you know where you stand.',
+    icon: BanknotesIcon,
+  },
+  {
+    title: 'Learning budget',
+    body: 'A yearly budget for courses, books, conferences, and certifications that make you better at your craft.',
+    icon: AcademicCapIcon,
+  },
+  {
+    title: 'Flexible hours',
+    body: 'Core overlap hours for collaboration, with the rest of your day shaped around your life and energy.',
+    icon: ClockIcon,
+  },
+  {
+    title: 'Real ownership',
+    body: 'Small team, short decision paths, and meaningful scope. Your work ships to patients, not a backlog.',
+    icon: SparklesIcon,
+  },
+];
+
+function applyHref(role: string) {
+  const subject = `Application: ${role}`;
+  const body = [
+    'Hello Selorah team,',
+    '',
+    `I would like to apply for the ${role} role.`,
+    '',
+    'A short introduction:',
+    '',
+    'Portfolio or GitHub:',
+    'LinkedIn:',
+    'Resume: attach it to this email.',
+    '',
+    'Thank you,',
+  ].join('\n');
+  return `mailto:${CAREERS_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 export default function Careers() {
   return (
-    <LegalLayout title="Careers">
-      <SEOTitle title="Careers" />
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        {/* Hero Section */}
-        <div className="mb-16">
-          <h1 className="text-3xl font-semibold text-primary/70 mb-10">Join the Revolution</h1>
-          <p>
-            We're building the future of healthcare data ownership. 
-            If you're passionate about privacy, blockchain, and healthcare technology, 
-            we'd love to have you on board.
-          </p>
-        </div>
-
-        {/* Open Roles */}
-        <div className="mb-20">
-          <h2 className="text-3xl font-semibold text-gray-900 mb-10">Open Roles</h2>
-
-          <div className="grid gap-6">
-            {/* Role 1 */}
-            <div className="group bg-white border border-gray-200 hover:border-blue-600 hover:shadow-2xl transition-all duration-300 rounded-3xl p-8">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex-1">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">Senior Fullstack Engineer</h3>
-                  <p className="text-gray-600">Remote • Full-time</p>
-                  <p className="mt-4 text-gray-700 leading-relaxed">
-                    Build scalable web applications using modern technologies (React, Node.js, TypeScript). 
-                    Work on secure health data systems and blockchain integration.
-                  </p>
-                </div>
-                <button className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-2xl transition-colors whitespace-nowrap">
-                  Apply Now
-                </button>
-              </div>
-            </div>
-
-            {/* Role 2 */}
-            <div className="group bg-white border border-gray-200 hover:border-blue-600 hover:shadow-2xl transition-all duration-300 rounded-3xl p-8">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex-1">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">Product Designer</h3>
-                  <p className="text-gray-600">Lagos / Remote • Full-time</p>
-                  <p className="mt-4 text-gray-700 leading-relaxed">
-                    Design intuitive and beautiful user experiences for patients, doctors, and healthcare organizations. 
-                    You’ll own the end-to-end design process from research to high-fidelity prototypes.
-                  </p>
-                </div>
-                <button className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-2xl transition-colors whitespace-nowrap">
-                  Apply Now
-                </button>
-              </div>
-            </div>
-
-            {/* Role 3 */}
-            <div className="group bg-white border border-gray-200 hover:border-blue-600 hover:shadow-2xl transition-all duration-300 rounded-3xl p-8">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex-1">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">Medical Data Analyst</h3>
-                  <p className="text-gray-600">Remote • Part-time</p>
-                  <p className="mt-4 text-gray-700 leading-relaxed">
-                    Analyze health data to generate insights while ensuring strict privacy and compliance standards. 
-                    Work closely with engineering and product teams.
-                  </p>
-                </div>
-                <button className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-2xl transition-colors whitespace-nowrap">
-                  Apply Now
-                </button>
-              </div>
-            </div>
-
-            {/* Role 4 - New */}
-            <div className="group bg-white border border-gray-200 hover:border-blue-600 hover:shadow-2xl transition-all duration-300 rounded-3xl p-8">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex-1">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">Blockchain Engineer</h3>
-                  <p className="text-gray-600">Remote • Full-time</p>
-                  <p className="mt-4 text-gray-700 leading-relaxed">
-                    Design and implement secure, privacy-preserving solutions using blockchain and decentralized technologies 
-                    for health record ownership and sharing.
-                  </p>
-                </div>
-                <button className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-2xl transition-colors whitespace-nowrap">
-                  Apply Now
-                </button>
-              </div>
-            </div>
-
-            {/* Role 5 - New */}
-            <div className="group bg-white border border-gray-200 hover:border-blue-600 hover:shadow-2xl transition-all duration-300 rounded-3xl p-8">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex-1">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">Frontend Engineer (React)</h3>
-                  <p className="text-gray-600">Remote • Full-time</p>
-                  <p className="mt-4 text-gray-700 leading-relaxed">
-                    Create fast, accessible, and delightful user interfaces using React, TypeScript, and Tailwind CSS. 
-                    Focus on performance and exceptional user experience.
-                  </p>
-                </div>
-                <button className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-2xl transition-colors whitespace-nowrap">
-                  Apply Now
-                </button>
-              </div>
-            </div>
-
-            {/* Role 6 - New */}
-            <div className="group bg-white border border-gray-200 hover:border-blue-600 hover:shadow-2xl transition-all duration-300 rounded-3xl p-8">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex-1">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">DevOps &amp; Security Engineer</h3>
-                  <p className="text-gray-600">Remote • Full-time</p>
-                  <p className="mt-4 text-gray-700 leading-relaxed">
-                    Build and maintain secure, scalable cloud infrastructure with strong focus on data protection, 
-                    compliance, and system reliability.
-                  </p>
-                </div>
-                <button className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-2xl transition-colors whitespace-nowrap">
-                  Apply Now
-                </button>
-              </div>
-            </div>
+    <StaticPage
+      title="Build the future of health data with us."
+      eyebrow="Careers"
+      description="We are a small team solving a large problem: making medical records portable, private, and useful for every patient in Africa. If that sounds like your kind of work, we would love to meet you."
+      heroTone="light"
+    >
+      <section className="grid gap-4 sm:grid-cols-3">
+        {[
+          { value: '6', label: 'open roles', icon: BriefcaseIcon },
+          { value: '100%', label: 'remote friendly', icon: GlobeAltIcon },
+          { value: '1', label: 'mission: patient ownership', icon: HeartIcon },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
+          >
+            <stat.icon className="h-5 w-5 text-[#6183FF]" />
+            <p className="mt-3 text-3xl font-black tracking-tight text-[#101217]">{stat.value}</p>
+            <p className="mt-0.5 text-[11px] font-semibold text-gray-400">{stat.label}</p>
           </div>
-        </div>
+        ))}
+      </section>
 
-        {/* Perks & Culture */}
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-white border border-gray-100 rounded-3xl p-10">
-            <h3 className="text-2xl font-semibold mb-8">Perks &amp; Benefits</h3>
-            <ul className="space-y-5 text-lg text-gray-700">
-              <li className="flex items-start gap-4"><span className="text-green-500 text-xl">✓</span> Flexible working hours</li>
-              <li className="flex items-start gap-4"><span className="text-green-500 text-xl">✓</span> Comprehensive health insurance</li>
-              <li className="flex items-start gap-4"><span className="text-green-500 text-xl">✓</span> Competitive salary + equity</li>
-              <li className="flex items-start gap-4"><span className="text-green-500 text-xl">✓</span> Learning &amp; development budget</li>
-              <li className="flex items-start gap-4"><span className="text-green-500 text-xl">✓</span> Remote-first culture</li>
-            </ul>
-          </div>
-
-          <div className="bg-white border border-gray-100 rounded-3xl p-10">
-            <h3 className="text-2xl font-semibold mb-8">Our Culture</h3>
-            <p className="text-gray-700 leading-relaxed text-lg">
-              We are a small but mighty team of builders who believe technology should empower people — 
-              especially in healthcare. Transparency, ownership, and continuous learning are at the core of everything we do.
+      <section className="mt-16">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6183FF]">
+              Open roles
+            </p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-[#101217] sm:text-4xl">
+              Find your next chapter.
+            </h2>
+            <p className="mt-3 text-sm font-medium leading-relaxed text-gray-500">
+              Every application goes to a human. Tell us what you have built and why this problem
+              matters to you.
             </p>
           </div>
-        </div>
-
-        {/* Final CTA */}
-        <div className="mt-20 text-center">
-          <p className="text-gray-600 text-lg mb-6">
-            Don’t see a role that matches your profile? We’re always open to exceptional talent.
-          </p>
-          <a 
-            href="mailto:selorahealth@gmail.com" 
-            className="inline-flex items-center gap-3 px-10 py-4 bg-gray-900 hover:bg-black text-white rounded-2xl text-lg font-medium transition-colors"
+          <a
+            href={applyHref('General application')}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-[#6183FF]/30"
           >
-            Send us your resume →
+            <EnvelopeIcon className="h-4 w-4 text-[#6183FF]" />
+            Send a general application
           </a>
         </div>
-      </div>
-    </LegalLayout>
+
+        <div className="mt-8 grid gap-4">
+          {ROLES.map((role) => (
+            <article
+              key={role.title}
+              className="group rounded-[28px] border border-gray-100 bg-white p-5 shadow-sm transition-all hover:border-[#6183FF]/25 hover:shadow-lg sm:p-6"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-lg font-black tracking-tight text-[#101217] sm:text-xl">
+                      {role.title}
+                    </h3>
+                    <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-[#4D6ED6]">
+                      {role.type}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] font-bold text-gray-400">
+                    <span className="inline-flex items-center gap-1">
+                      <MapPinIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                      {role.location}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <ClockIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                      {role.type}
+                    </span>
+                  </div>
+
+                  <p className="mt-3 max-w-3xl text-[12px] font-medium leading-relaxed text-gray-500">
+                    {role.summary}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {role.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="rounded-full border border-gray-100 bg-[#FAFBFF] px-2.5 py-1 text-[9px] font-bold text-gray-500"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <a
+                  href={applyHref(role.title)}
+                  className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-full bg-[#6183FF] px-6 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+                >
+                  Apply now
+                  <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-16">
+        <div className="max-w-2xl">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6183FF]">
+            Why Selorah
+          </p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-[#101217] sm:text-4xl">
+            Do work that compounds.
+          </h2>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {PERKS.map((perk) => (
+            <article key={perk.title} className="rounded-[26px] border border-gray-100 bg-white p-5">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+                <perk.icon className="h-5 w-5" />
+              </span>
+              <h3 className="mt-4 text-base font-black tracking-tight text-[#101217]">
+                {perk.title}
+              </h3>
+              <p className="mt-1.5 text-[11px] font-medium leading-relaxed text-gray-500">
+                {perk.body}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-16 rounded-[32px] bg-[#101217] px-6 py-10 text-white sm:px-10">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8FA8FF]">
+              Culture
+            </p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
+              Transparent, ownership driven, and kind.
+            </h2>
+            <p className="mt-2 text-xs font-medium leading-relaxed text-white/55">
+              We write things down, challenge ideas with evidence, and assume good intent. We are
+              building for patients who cannot afford a broken handoff, so quality is not optional.
+            </p>
+          </div>
+          <a
+            href={applyHref('General application')}
+            className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-bold text-[#101217] transition-colors hover:bg-[#F4F7FF]"
+          >
+            <EnvelopeIcon className="h-4 w-4 text-[#6183FF]" />
+            Introduce yourself
+          </a>
+        </div>
+      </section>
+
+      <section className="mt-16 text-center">
+        <h2 className="text-3xl font-black tracking-tight text-[#101217] sm:text-4xl">
+          Do not see your role?
+        </h2>
+        <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-relaxed text-gray-500">
+          We are always open to exceptional people. Send us what you have built and the problem you
+          want to spend your time on.
+        </p>
+        <a
+          href={applyHref('Open application')}
+          className="mt-6 inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-7 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+        >
+          Send your resume
+          <ArrowRightIcon className="h-4 w-4" />
+        </a>
+      </section>
+    </StaticPage>
   );
 }

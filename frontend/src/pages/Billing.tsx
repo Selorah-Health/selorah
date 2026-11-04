@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -11,6 +11,7 @@ import {
   StarIcon,
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { createClient } from '../lib/supabase/client';
 import {
   DEFAULT_PRO_PLAN,
   PRO_FEATURES,
@@ -18,6 +19,8 @@ import {
   PRO_PLAN_LABEL,
   readPayments,
   readProState,
+  refreshProFromProfile,
+  verifyProReference,
   type PaymentRecord,
   type ProState,
 } from '../lib/pro';
@@ -35,23 +38,140 @@ function formatDate(value?: string) {
 
 export default function Billing() {
   const navigate = useNavigate();
+  const supabase = useMemo(() => createClient(), []);
   const [pro, setPro] = useState<ProState>(() => readProState());
-  const [payments, setPayments] = useState<PaymentRecord[]>(() => readPayments());
+  const [localPayments, setLocalPayments] = useState<PaymentRecord[]>(() => readPayments());
+  const [dbPayments, setDbPayments] = useState<PaymentRecord[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     setPro(readProState());
-    setPayments(readPayments());
+    setLocalPayments(readPayments());
   }, []);
+
+  const loadDbPayments = useCallback(async () => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData?.user;
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('payments')
+        .select('reference, amount, currency, status, plan, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error || !data) return;
+
+      setDbPayments(
+        data.map((row) => ({
+          reference: String(row.reference || ''),
+          amount: Number(row.amount || 0),
+          currency: String(row.currency || 'NGN'),
+          status:
+            row.status === 'paid'
+              ? 'paid'
+              : row.status === 'pending'
+                ? 'pending'
+                : 'failed',
+          plan: String(row.plan || PRO_PLAN_LABEL),
+          createdAt: String(row.created_at || new Date().toISOString()),
+        }))
+      );
+    } catch {
+      // The local receipt list still works when the database is offline.
+    }
+  }, [supabase]);
 
   useEffect(() => {
     refresh();
+    void loadDbPayments();
+
+    const syncServer = async () => {
+      const serverState = await refreshProFromProfile(supabase);
+      if (serverState?.active) setPro(serverState);
+    };
+    void syncServer();
+    window.addEventListener('focus', syncServer);
+
     window.addEventListener('selorah:pro-updated', refresh);
     window.addEventListener('storage', refresh);
     return () => {
+      window.removeEventListener('focus', syncServer);
       window.removeEventListener('selorah:pro-updated', refresh);
       window.removeEventListener('storage', refresh);
     };
-  }, [refresh]);
+  }, [refresh, loadDbPayments, supabase]);
+
+  const payments = useMemo(() => {
+    const merged = [...dbPayments];
+    for (const payment of localPayments) {
+      if (!merged.some((item) => item.reference === payment.reference)) {
+        merged.push(payment);
+      }
+    }
+    return merged
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 20);
+  }, [dbPayments, localPayments]);
+
+  const restorePurchase = async () => {
+    setSyncing(true);
+    setRestoreMessage(null);
+
+    try {
+      const serverState = await refreshProFromProfile(supabase);
+      if (serverState?.active) {
+        setPro(serverState);
+        setRestoreMessage('Selorah Pro is active on this account.');
+        return;
+      }
+
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData?.user;
+      if (!user) {
+        setRestoreMessage('Sign in again to restore a purchase.');
+        return;
+      }
+
+      const { data: rows } = await supabase
+        .from('payments')
+        .select('reference, status')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      const candidate =
+        (rows || []).find((row) => row.status === 'paid' || row.status === 'pending') ||
+        (rows || [])[0];
+
+      if (!candidate?.reference) {
+        setRestoreMessage(
+          'No payment was found on this account. If you paid with a different email, verify the Paystack reference on the upgrade page.'
+        );
+        return;
+      }
+
+      const result = await verifyProReference(String(candidate.reference), { supabase });
+      if (result.verified) {
+        setPro(result.state);
+        setRestoreMessage('Payment verified. Selorah Pro is active.');
+        void loadDbPayments();
+      } else if (result.pendingMessage) {
+        setRestoreMessage(result.pendingMessage);
+      } else {
+        setRestoreMessage('The latest payment is not confirmed yet. Try again in a moment.');
+      }
+    } catch (error) {
+      setRestoreMessage(
+        error instanceof Error ? error.message : 'Could not restore that purchase.'
+      );
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const isPro = pro.active;
   const activePlan = PRO_PLANS[pro.planId || DEFAULT_PRO_PLAN];
@@ -126,11 +246,26 @@ export default function Billing() {
                 </>
               )}
             </button>
+            <button
+              type="button"
+              onClick={restorePurchase}
+              disabled={syncing}
+              className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 text-xs font-bold text-white/80 transition-colors hover:border-white/30 hover:text-white disabled:opacity-50"
+            >
+              <ArrowPathIcon className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Checking...' : 'Restore a purchase'}
+            </button>
             <p className="text-center text-[10px] font-medium text-white/35">
               From ₦2,000 per month or ₦20,000 per year
             </p>
           </div>
         </div>
+
+        {restoreMessage && (
+          <p className="relative mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-[11px] font-semibold leading-relaxed text-white/70">
+            {restoreMessage}
+          </p>
+        )}
       </section>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -184,7 +319,7 @@ export default function Billing() {
           <div>
             <h3 className="text-base font-bold text-[#101217]">Payment history</h3>
             <p className="text-[11px] font-medium text-gray-400">
-              Receipts for Pro payments made on this device.
+              Payments linked to this account.
             </p>
           </div>
           <DocumentTextIcon className="h-5 w-5 text-gray-300" />
@@ -217,9 +352,27 @@ export default function Billing() {
                   <span className="text-sm font-bold text-gray-600">
                     ₦{(payment.amount / 100).toLocaleString('en-NG')}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-green-600">
-                    <CheckBadgeIcon className="h-3.5 w-3.5" />
-                    Paid
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] ${
+                      payment.status === 'paid'
+                        ? 'bg-green-50 text-green-600'
+                        : payment.status === 'pending'
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-red-50 text-red-600'
+                    }`}
+                  >
+                    {payment.status === 'paid' ? (
+                      <CheckBadgeIcon className="h-3.5 w-3.5" />
+                    ) : payment.status === 'pending' ? (
+                      <ArrowPathIcon className="h-3.5 w-3.5" />
+                    ) : (
+                      <DocumentTextIcon className="h-3.5 w-3.5" />
+                    )}
+                    {payment.status === 'paid'
+                      ? 'Paid'
+                      : payment.status === 'pending'
+                        ? 'Pending'
+                        : 'Failed'}
                   </span>
                 </div>
               </div>

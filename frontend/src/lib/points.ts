@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isOffline, readSnapshot, writeSnapshot } from './offlineSnapshot';
 
 export const POINTS_EVENT = 'selorah:points-updated';
 
@@ -80,7 +81,8 @@ export const TASKS: TaskDefinition[] = [
   {
     id: 'first-survey',
     title: 'Complete a research survey',
-    description: 'Answer a 15-question survey and earn N20 for every question.',
+    description:
+      'Answer a 15-question survey to earn survey cash rewards, then claim 100 health points here.',
     points: 100,
     href: '/dashboard/research',
     actionLabel: 'Browse surveys',
@@ -119,25 +121,42 @@ export function levelFor(points: number) {
   return { current, next, progress };
 }
 
-export async function fetchPointEvents(supabase: SupabaseClient) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { userId: null, events: [] as PointEvent[], total: 0 };
+export type PointSummary = {
+  userId: string | null;
+  events: PointEvent[];
+  total: number;
+};
 
-  const { data, error } = await supabase
-    .from('point_events')
-    .select('id, source, label, points, reference, created_at')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+export async function fetchPointEvents(supabase: SupabaseClient): Promise<PointSummary> {
+  const cached = readSnapshot<PointSummary>('points');
+  const empty: PointSummary = { userId: null, events: [], total: 0 };
+  if (isOffline()) return cached || empty;
 
-  if (error) throw error;
-  const events = (data || []) as PointEvent[];
-  return {
-    userId: user.id,
-    events,
-    total: events.reduce((sum, event) => sum + Number(event.points || 0), 0),
-  };
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return cached || empty;
+
+    const { data, error } = await supabase
+      .from('point_events')
+      .select('id, source, label, points, reference, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) return cached || empty;
+
+    const events = (data || []) as PointEvent[];
+    const summary: PointSummary = {
+      userId: user.id,
+      events,
+      total: events.reduce((sum, event) => sum + Number(event.points || 0), 0),
+    };
+    writeSnapshot('points', summary);
+    return summary;
+  } catch {
+    return cached || empty;
+  }
 }
 
 export async function awardTaskPoints(

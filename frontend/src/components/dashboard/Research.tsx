@@ -15,9 +15,11 @@ import {
 import { useToast } from '../../contexts/ToastContext';
 import { createClient } from '../../lib/supabase/client';
 import { notifyEarningsChanged, subscribeEarnings } from '../../lib/earnings';
+import { isOffline, readSnapshot, writeSnapshot } from '../../lib/offlineSnapshot';
 import {
   formatNaira,
   normalizeOptions,
+  normalizeSurveyReward,
   pointsToNaira,
   type Survey,
   type SurveyQuestion,
@@ -31,6 +33,12 @@ type AnswerValue = string | string[];
 type Identity = {
   name: string;
   email: string;
+};
+
+type ResearchSnapshot = {
+  identity: Identity;
+  surveys: Survey[];
+  responses: SurveyResponse[];
 };
 
 function initialsOf(name: string, email: string) {
@@ -79,12 +87,33 @@ export default function Research() {
     if (!silent) setLoading(true);
     setLoadError(null);
 
+    const cached = readSnapshot<ResearchSnapshot>('research');
+
+    if (isOffline()) {
+      if (cached) {
+        setIdentity(cached.identity);
+        setSurveys(cached.surveys);
+        setResponses(cached.responses);
+        setLoadError(null);
+      } else {
+        setLoadError('You are offline. Your last survey values will appear here after you reconnect.');
+      }
+      setLoading(false);
+      return;
+    }
+
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (!user) {
+        if (cached) {
+          setIdentity(cached.identity);
+          setSurveys(cached.surveys);
+          setResponses(cached.responses);
+          return;
+        }
         setLoadError('Sign in to see open surveys and your research balance.');
         return;
       }
@@ -147,13 +176,22 @@ export default function Research() {
         grouped.set(question.survey_id, list);
       }
 
-      setSurveys(
-        rows.map((row) => ({
-          ...row,
-          questions: grouped.get(row.id) || [],
-        }))
-      );
-      setResponses((responseRows || []) as SurveyResponse[]);
+      const nextSurveys = rows.map((row) => ({
+        ...row,
+        questions: grouped.get(row.id) || [],
+      }));
+      const nextResponses = ((responseRows || []) as SurveyResponse[]).map((row) => ({
+        ...row,
+        reward_naira: normalizeSurveyReward(row),
+      }));
+
+      setSurveys(nextSurveys);
+      setResponses(nextResponses);
+      writeSnapshot<ResearchSnapshot>('research', {
+        identity: { name, email: user.email || '' },
+        surveys: nextSurveys,
+        responses: nextResponses,
+      });
 
       const storedOptIn = user.user_metadata?.research_opt_in;
       if (typeof storedOptIn === 'boolean') {
@@ -162,9 +200,17 @@ export default function Research() {
       }
     } catch (error) {
       console.error('Failed to load research surveys:', error);
-      setLoadError(
-        error instanceof Error ? error.message : 'Surveys could not be loaded right now.'
-      );
+
+      if (cached) {
+        setIdentity(cached.identity);
+        setSurveys(cached.surveys);
+        setResponses(cached.responses);
+        setLoadError(null);
+      } else {
+        setLoadError(
+          error instanceof Error ? error.message : 'Surveys could not be loaded right now.'
+        );
+      }
     } finally {
       setLoading(false);
     }

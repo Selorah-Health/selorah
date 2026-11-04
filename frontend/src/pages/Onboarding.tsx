@@ -131,10 +131,22 @@ export default function Onboarding() {
           data: { user },
         } = await supabase.auth.getUser();
         if (user?.user_metadata) {
-          first = first || user.user_metadata.first_name || '';
-          last = last || user.user_metadata.last_name || '';
-          roleFromSignup = roleFromSignup || user.user_metadata.role || '';
-          phone = phone || user.user_metadata.phone || '';
+          const metadata = user.user_metadata;
+          first = first || metadata.first_name || '';
+          last = last || metadata.last_name || '';
+
+          if (!first && !last) {
+            const full = String(metadata.full_name || metadata.name || '').trim();
+            if (full) {
+              const parts = full.split(/\s+/).filter(Boolean);
+              first = parts[0] || '';
+              last = parts.slice(1).join(' ');
+            }
+          }
+
+          roleFromSignup = roleFromSignup || metadata.role || '';
+          phone = phone || metadata.phone || '';
+          officialEmail = officialEmail || user.email || '';
         }
       } catch {
         // Auth can be unavailable offline.

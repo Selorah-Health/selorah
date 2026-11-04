@@ -61,7 +61,9 @@ export async function fetchPermanentToken(supabase: SupabaseClient) {
 
   const { data, error } = await supabase
     .from('patient_profiles')
-    .select('id, permanent_qr_token, full_name, blood_group, genotype, allergies, emergency_contacts')
+    .select(
+      'id, permanent_qr_token, full_name, date_of_birth, gender, height, weight, blood_group, genotype, allergies, emergency_contacts'
+    )
     .eq('user_id', user.id)
     .maybeSingle();
 
@@ -81,7 +83,9 @@ export async function ensurePermanentToken(supabase: SupabaseClient) {
     .from('patient_profiles')
     .update({ permanent_qr_token: crypto.randomUUID() })
     .eq('id', profile.id)
-    .select('id, permanent_qr_token, full_name, blood_group, genotype, allergies, emergency_contacts')
+    .select(
+      'id, permanent_qr_token, full_name, date_of_birth, gender, height, weight, blood_group, genotype, allergies, emergency_contacts'
+    )
     .single();
 
   if (error) throw error;
