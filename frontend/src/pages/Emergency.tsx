@@ -448,7 +448,8 @@ export default function Emergency() {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
-        const type = recorder.mimeType || preferredMime || 'audio/webm';
+        const type =
+          chunksRef.current[0]?.type || recorder.mimeType || preferredMime || 'audio/webm';
         const blob = new Blob(chunksRef.current, { type });
         if (blob.size > 25 * 1024 * 1024) {
           toastError('The voice note is too large. Record a shorter note or upload a smaller file.');
@@ -463,7 +464,7 @@ export default function Emergency() {
         streamRef.current = null;
       };
 
-      recorder.start();
+      recorder.start(1000);
       recorderRef.current = recorder;
       setRecordSeconds(0);
       setRecording(true);
