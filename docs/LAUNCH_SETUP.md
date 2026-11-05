@@ -212,7 +212,7 @@ Practical monthly target:
 
 Run these files in the Supabase SQL editor after the current schema is healthy:
 
-- `supabase/migrations/20261105120000_period_tracker.sql`
+- `supabase/migrations/20261105_period_tracker.sql`
 - `supabase/migrations/20261105120100_emergency_reports.sql`
 
 The emergency migration also creates the private `emergency-attachments` storage
