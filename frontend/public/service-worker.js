@@ -1,5 +1,5 @@
 /* Selorah Health service worker. Fast shell, bounded network waits, offline ready. */
-const VERSION = 'selorah-v5';
+const VERSION = 'selorah-v6';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 const PREVIOUS_CACHE_PREFIX = 'selorah-v3';
