@@ -1,0 +1,2 @@
+-- Historical version marker.
+-- The period tracker SQL now lives in 20261105_period_tracker.sql.
