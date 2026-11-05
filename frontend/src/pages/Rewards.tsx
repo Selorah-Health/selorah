@@ -161,7 +161,7 @@ export default function Rewards() {
   return (
     <div className="space-y-6 font-sora">
       <div>
-        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
           Health rewards
         </p>
         <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#101217] sm:text-3xl">
@@ -173,8 +173,8 @@ export default function Rewards() {
         </p>
       </div>
 
-      <div className="flex items-start gap-3 rounded-2xl border border-[#6183FF]/15 bg-[#EEF2FF] p-4">
-        <SparklesIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#6183FF]" />
+      <div className="flex items-start gap-3 rounded-2xl border border-primary/15 bg-primary/10 p-4">
+        <SparklesIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <div>
           <p className="text-xs font-bold text-[#101217]">Two different point systems</p>
           <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-600">
@@ -186,7 +186,7 @@ export default function Rewards() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-[24px] border border-transparent bg-[#6183FF] p-5 text-white shadow-lg shadow-[#6183FF]/20 sm:col-span-2">
+        <div className="rounded-[24px] border border-transparent bg-primary p-5 text-white shadow-lg shadow-primary/20 sm:col-span-2">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/60">
@@ -225,7 +225,7 @@ export default function Rewards() {
           <button
             type="button"
             onClick={() => navigate('/dashboard/earnings')}
-            className="mt-3 flex items-center gap-1 text-[11px] font-bold text-[#6183FF] hover:underline"
+            className="mt-3 flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
           >
             Open earnings
             <ChevronRightIcon className="h-3.5 w-3.5" />
@@ -241,7 +241,7 @@ export default function Rewards() {
               Claim each task once. Progress is checked against your real data.
             </p>
           </div>
-          <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-[#6183FF]">
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-primary">
             {TASKS.length} tasks
           </span>
         </div>
@@ -257,7 +257,7 @@ export default function Rewards() {
                   isClaimed
                     ? 'border-gray-100 bg-[#F8F9FE]'
                     : isReady
-                      ? 'border-[#6183FF]/25 bg-[#EEF2FF]/50'
+                      ? 'border-primary/25 bg-primary/10'
                       : 'border-gray-100 bg-white'
                 }`}
               >
@@ -266,7 +266,7 @@ export default function Rewards() {
                     isClaimed
                       ? 'bg-[#EAFBF2] text-[#15955C]'
                       : isReady
-                        ? 'bg-[#6183FF] text-white'
+                        ? 'bg-primary text-white'
                         : 'bg-[#F8F9FE] text-gray-400'
                   }`}
                 >
@@ -280,7 +280,7 @@ export default function Rewards() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-bold text-[#101217]">{task.title}</p>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#6183FF]">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-primary">
                       +{task.points} pts
                     </span>
                   </div>
@@ -294,7 +294,7 @@ export default function Rewards() {
                     <button
                       type="button"
                       onClick={() => navigate(task.href!)}
-                      className="min-h-[38px] rounded-full border border-gray-200 bg-white px-3 text-[10px] font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                      className="min-h-[38px] rounded-full border border-gray-200 bg-white px-3 text-[10px] font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
                     >
                       {task.actionLabel || 'Open'}
                     </button>
@@ -307,7 +307,7 @@ export default function Rewards() {
                       isClaimed
                         ? 'bg-transparent text-[#15955C]'
                         : isReady
-                          ? 'bg-[#6183FF] text-white'
+                          ? 'bg-primary text-white'
                           : 'bg-gray-100 text-gray-400'
                     } disabled:cursor-default`}
                   >
@@ -323,7 +323,7 @@ export default function Rewards() {
       <button
         type="button"
         onClick={() => navigate('/dashboard/research')}
-        className="flex w-full items-center justify-between gap-3 rounded-[24px] border border-gray-50 bg-white p-5 text-left shadow-sm transition-colors hover:border-[#6183FF]/25"
+        className="flex w-full items-center justify-between gap-3 rounded-[24px] border border-gray-50 bg-white p-5 text-left shadow-sm transition-colors hover:border-primary/25"
       >
         <div>
           <p className="text-sm font-bold text-[#101217]">Earn N20 per survey point</p>
@@ -331,7 +331,7 @@ export default function Rewards() {
             Opt in to a study, answer 15 questions, and get paid instantly.
           </p>
         </div>
-        <ArrowRightIcon className="h-5 w-5 shrink-0 text-[#6183FF]" />
+        <ArrowRightIcon className="h-5 w-5 shrink-0 text-primary" />
       </button>
     </div>
   );

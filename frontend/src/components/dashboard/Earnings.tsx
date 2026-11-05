@@ -170,7 +170,7 @@ export default function Earnings() {
     <div className="space-y-6 font-sora">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
             Financial rewards
           </p>
           <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#101217] sm:text-3xl">
@@ -186,14 +186,14 @@ export default function Earnings() {
             onClick={() => void load(true)}
             disabled={refreshing}
             aria-label="Refresh earnings"
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] disabled:opacity-50"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-50"
           >
             <ArrowPathIcon className={`h-4.5 w-4.5 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
           <button
             type="button"
             onClick={openWithdraw}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
           >
             <ArrowDownTrayIcon className="h-4 w-4" />
             Withdraw funds
@@ -224,8 +224,8 @@ export default function Earnings() {
             value: formatNaira(data.lifetime),
             hint: `${data.earnings.length} reward${data.earnings.length === 1 ? '' : 's'}`,
             icon: WalletIcon,
-            color: 'text-[#6183FF]',
-            bg: 'bg-[#EEF2FF]',
+            color: 'text-primary',
+            bg: 'bg-primary/10',
           },
         ].map((card) => (
           <div
@@ -253,7 +253,7 @@ export default function Earnings() {
                 Survey rewards land here the moment you submit.
               </p>
             </div>
-            <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-[#6183FF]">
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-primary">
               N20 / point
             </span>
           </div>
@@ -270,7 +270,7 @@ export default function Earnings() {
             <div className="mt-3 divide-y divide-gray-50">
               {data.earnings.slice(0, 20).map((row) => (
                 <div key={row.id} className="flex items-center gap-3 py-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <CheckCircleIcon className="h-4.5 w-4.5" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -348,7 +348,7 @@ export default function Earnings() {
           )}
 
           <div className="mt-4 flex items-start gap-2 rounded-2xl border border-gray-100 px-3.5 py-3">
-            <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#6183FF]" />
+            <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <p className="text-[10px] font-medium leading-relaxed text-gray-400">
               Payouts are protected and auditable. You can see every status change here.
             </p>
@@ -372,7 +372,7 @@ export default function Earnings() {
           >
             <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <BanknotesIcon className="h-5 w-5" />
                 </span>
                 <div>
@@ -406,7 +406,7 @@ export default function Earnings() {
                   max={data.available}
                   value={form.amount}
                   onChange={(event) => setForm({ ...form, amount: event.target.value })}
-                  className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-sm font-bold outline-none focus:border-[#6183FF]"
+                  className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-sm font-bold outline-none focus:border-primary"
                 />
               </label>
 
@@ -417,7 +417,7 @@ export default function Earnings() {
                 <select
                   value={form.bankCode}
                   onChange={(event) => setForm({ ...form, bankCode: event.target.value })}
-                  className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3.5 text-xs font-semibold outline-none focus:border-[#6183FF]"
+                  className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3.5 text-xs font-semibold outline-none focus:border-primary"
                 >
                   {BANKS.map((bank) => (
                     <option key={bank.code} value={bank.code}>
@@ -439,7 +439,7 @@ export default function Earnings() {
                     setForm({ ...form, accountNumber: event.target.value.replace(/\D/g, '') })
                   }
                   placeholder="10 digits"
-                  className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-sm font-semibold tracking-wider outline-none focus:border-[#6183FF]"
+                  className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-sm font-semibold tracking-wider outline-none focus:border-primary"
                 />
               </label>
 
@@ -451,7 +451,7 @@ export default function Earnings() {
                   value={form.accountName}
                   onChange={(event) => setForm({ ...form, accountName: event.target.value })}
                   placeholder="As it appears on your bank account"
-                  className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-[#6183FF]"
+                  className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-primary"
                 />
               </label>
 
@@ -465,7 +465,7 @@ export default function Earnings() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-[#6183FF] text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 disabled:opacity-60"
+                className="flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-white shadow-lg shadow-primary/20 disabled:opacity-60"
               >
                 {submitting ? 'Requesting...' : 'Request withdrawal'}
               </button>

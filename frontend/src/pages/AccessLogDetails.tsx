@@ -168,7 +168,7 @@ export default function AccessLogDetails() {
       <button
         type="button"
         onClick={() => navigate('/dashboard/access-log')}
-        className="group flex items-center gap-2 text-xs font-bold text-gray-400 transition-colors hover:text-[#6183FF]"
+        className="group flex items-center gap-2 text-xs font-bold text-gray-400 transition-colors hover:text-primary"
       >
         <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         Back to access log
@@ -188,7 +188,7 @@ export default function AccessLogDetails() {
           <button
             type="button"
             onClick={() => navigate('/dashboard/access-log')}
-            className="mt-5 min-h-[42px] rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white"
+            className="mt-5 min-h-[42px] rounded-full bg-primary px-5 text-xs font-bold text-white"
           >
             Return to access log
           </button>
@@ -201,7 +201,7 @@ export default function AccessLogDetails() {
                 <div
                   className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
                     entry.kind === 'link'
-                      ? 'bg-[#EEF2FF] text-[#6183FF]'
+                      ? 'bg-primary/10 text-primary'
                       : entry.revoked
                         ? 'bg-red-50 text-red-400'
                         : 'bg-green-50 text-green-600'
@@ -282,7 +282,7 @@ export default function AccessLogDetails() {
                   Device verification
                 </h3>
                 <div className="flex items-center gap-3 rounded-2xl border border-gray-100 p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <ComputerDesktopIcon className="h-5 w-5" />
                   </div>
                   <div>

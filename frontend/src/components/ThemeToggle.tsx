@@ -16,7 +16,7 @@ export default function ThemeToggle({ tone = 'light', className = '' }: ThemeTog
   const toneClass =
     tone === 'dark'
       ? 'border-white/15 text-white/70 hover:border-white/30 hover:bg-white/10 hover:text-white'
-      : 'border-gray-200 bg-white text-gray-500 hover:border-[#6183FF]/40 hover:text-[#6183FF]';
+      : 'border-gray-200 bg-white text-gray-500 hover:border-primary/40 hover:text-primary';
 
   return (
     <button

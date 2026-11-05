@@ -178,7 +178,7 @@ export default function Resilience() {
   return (
     <div className="space-y-6 font-sora">
       <div>
-        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
           Emergency resilience
         </p>
         <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#101217] sm:text-3xl">
@@ -213,7 +213,7 @@ export default function Resilience() {
           },
         ].map((card) => (
           <div key={card.label} className="rounded-[24px] border border-gray-50 bg-white p-5 shadow-sm">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <card.icon className="h-5 w-5" />
             </span>
             <p className="mt-4 text-[9px] font-black uppercase tracking-[0.16em] text-gray-400">
@@ -228,7 +228,7 @@ export default function Resilience() {
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <FingerPrintIcon className="h-5 w-5" />
             </span>
             <div>
@@ -249,7 +249,7 @@ export default function Resilience() {
             type="button"
             onClick={runAnchors}
             disabled={busy || records.length === 0}
-            className="mt-4 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[#6183FF] text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 disabled:opacity-50"
+            className="mt-4 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 disabled:opacity-50"
           >
             <ShieldCheckIcon className="h-4 w-4" />
             {busy ? 'Working...' : `Anchor ${records.length} records`}
@@ -293,14 +293,14 @@ export default function Resilience() {
               value={passphrase}
               onChange={(event) => setPassphrase(event.target.value)}
               placeholder="Recovery phrase (8+ characters)"
-              className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-[#6183FF]"
+              className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-primary"
             />
             <input
               type="password"
               value={confirmPassphrase}
               onChange={(event) => setConfirmPassphrase(event.target.value)}
               placeholder="Repeat recovery phrase"
-              className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-[#6183FF]"
+              className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-primary"
             />
             <button
               type="button"
@@ -326,7 +326,7 @@ export default function Resilience() {
                   value={unlockPhrase}
                   onChange={(event) => setUnlockPhrase(event.target.value)}
                   placeholder="Recovery phrase"
-                  className="min-h-[40px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-[11px] font-semibold outline-none focus:border-[#6183FF]"
+                  className="min-h-[40px] flex-1 rounded-xl border border-gray-200 bg-white px-3 text-[11px] font-semibold outline-none focus:border-primary"
                 />
                 <button
                   type="button"
@@ -347,9 +347,9 @@ export default function Resilience() {
         </div>
       </div>
 
-      <div className="rounded-[24px] border border-[#6183FF]/15 bg-[#EEF2FF] p-4">
+      <div className="rounded-[24px] border border-primary/15 bg-primary/10 p-4">
         <p className="flex items-start gap-2 text-[11px] font-medium leading-relaxed text-gray-600">
-          <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#6183FF]" />
+          <LockClosedIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           Health data is never written to a public chain. Only a hash and a pointer are anchored.
           The encrypted backup is the part that can restore your history if Selorah is unreachable.
         </p>

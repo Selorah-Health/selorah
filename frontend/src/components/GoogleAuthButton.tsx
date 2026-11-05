@@ -68,9 +68,9 @@ export default function GoogleAuthButton({
         type="button"
         onClick={() => void start()}
         disabled={loading}
-        className="flex min-h-[50px] w-full items-center justify-center gap-2.5 rounded-2xl border border-gray-200 bg-white px-5 text-sm font-bold text-[#101217] transition-colors hover:border-[#6183FF]/40 hover:bg-[#F8F9FE] disabled:opacity-60"
+        className="flex min-h-[50px] w-full items-center justify-center gap-2.5 rounded-2xl border border-gray-200 bg-white px-5 text-sm font-bold text-[#101217] transition-colors hover:border-primary/40 hover:bg-[#F8F9FE] disabled:opacity-60"
       >
-        {loading ? <ArrowPathIcon className="h-4 w-4 animate-spin text-[#6183FF]" /> : <GoogleMark />}
+        {loading ? <ArrowPathIcon className="h-4 w-4 animate-spin text-primary" /> : <GoogleMark />}
         {loading ? 'Opening Google...' : label}
       </button>
       {error && (

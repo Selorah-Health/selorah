@@ -85,20 +85,20 @@ export default function LegalLayout({
   }, [toc]);
 
   return (
-    <div className="min-h-screen bg-white font-sora text-[#101217] selection:bg-[#6183FF]/15">
+    <div className="min-h-screen bg-white font-sora text-[#101217] selection:bg-primary/15">
       <Header theme="light" />
 
       <main className="mx-auto max-w-6xl px-5 pb-20 pt-28 sm:px-8 sm:pt-32 lg:px-10 lg:pt-36">
         <div className="mb-10 border-b border-gray-100 pb-9 sm:mb-12">
           <Link
             to="/"
-            className="group inline-flex items-center gap-2 text-[11px] font-bold text-gray-400 transition-colors hover:text-[#6183FF]"
+            className="group inline-flex items-center gap-2 text-[11px] font-bold text-gray-400 transition-colors hover:text-primary"
           >
             <ArrowLeftIcon className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
             Back to Selorah
           </Link>
 
-          <p className="mt-7 text-[10px] font-black uppercase tracking-[0.2em] text-[#6183FF]">
+          <p className="mt-7 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             {eyebrow}
           </p>
           <h1 className="mt-2 max-w-4xl text-3xl font-black leading-[1.08] tracking-tight sm:text-4xl lg:text-5xl">
@@ -108,11 +108,11 @@ export default function LegalLayout({
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
             {lastUpdated && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-100 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-500 shadow-sm">
-                <ClockIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                <ClockIcon className="h-3.5 w-3.5 text-primary" />
                 Last updated {lastUpdated}
               </span>
             )}
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6183FF]/15 bg-[#F4F7FF] px-3 py-1.5 text-[10px] font-bold text-[#4D6ED6]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-[#F4F7FF] px-3 py-1.5 text-[10px] font-bold text-primary-hover">
               Written in plain language
             </span>
           </div>
@@ -139,7 +139,7 @@ export default function LegalLayout({
                       }
                       className={`w-full rounded-xl px-2.5 py-2 text-left text-[11px] font-semibold leading-snug transition-colors ${
                         activeId === item.id
-                          ? 'bg-white text-[#101217] shadow-sm ring-1 ring-[#6183FF]/15'
+                          ? 'bg-white text-[#101217] shadow-sm ring-1 ring-primary/15'
                           : 'text-gray-500 hover:bg-white/70 hover:text-[#101217]'
                       }`}
                     >
@@ -151,7 +151,7 @@ export default function LegalLayout({
 
               <Link
                 to="/contact"
-                className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2.5 text-[11px] font-bold text-[#6183FF] transition-colors hover:border-[#6183FF]/30"
+                className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2.5 text-[11px] font-bold text-primary transition-colors hover:border-primary/30"
               >
                 Questions? Contact us
                 <ArrowUpRightIcon className="h-3.5 w-3.5" />
@@ -164,7 +164,7 @@ export default function LegalLayout({
               <div className="[&_h2]:scroll-mt-28 [&_p]:leading-relaxed">{children}</div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 rounded-[24px] border border-[#6183FF]/15 bg-[#F4F7FF] p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-6 flex flex-col gap-3 rounded-[24px] border border-primary/15 bg-[#F4F7FF] p-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-bold text-[#101217]">Still have a question?</p>
                 <p className="mt-0.5 text-[11px] font-medium text-gray-500">
@@ -173,7 +173,7 @@ export default function LegalLayout({
               </div>
               <Link
                 to="/contact"
-                className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-5 text-[11px] font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+                className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-[11px] font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
               >
                 Contact Selorah
                 <ArrowUpRightIcon className="h-3.5 w-3.5" />

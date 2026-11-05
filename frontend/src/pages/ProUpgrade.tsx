@@ -422,13 +422,13 @@ export default function ProUpgrade() {
         <button
           type="button"
           onClick={() => navigate('/dashboard/billing')}
-          className="group flex items-center gap-2 text-xs font-bold text-gray-400 transition-colors hover:text-[#6183FF]"
+          className="group flex items-center gap-2 text-xs font-bold text-gray-400 transition-colors hover:text-primary"
         >
           <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
           Back to billing
         </button>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-500">
-          <ShieldCheckIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+          <ShieldCheckIcon className="h-3.5 w-3.5 text-primary" />
           Secure checkout by Paystack
         </span>
       </div>
@@ -436,7 +436,7 @@ export default function ProUpgrade() {
       <section className="relative overflow-hidden rounded-[32px] bg-[#020924] px-5 py-8 text-white shadow-2xl shadow-blue-900/10 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
         <div
           aria-hidden
-          className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#6183FF]/30 blur-3xl"
+          className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary/30 blur-3xl"
         />
         <div
           aria-hidden
@@ -445,7 +445,7 @@ export default function ProUpgrade() {
 
         <div className="relative grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#8FA8FF]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
               <StarIcon className="h-3.5 w-3.5 text-[#5FFAB0]" />
               Selorah Pro
             </span>
@@ -471,7 +471,7 @@ export default function ProUpgrade() {
                   key={item.label}
                   className="rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-3"
                 >
-                  <item.icon className="h-4 w-4 text-[#8FA8FF]" />
+                  <item.icon className="h-4 w-4 text-primary" />
                   <p className="mt-2 text-xs font-bold text-white">{item.label}</p>
                   <p className="text-[10px] font-semibold text-white/40">{item.detail}</p>
                 </div>
@@ -482,7 +482,7 @@ export default function ProUpgrade() {
           <div className="rounded-[28px] border border-white/10 bg-white p-5 text-[#101217] shadow-2xl shadow-black/20 sm:p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#6183FF]">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
                   {isActive ? 'Your plan' : planId === 'annual' ? 'Best value' : 'Flexible plan'}
                 </p>
                 <h2 className="mt-1 text-lg font-black tracking-tight">{PRO_PLAN_LABEL}</h2>
@@ -491,7 +491,7 @@ export default function ProUpgrade() {
                 className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-[0.1em] ${
                   isActive
                     ? 'bg-green-50 text-green-600'
-                    : 'bg-[#EEF2FF] text-[#6183FF]'
+                    : 'bg-primary/10 text-primary'
                 }`}
               >
                 {isActive ? 'Active' : planId === 'annual' ? 'Save ₦4,000' : 'Monthly'}
@@ -511,14 +511,14 @@ export default function ProUpgrade() {
                     aria-pressed={selected}
                     className={`rounded-2xl border px-3 py-3 text-left transition-colors disabled:opacity-60 ${
                       selected
-                        ? 'border-[#6183FF] bg-[#EEF2FF] ring-1 ring-[#6183FF]/30'
+                        ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
                         : 'border-gray-200 bg-white hover:border-gray-300'
                     }`}
                   >
                     <span className="flex items-center justify-between gap-1">
                       <span
                         className={`text-[10px] font-black uppercase tracking-[0.1em] ${
-                          selected ? 'text-[#6183FF]' : 'text-gray-400'
+                          selected ? 'text-primary' : 'text-gray-400'
                         }`}
                       >
                         {option.label}
@@ -569,7 +569,7 @@ export default function ProUpgrade() {
             <div className="mt-5 space-y-2.5 border-t border-gray-100 pt-5">
               {FEATURE_DETAILS.slice(0, 4).map((feature) => (
                 <div key={feature.title} className="flex items-start gap-2.5">
-                  <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#6183FF]" />
+                  <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <span className="text-xs font-semibold leading-relaxed text-gray-600">
                     {feature.title}
                   </span>
@@ -630,7 +630,7 @@ export default function ProUpgrade() {
                       autoComplete="off"
                       spellCheck={false}
                       placeholder="Paste the reference from your Paystack receipt"
-                      className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3.5 text-xs font-semibold text-[#101217] outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                      className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3.5 text-xs font-semibold text-[#101217] outline-none placeholder:text-gray-300 focus:border-primary"
                     />
                     {recoveryMessage && (
                       <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-[10px] font-semibold leading-relaxed text-red-600">
@@ -650,7 +650,7 @@ export default function ProUpgrade() {
                         type="button"
                         onClick={handleCheckPending}
                         disabled={recovering}
-                        className="min-h-[38px] w-full rounded-xl text-[10px] font-bold text-[#6183FF] transition-colors hover:bg-white disabled:opacity-50"
+                        className="min-h-[38px] w-full rounded-xl text-[10px] font-bold text-primary transition-colors hover:bg-white disabled:opacity-50"
                       >
                         Check the pending payment on this device
                       </button>
@@ -684,7 +684,7 @@ export default function ProUpgrade() {
                   type="button"
                   onClick={handleUpgrade}
                   disabled={busy}
-                  className="mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-all hover:bg-[#4D6ED6] active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
+                  className="mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary-hover active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
                 >
                   {busy ? (
                     <>
@@ -724,7 +724,7 @@ export default function ProUpgrade() {
 
       <section className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
         <div className="max-w-xl">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
             What Pro unlocks
           </p>
           <h2 className="mt-2 text-2xl font-black tracking-tight text-[#101217]">
@@ -740,9 +740,9 @@ export default function ProUpgrade() {
           {FEATURE_DETAILS.map((feature) => (
             <article
               key={feature.title}
-              className="rounded-2xl border border-gray-100 bg-[#F8F9FE] p-4 transition-colors hover:border-[#6183FF]/30 hover:bg-white"
+              className="rounded-2xl border border-gray-100 bg-[#F8F9FE] p-4 transition-colors hover:border-primary/30 hover:bg-white"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#6183FF] shadow-sm">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
                 <feature.icon className="h-5 w-5" />
               </span>
               <h3 className="mt-3 text-sm font-bold leading-snug text-[#101217]">
@@ -767,7 +767,7 @@ export default function ProUpgrade() {
             <div className="grid grid-cols-[1.2fr_0.9fr_0.9fr] bg-[#F8F9FE] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.12em] text-gray-400">
               <span>Feature</span>
               <span className="text-center">Basic</span>
-              <span className="text-center text-[#6183FF]">Pro</span>
+              <span className="text-center text-primary">Pro</span>
             </div>
             {COMPARISON.map((row, index) => (
               <div
@@ -778,7 +778,7 @@ export default function ProUpgrade() {
               >
                 <span className="font-semibold text-[#101217]">{row.label}</span>
                 <span className="text-center font-medium text-gray-400">{row.basic}</span>
-                <span className="text-center font-bold text-[#6183FF]">{row.pro}</span>
+                <span className="text-center font-bold text-primary">{row.pro}</span>
               </div>
             ))}
           </div>

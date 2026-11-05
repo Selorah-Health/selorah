@@ -54,7 +54,7 @@ const ROLES = [
 ];
 
 const inputClass =
-  'min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]';
+  'min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary';
 
 const labelClass =
   'mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400';
@@ -552,7 +552,7 @@ export default function Onboarding() {
             <ThemeToggle />
             <Link
               to="/dashboard"
-              className="rounded-full border border-gray-200 px-3.5 py-2 text-[11px] font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+              className="rounded-full border border-gray-200 px-3.5 py-2 text-[11px] font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
             >
               Skip for now
             </Link>
@@ -560,7 +560,7 @@ export default function Onboarding() {
         </div>
         <div className="h-1 w-full bg-gray-100">
           <div
-            className="h-full bg-[#6183FF] transition-all duration-300"
+            className="h-full bg-primary transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -578,7 +578,7 @@ export default function Onboarding() {
                   key={label}
                   className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${
                     isCurrent
-                      ? 'bg-[#6183FF] text-white'
+                      ? 'bg-primary text-white'
                       : isDone
                         ? 'bg-[#EAFBF2] text-[#15955C]'
                         : 'bg-white text-gray-400'
@@ -616,7 +616,7 @@ export default function Onboarding() {
 
           {step === 1 && (
             <div className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-sm sm:p-9">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
                 Welcome to Selorah
               </p>
               <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -641,13 +641,13 @@ export default function Onboarding() {
                       }}
                       className={`group flex min-h-[104px] items-start gap-3 rounded-2xl border p-4 text-left transition-all ${
                         selected
-                          ? 'border-[#6183FF] bg-[#EEF2FF]'
-                          : 'border-gray-200 bg-white hover:border-[#6183FF]/40 hover:shadow-sm'
+                          ? 'border-primary bg-primary/10'
+                          : 'border-gray-200 bg-white hover:border-primary/40 hover:shadow-sm'
                       }`}
                     >
                       <span
                         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                          selected ? 'bg-[#6183FF] text-white' : 'bg-gray-50 text-[#6183FF]'
+                          selected ? 'bg-primary text-white' : 'bg-gray-50 text-primary'
                         }`}
                       >
                         <Icon className="h-5 w-5" />
@@ -655,7 +655,7 @@ export default function Onboarding() {
                       <span className="min-w-0">
                         <span className="flex items-center gap-1.5 text-sm font-bold text-[#101217]">
                           {role.title}
-                          {selected && <CheckCircleIcon className="h-3.5 w-3.5 text-[#6183FF]" />}
+                          {selected && <CheckCircleIcon className="h-3.5 w-3.5 text-primary" />}
                         </span>
                         <span className="mt-1 block text-[11px] font-medium leading-relaxed text-gray-400">
                           {role.desc}
@@ -673,14 +673,14 @@ export default function Onboarding() {
                     setFormData((current) => ({ ...current, role: 'patient' }));
                     setStep(totalSteps);
                   }}
-                  className="text-[11px] font-bold text-gray-400 transition-colors hover:text-[#6183FF]"
+                  className="text-[11px] font-bold text-gray-400 transition-colors hover:text-primary"
                 >
                   Just let me look around first
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="flex min-h-[42px] items-center gap-1.5 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white"
+                  className="flex min-h-[42px] items-center gap-1.5 rounded-full bg-primary px-5 text-xs font-bold text-white"
                 >
                   Continue
                   <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -691,7 +691,7 @@ export default function Onboarding() {
 
           {step === 2 && (
             <div className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-sm sm:p-9">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
                 {isPatient ? 'Your details' : 'Organization details'}
               </p>
               <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -912,7 +912,7 @@ export default function Onboarding() {
                   type="button"
                   onClick={nextStep}
                   disabled={isPatient ? !formData.firstName.trim() : !formData.orgName.trim()}
-                  className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-[#6183FF] text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Continue
                   <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -923,7 +923,7 @@ export default function Onboarding() {
 
           {step === 3 && (
             <div className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-sm sm:p-9">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
                 {isPatient ? 'Health basics' : 'Verification documents'}
               </p>
               <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -1005,7 +1005,7 @@ export default function Onboarding() {
                     <textarea
                       rows={3}
                       placeholder="e.g. Penicillin, peanuts, latex"
-                      className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+                      className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
                       value={formData.allergies}
                       onChange={(event) => update('allergies', event.target.value)}
                     />
@@ -1016,14 +1016,14 @@ export default function Onboarding() {
                     <textarea
                       rows={3}
                       placeholder="e.g. Asthma, hypertension, sickle cell"
-                      className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+                      className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
                       value={formData.medicalConditions}
                       onChange={(event) => update('medicalConditions', event.target.value)}
                     />
                   </label>
 
-                  <div className="flex items-start gap-2.5 rounded-2xl bg-[#EEF2FF]/60 px-4 py-3">
-                    <HeartIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#6183FF]" />
+                  <div className="flex items-start gap-2.5 rounded-2xl bg-primary/10 px-4 py-3">
+                    <HeartIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                     <p className="text-[11px] font-medium leading-relaxed text-gray-500">
                       This information is encrypted and shown to a clinician only when you share
                       your record.
@@ -1042,14 +1042,14 @@ export default function Onboarding() {
                         className={`flex w-full items-center gap-3 rounded-2xl border-2 border-dashed p-5 text-left transition-all ${
                           isUploaded
                             ? 'border-[#5FFAB0] bg-[#EAFBF2]'
-                            : 'border-gray-200 bg-[#F8F9FE] hover:border-[#6183FF]/40'
+                            : 'border-gray-200 bg-[#F8F9FE] hover:border-primary/40'
                         }`}
                       >
                         <span
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
                             isUploaded
                               ? 'bg-white text-[#15955C]'
-                              : 'bg-white text-[#6183FF]'
+                              : 'bg-white text-primary'
                           }`}
                         >
                           {isUploaded ? (
@@ -1066,7 +1066,7 @@ export default function Onboarding() {
                             PDF or image. Reviewed by our verification team.
                           </span>
                         </span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[#6183FF]">
+                        <span className="text-[10px] font-black uppercase tracking-[0.12em] text-primary">
                           {isUploaded ? 'Replace' : 'Choose'}
                         </span>
                       </button>
@@ -1087,7 +1087,7 @@ export default function Onboarding() {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-[#6183FF] text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+                  className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
                 >
                   Continue
                   <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -1100,7 +1100,7 @@ export default function Onboarding() {
             <div className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-sm sm:p-9">
               {isPatient ? (
                 <>
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
                     Emergency contacts
                   </p>
                   <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -1128,14 +1128,14 @@ export default function Onboarding() {
                           <input
                             type="text"
                             placeholder="Full name"
-                            className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                            className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-primary"
                             value={contact.name}
                             onChange={(event) => updateContact(index, 'name', event.target.value)}
                           />
                           <input
                             type="text"
                             placeholder="Relationship"
-                            className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                            className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-primary"
                             value={contact.relationship}
                             onChange={(event) =>
                               updateContact(index, 'relationship', event.target.value)
@@ -1145,7 +1145,7 @@ export default function Onboarding() {
                         <input
                           type="tel"
                           placeholder="Phone number"
-                          className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                          className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-primary"
                           value={contact.phone}
                           onChange={(event) => updateContact(index, 'phone', event.target.value)}
                         />
@@ -1156,7 +1156,7 @@ export default function Onboarding() {
                       <button
                         type="button"
                         onClick={addContact}
-                        className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 text-[11px] font-bold text-gray-400 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                        className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 text-[11px] font-bold text-gray-400 transition-colors hover:border-primary/40 hover:text-primary"
                       >
                         <PlusIcon className="h-4 w-4" />
                         Add an emergency contact
@@ -1166,7 +1166,7 @@ export default function Onboarding() {
                 </>
               ) : (
                 <div className="py-6 text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <SparklesIcon className="h-8 w-8" />
                   </div>
                   <h1 className="mt-4 text-2xl font-bold tracking-tight">Verification pending</h1>
@@ -1190,7 +1190,7 @@ export default function Onboarding() {
                   <button
                     type="button"
                     onClick={nextStep}
-                    className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-[#6183FF] text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+                    className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
                   >
                     Review and finish
                     <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -1200,7 +1200,7 @@ export default function Onboarding() {
                     type="button"
                     onClick={handleFinish}
                     disabled={saving}
-                    className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-[#6183FF] text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] disabled:opacity-60"
+                    className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:opacity-60"
                   >
                     {saving ? 'Saving profile...' : 'Go to dashboard'}
                   </button>
@@ -1252,7 +1252,7 @@ export default function Onboarding() {
                 type="button"
                 onClick={handleFinish}
                 disabled={saving}
-                className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-colors hover:bg-[#4D6ED6] disabled:opacity-60"
+                className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover disabled:opacity-60"
               >
                 {saving ? (
                   <>

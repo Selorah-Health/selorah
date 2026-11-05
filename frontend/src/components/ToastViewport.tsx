@@ -5,7 +5,7 @@ const styles: Record<
   { bg: string; text: string; muted: string; iconBg: string; icon: string; border: string }
 > = {
   success: {
-    bg: 'bg-[#6183FF]',
+    bg: 'bg-primary',
     text: 'text-white',
     muted: 'text-white/80',
     iconBg: 'bg-white/20 text-white',
@@ -21,7 +21,7 @@ const styles: Record<
     border: 'border-white/10',
   },
   info: {
-    bg: 'bg-[#6183FF]',
+    bg: 'bg-primary',
     text: 'text-white',
     muted: 'text-white/80',
     iconBg: 'bg-white/20 text-white',

@@ -243,7 +243,7 @@ export default function QRCodes() {
     <div className="space-y-6 font-sora">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
             Secure sharing
           </p>
           <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#101217] sm:text-3xl">
@@ -272,7 +272,7 @@ export default function QRCodes() {
             type="button"
             onClick={() => setTab(item.id)}
             className={`inline-flex min-h-[38px] items-center gap-1.5 rounded-full px-4 text-[10px] font-black uppercase tracking-[0.08em] transition-colors ${
-              tab === item.id ? 'bg-[#6183FF] text-white' : 'text-gray-500 hover:text-[#101217]'
+              tab === item.id ? 'bg-primary text-white' : 'text-gray-500 hover:text-[#101217]'
             }`}
           >
             <item.icon className="h-3.5 w-3.5" />
@@ -285,7 +285,7 @@ export default function QRCodes() {
         <div className="grid gap-5 lg:grid-cols-12">
           <div className="rounded-[28px] border border-gray-50 bg-white p-6 shadow-sm sm:p-8 lg:col-span-7">
             <div className="flex flex-col items-center text-center">
-              <div className="rounded-[32px] border border-gray-100 bg-white p-6 shadow-xl shadow-[#6183FF]/5">
+              <div className="rounded-[32px] border border-gray-100 bg-white p-6 shadow-xl shadow-primary/5">
                 {permanentToken ? (
                   <QRCodeCanvas
                     value={sharedUrl(permanentToken)}
@@ -318,7 +318,7 @@ export default function QRCodes() {
                 <button
                   type="button"
                   onClick={() => copy(sharedUrl(permanentToken))}
-                  className="mt-4 flex min-h-[42px] items-center gap-2 rounded-full bg-[#F8F9FE] px-4 text-[11px] font-bold text-gray-600 transition-colors hover:bg-[#EEF2FF] hover:text-[#6183FF]"
+                  className="mt-4 flex min-h-[42px] items-center gap-2 rounded-full bg-[#F8F9FE] px-4 text-[11px] font-bold text-gray-600 transition-colors hover:bg-primary/10 hover:text-primary"
                 >
                   {copied === sharedUrl(permanentToken) ? (
                     <CheckIcon className="h-4 w-4" />
@@ -332,7 +332,7 @@ export default function QRCodes() {
           </div>
 
           <div className="space-y-4 lg:col-span-5">
-            <div className="rounded-[24px] border border-[#6183FF]/15 bg-[#EEF2FF] p-5">
+            <div className="rounded-[24px] border border-primary/15 bg-primary/10 p-5">
               <p className="text-sm font-bold text-[#101217]">Carry it on your card</p>
               <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-500">
                 Order a physical Selorah card with this QR code, your blood group, and emergency
@@ -341,7 +341,7 @@ export default function QRCodes() {
               <button
                 type="button"
                 onClick={() => (window.location.href = '/dashboard/card')}
-                className="mt-3 flex min-h-[40px] items-center gap-1.5 rounded-full bg-[#6183FF] px-4 text-[11px] font-bold text-white"
+                className="mt-3 flex min-h-[40px] items-center gap-1.5 rounded-full bg-primary px-4 text-[11px] font-bold text-white"
               >
                 <CreditCardIcon className="h-4 w-4" />
                 Open Selorah card
@@ -382,7 +382,7 @@ export default function QRCodes() {
                       onClick={() => setExpiryType(option.id)}
                       className={`rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] ${
                         expiryType === option.id
-                          ? 'bg-[#EEF2FF] text-[#6183FF]'
+                          ? 'bg-primary/10 text-primary'
                           : 'text-gray-400'
                       }`}
                     >
@@ -406,8 +406,8 @@ export default function QRCodes() {
                       onClick={() => setExpiry(option.val)}
                       className={`min-h-[44px] rounded-xl border-2 text-xs font-bold transition-all ${
                         expiry === option.val
-                          ? 'border-[#6183FF] bg-[#6183FF] text-white'
-                          : 'border-gray-100 text-gray-400 hover:border-[#6183FF]/30'
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-gray-100 text-gray-400 hover:border-primary/30'
                       }`}
                     >
                       {option.label}
@@ -422,7 +422,7 @@ export default function QRCodes() {
                     max={43200}
                     value={customExpiry}
                     onChange={(event) => setCustomExpiry(event.target.value)}
-                    className="min-h-[44px] flex-1 rounded-xl border border-gray-200 px-3.5 text-sm font-bold outline-none focus:border-[#6183FF]"
+                    className="min-h-[44px] flex-1 rounded-xl border border-gray-200 px-3.5 text-sm font-bold outline-none focus:border-primary"
                   />
                   <span className="flex items-center rounded-xl bg-[#F8F9FE] px-3.5 text-[10px] font-black text-gray-400">
                     MINS
@@ -435,7 +435,7 @@ export default function QRCodes() {
               type="button"
               onClick={generateCode}
               disabled={busy}
-              className="mt-4 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-[#6183FF] text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 disabled:opacity-60"
+              className="mt-4 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-white shadow-lg shadow-primary/20 disabled:opacity-60"
             >
               <QrCodeIcon className="h-4 w-4" />
               {busy ? 'Creating...' : online ? 'Generate QR code' : 'Create offline QR code'}
@@ -456,7 +456,7 @@ export default function QRCodes() {
                 <button
                   type="button"
                   onClick={() => copy(sharedUrl(activeToken))}
-                  className="mt-2 text-[10px] font-bold text-[#6183FF] hover:underline"
+                  className="mt-2 text-[10px] font-bold text-primary hover:underline"
                 >
                   Copy link
                 </button>
@@ -476,7 +476,7 @@ export default function QRCodes() {
                 type="button"
                 onClick={() => void load()}
                 aria-label="Refresh codes"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-[#6183FF]"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:text-primary"
               >
                 <ArrowPathIcon className="h-4 w-4" />
               </button>
@@ -497,7 +497,7 @@ export default function QRCodes() {
                     key={link.id}
                     className="flex items-center gap-3 rounded-2xl border border-gray-100 p-3"
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                       <QrCodeIcon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -526,7 +526,7 @@ export default function QRCodes() {
       )}
 
       <div className="flex items-start gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3">
-        <ShieldExclamationIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#6183FF]" />
+        <ShieldExclamationIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         <p className="text-[10px] font-medium leading-relaxed text-gray-400">
           Anyone with a code can view the records you shared. Only share codes with people you
           trust, and check your access log after a visit.

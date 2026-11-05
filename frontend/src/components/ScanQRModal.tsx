@@ -152,7 +152,7 @@ export default function ScanQRModal({ isOpen, onClose, onSuccess }: ScanQRModalP
         </button>
 
         <div className="p-8 text-center border-b border-gray-50 bg-gray-50/50">
-          <div className="w-16 h-16 bg-blue-50 text-[#6183FF] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+          <div className="w-16 h-16 bg-blue-50 text-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
             <QrCodeIcon className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-bold text-[#101217]">Scan QR Token</h2>
@@ -169,7 +169,7 @@ export default function ScanQRModal({ isOpen, onClose, onSuccess }: ScanQRModalP
             <input
               type="text"
               placeholder="e.g. 81993f0e-674b-4b00-8231-6ce1326edb9e"
-              className="w-full bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#6183FF] transition-all font-mono"
+              className="w-full bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all font-mono"
               value={token}
               onChange={(e) => setToken(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleScan()}
@@ -185,7 +185,7 @@ export default function ScanQRModal({ isOpen, onClose, onSuccess }: ScanQRModalP
           <button
             onClick={handleScan}
             disabled={loading}
-            className="w-full bg-[#6183FF] text-white py-4 rounded-2xl font-bold hover:bg-[#4E6EEF] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50"
+            className="w-full bg-primary text-white py-4 rounded-2xl font-bold hover:bg-[#4E6EEF] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 disabled:opacity-50"
           >
             {loading ? 'Verifying...' : 'Access Records'} <ArrowRightIcon className="w-4 h-4" />
           </button>

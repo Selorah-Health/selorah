@@ -50,11 +50,11 @@ export default function WhatsNewModal({ open, onClose }: WhatsNewModalProps) {
       >
         <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-5 sm:px-6">
           <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#6183FF] text-white shadow-lg shadow-[#6183FF]/20">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/20">
               <SparklesIcon className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
                 Release {CURRENT_RELEASE}
               </p>
               <h2
@@ -85,7 +85,7 @@ export default function WhatsNewModal({ open, onClose }: WhatsNewModalProps) {
               key={note.title}
               className="rounded-2xl border border-gray-100 bg-[#F8F9FE] px-4 py-4 sm:px-5"
             >
-              <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#6183FF]">
+              <p className="text-[8px] font-black uppercase tracking-[0.16em] text-primary">
                 {note.tag}
               </p>
               <h3 className="mt-1.5 text-sm font-bold text-[#101217]">{note.title}</h3>
@@ -103,7 +103,7 @@ export default function WhatsNewModal({ open, onClose }: WhatsNewModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+            className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
           >
             <CheckIcon className="h-4 w-4" />
             Got it

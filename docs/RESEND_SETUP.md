@@ -7,7 +7,7 @@ Project values used below:
 
 - Supabase project ref: `dbpyyhrbekamyejizson`
 - Public site: `https://www.selorah.app`
-- Support inbox: `selorahealth@gmail.com`
+- Support inbox: `support@selorah.app`
 
 ## 1. Add and verify the sending domain
 
@@ -25,12 +25,26 @@ Project values used below:
 6. Add a DMARC record for the root domain. Start in monitor mode:
 
 ```text
-_dmarc.selorah.app  TXT  "v=DMARC1; p=none; rua=mailto:selorahealth@gmail.com; fo=1"
+_dmarc.selorah.app  TXT  "v=DMARC1; p=none; rua=mailto:support@selorah.app; fo=1"
 ```
 
 Do not invent DNS values. Always copy the exact values Resend gives you. If an
 SPF record already exists on the root domain, merge the Resend include into it
 instead of creating a second SPF record.
+
+### Name.com DNS steps
+
+1. Log in to Name.com and open the domain.
+2. Open **DNS Records** and choose **Add Record** for each Resend record.
+3. Use host `@` for the root domain. For a subdomain record, enter only the
+   prefix, not the full domain name.
+4. Paste the exact value from Resend. Do not add quotes unless Resend includes
+   them.
+5. Set TTL to `300` while verifying. A longer TTL is fine after verification.
+6. Do not create a second SPF record. If one already exists, edit it and add the
+   Resend include.
+7. Wait for Resend to show **Verified**. This usually takes 15 minutes and can
+   take up to 72 hours.
 
 ## 2. Create the API key
 
@@ -49,7 +63,7 @@ supabase link --project-ref dbpyyhrbekamyejizson
 supabase secrets set \
   RESEND_API_KEY="re_your_key" \
   EMAIL_FROM="Selorah Health <hello@selorah.app>" \
-  EMAIL_REPLY_TO="selorahealth@gmail.com" \
+  EMAIL_REPLY_TO="support@selorah.app" \
   EMAIL_CRON_SECRET="$(openssl rand -hex 32)"
 ```
 
@@ -214,7 +228,7 @@ where id = 'THE_EMAIL_ID';
 - `EMAIL_FROM` uses the verified domain, not a Gmail address.
 - Test messages land in the inbox, not spam.
 - The welcome and survey emails include a clear reason for receiving them.
-- The support inbox is monitored and replies go to `selorahealth@gmail.com`.
+- The support inbox is monitored and replies go to `support@selorah.app`.
 - Never put the Resend key in frontend code or a committed file.
 
 ## Troubleshooting

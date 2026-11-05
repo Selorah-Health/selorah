@@ -233,11 +233,11 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
         </button>
 
         <div className="flex items-center gap-3 pr-10">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#6183FF]/30 bg-[#6183FF]/15 text-[#6183FF]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/15 text-primary">
             <BeakerIcon className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
               Researcher tools
             </p>
             <h3 className="text-xl font-black tracking-tight text-white">Create a survey</h3>
@@ -251,19 +251,19 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
+            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-primary">
               Survey title
             </span>
             <input
               value={form.title}
               onChange={(event) => setForm({ ...form, title: event.target.value })}
               placeholder="e.g. Asthma control in young adults"
-              className="min-h-[46px] w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[#6183FF]"
+              className="min-h-[46px] w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white outline-none transition-colors placeholder:text-gray-600 focus:border-primary"
             />
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
+            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-primary">
               Summary
             </span>
             <textarea
@@ -271,24 +271,24 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
               onChange={(event) => setForm({ ...form, summary: event.target.value })}
               rows={2}
               placeholder="What the survey studies and what participants will be asked."
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium leading-relaxed text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[#6183FF]"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium leading-relaxed text-white outline-none transition-colors placeholder:text-gray-600 focus:border-primary"
             />
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
+              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-primary">
                 Category
               </span>
               <input
                 value={form.category}
                 onChange={(event) => setForm({ ...form, category: event.target.value })}
                 placeholder="Cardiovascular health"
-                className="min-h-[46px] w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[#6183FF]"
+                className="min-h-[46px] w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white outline-none transition-colors placeholder:text-gray-600 focus:border-primary"
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
+              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-primary">
                 Minutes
               </span>
               <div className="relative">
@@ -299,7 +299,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
                   max={60}
                   value={form.minutes}
                   onChange={(event) => setForm({ ...form, minutes: event.target.value })}
-                  className="min-h-[46px] w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm font-semibold text-white outline-none transition-colors focus:border-[#6183FF]"
+                  className="min-h-[46px] w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm font-semibold text-white outline-none transition-colors focus:border-primary"
                 />
               </div>
             </label>
@@ -314,7 +314,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
 
           <div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
+              <span className="text-[10px] font-black uppercase tracking-[0.14em] text-primary">
                 Questions
               </span>
               <button
@@ -359,7 +359,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
                       updateQuestion(question.key, { prompt: event.target.value })
                     }
                     placeholder="Type the question"
-                    className="mt-2 min-h-[42px] w-full rounded-xl border border-white/10 bg-white/5 px-3.5 text-sm font-semibold text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[#6183FF]"
+                    className="mt-2 min-h-[42px] w-full rounded-xl border border-white/10 bg-white/5 px-3.5 text-sm font-semibold text-white outline-none transition-colors placeholder:text-gray-600 focus:border-primary"
                   />
 
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -370,7 +370,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
                           type: event.target.value as QuestionType,
                         })
                       }
-                      className="min-h-[42px] rounded-xl border border-white/10 bg-white/5 px-3 text-xs font-semibold text-white outline-none focus:border-[#6183FF]"
+                      className="min-h-[42px] rounded-xl border border-white/10 bg-white/5 px-3 text-xs font-semibold text-white outline-none focus:border-primary"
                     >
                       {(Object.keys(TYPE_LABELS) as QuestionType[]).map((type) => (
                         <option key={type} value={type} className="bg-[#0A0B14]">
@@ -386,7 +386,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
                         onChange={(event) =>
                           updateQuestion(question.key, { required: event.target.checked })
                         }
-                        className="h-4 w-4 rounded border-gray-600 bg-transparent text-[#6183FF]"
+                        className="h-4 w-4 rounded border-gray-600 bg-transparent text-primary"
                       />
                       Required
                     </label>
@@ -399,7 +399,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
                         updateQuestion(question.key, { optionsText: event.target.value })
                       }
                       placeholder="Options, separated by commas"
-                      className="mt-2 min-h-[42px] w-full rounded-xl border border-white/10 bg-white/5 px-3.5 text-xs font-medium text-white outline-none transition-colors placeholder:text-gray-600 focus:border-[#6183FF]"
+                      className="mt-2 min-h-[42px] w-full rounded-xl border border-white/10 bg-white/5 px-3.5 text-xs font-medium text-white outline-none transition-colors placeholder:text-gray-600 focus:border-primary"
                     />
                   )}
 
@@ -434,7 +434,7 @@ export default function NewStudyModal({ isOpen, onClose, onCreated }: NewStudyMo
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#6183FF] px-6 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-colors hover:bg-[#4D6ED6] disabled:opacity-60"
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
               {submitting ? (
                 <>

@@ -397,7 +397,7 @@ export default function ResearcherDashboard() {
         user={user}
         sidebarBg="bg-[#050038]"
         logoutBg="bg-[#1A1B2E]"
-        avatarGradient="bg-gradient-to-tr from-[#050038] to-[#6183FF]"
+        avatarGradient="bg-gradient-to-tr from-[#050038] to-primary"
         roleDescription={identity.verified ? 'Verified researcher' : 'Researcher'}
       />
 
@@ -427,11 +427,11 @@ export default function ResearcherDashboard() {
                   <section className="relative overflow-hidden rounded-[28px] border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
                     <div
                       aria-hidden
-                      className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-[#6183FF]/10 blur-3xl"
+                      className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl"
                     />
                     <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                       <div className="flex min-w-0 items-center gap-4">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#050038] to-[#6183FF] text-lg font-black text-white">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#050038] to-primary text-lg font-black text-white">
                           {identity.initials}
                         </div>
                         <div className="min-w-0">
@@ -440,7 +440,7 @@ export default function ResearcherDashboard() {
                               {identity.name}
                             </h2>
                             {identity.isPro && (
-                              <span className="rounded-full bg-[#6183FF] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-white">
+                              <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-white">
                                 Pro
                               </span>
                             )}
@@ -460,11 +460,11 @@ export default function ResearcherDashboard() {
                           </p>
                           <div className="mt-2 flex flex-wrap gap-2">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F8F9FE] px-2.5 py-1 text-[10px] font-semibold text-gray-500">
-                              <ShieldCheckIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                              <ShieldCheckIcon className="h-3.5 w-3.5 text-primary" />
                               {identity.institution}
                             </span>
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F8F9FE] px-2.5 py-1 text-[10px] font-semibold text-gray-500">
-                              <BeakerIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                              <BeakerIcon className="h-3.5 w-3.5 text-primary" />
                               Researcher
                             </span>
                           </div>
@@ -480,11 +480,11 @@ export default function ResearcherDashboard() {
                             {identity.irb || 'Not provided'}
                           </p>
                         </div>
-                        <div className="rounded-xl bg-[#EEF2FF] px-4 py-2.5">
-                          <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#6183FF]">
+                        <div className="rounded-xl bg-primary/10 px-4 py-2.5">
+                          <p className="text-[9px] font-black uppercase tracking-[0.12em] text-primary">
                             Open surveys
                           </p>
-                          <p className="mt-0.5 text-lg font-black text-[#6183FF]">{totals.open}</p>
+                          <p className="mt-0.5 text-lg font-black text-primary">{totals.open}</p>
                         </div>
                       </div>
                     </div>
@@ -517,7 +517,7 @@ export default function ResearcherDashboard() {
                         key={card.label}
                         className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm"
                       >
-                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+                        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                           <card.icon className="h-5 w-5" />
                         </div>
                         <p className="text-[9px] font-black uppercase tracking-[0.16em] text-gray-400">
@@ -582,7 +582,7 @@ export default function ResearcherDashboard() {
                         <button
                           type="button"
                           onClick={() => setIsNewSurveyOpen(true)}
-                          className="mt-5 inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20"
+                          className="mt-5 inline-flex min-h-[42px] items-center gap-2 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20"
                         >
                           <PlusIcon className="h-4 w-4" />
                           Create a survey
@@ -596,7 +596,7 @@ export default function ResearcherDashboard() {
                           return (
                             <article
                               key={survey.id}
-                              className="flex flex-col rounded-[26px] border border-gray-100 bg-white p-5 shadow-sm transition-colors hover:border-[#6183FF]/25"
+                              className="flex flex-col rounded-[26px] border border-gray-100 bg-white p-5 shadow-sm transition-colors hover:border-primary/25"
                             >
                               <div className="flex items-center justify-between gap-2">
                                 <span
@@ -647,7 +647,7 @@ export default function ResearcherDashboard() {
                                 <button
                                   type="button"
                                   onClick={() => setActiveSurvey(survey)}
-                                  className="min-h-[38px] rounded-full bg-[#EEF2FF] px-4 text-[11px] font-bold text-[#6183FF] transition-colors hover:bg-[#6183FF] hover:text-white"
+                                  className="min-h-[38px] rounded-full bg-primary/10 px-4 text-[11px] font-bold text-primary transition-colors hover:bg-primary hover:text-white"
                                 >
                                   Manage
                                 </button>
@@ -667,7 +667,7 @@ export default function ResearcherDashboard() {
               element={
                 <div className="mx-auto max-w-5xl space-y-8">
                   <div className="relative overflow-hidden rounded-[32px] bg-[#050038] p-8 text-white shadow-2xl md:p-12">
-                    <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#6183FF]/20 blur-3xl" />
+                    <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
                     <div className="relative z-10 grid grid-cols-1 items-center gap-8 md:grid-cols-2">
                       <div>
                         <h2 className="mb-4 text-3xl font-black tracking-tight">
@@ -727,7 +727,7 @@ export default function ResearcherDashboard() {
                             key={item.title}
                             className="flex items-start gap-3 rounded-2xl bg-[#F8F9FE] p-4"
                           >
-                            <ShieldCheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#6183FF]" />
+                            <ShieldCheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                             <div>
                               <p className="text-xs font-bold text-[#101217]">{item.title}</p>
                               <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-gray-500">
@@ -739,7 +739,7 @@ export default function ResearcherDashboard() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col justify-between rounded-[32px] border border-blue-100 bg-[#EEF2FF] p-8">
+                    <div className="flex flex-col justify-between rounded-[32px] border border-blue-100 bg-primary/10 p-8">
                       <div>
                         <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-blue-500">
                           Live patient count
@@ -753,7 +753,7 @@ export default function ResearcherDashboard() {
                       </div>
                       <a
                         href="mailto:research@selorah.health?subject=Data%20cohort%20request"
-                        className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-blue-500/20"
+                        className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-blue-500/20"
                       >
                         Request a cohort
                       </a>
@@ -789,7 +789,7 @@ export default function ResearcherDashboard() {
                       </div>
                       <h3 className="mb-2 text-2xl font-black text-[#101217]">Standard Access</h3>
                       <div className="mb-6 flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-[#6183FF]">$2.50</span>
+                        <span className="text-4xl font-black text-primary">$2.50</span>
                         <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
                           / record
                         </span>
@@ -816,13 +816,13 @@ export default function ResearcherDashboard() {
                     </div>
 
                     <div className="relative overflow-hidden rounded-[32px] bg-[#050038] p-8 shadow-2xl">
-                      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#6183FF]/20 blur-3xl" />
+                      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
                       <div className="relative z-10">
                         <div className="mb-8 flex items-start justify-between">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#6183FF]/20 bg-[#6183FF]/20 text-[#6183FF] backdrop-blur-sm">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/20 text-primary backdrop-blur-sm">
                             <BanknotesIcon className="h-6 w-6" />
                           </div>
-                          <span className="rounded-full bg-[#6183FF] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20">
+                          <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20">
                             Institutional
                           </span>
                         </div>
@@ -850,7 +850,7 @@ export default function ResearcherDashboard() {
                         </ul>
                         <a
                           href="mailto:research@selorah.health?subject=Enterprise%20API"
-                          className="flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-[#6183FF] text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-opacity hover:opacity-90"
+                          className="flex min-h-[46px] w-full items-center justify-center rounded-2xl bg-primary text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-opacity hover:opacity-90"
                         >
                           Contact sales
                         </a>
@@ -872,7 +872,7 @@ export default function ResearcherDashboard() {
                 <div className="mx-auto max-w-3xl">
                   <div className="rounded-[32px] border border-gray-100 bg-white p-8 shadow-sm md:p-12">
                     <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#050038] to-[#6183FF] text-sm font-black text-white">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#050038] to-primary text-sm font-black text-white">
                         {identity.initials}
                       </div>
                       <div>
@@ -894,7 +894,7 @@ export default function ResearcherDashboard() {
                           onChange={(event) =>
                             setSettings({ ...settings, full_name: event.target.value })
                           }
-                          className="w-full rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-medium outline-none transition-all focus:border-[#6183FF]"
+                          className="w-full rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-medium outline-none transition-all focus:border-primary"
                         />
                       </label>
 
@@ -908,7 +908,7 @@ export default function ResearcherDashboard() {
                           onChange={(event) =>
                             setSettings({ ...settings, institution: event.target.value })
                           }
-                          className="w-full rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-medium outline-none transition-all focus:border-[#6183FF]"
+                          className="w-full rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-medium outline-none transition-all focus:border-primary"
                         />
                       </label>
 
@@ -923,7 +923,7 @@ export default function ResearcherDashboard() {
                             setSettings({ ...settings, irb_number: event.target.value })
                           }
                           placeholder="Add the reference if your institution issued one"
-                          className="w-full rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm font-medium outline-none transition-all focus:border-[#6183FF]"
+                          className="w-full rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm font-medium outline-none transition-all focus:border-primary"
                         />
                       </label>
 
@@ -993,7 +993,7 @@ export default function ResearcherDashboard() {
             <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-gray-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-7 sm:py-5">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-[#6183FF]">
+                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-primary">
                     {activeSurvey.category}
                   </span>
                   <span
@@ -1104,7 +1104,7 @@ export default function ResearcherDashboard() {
               </div>
 
               <p className="flex items-start gap-2 rounded-xl bg-[#F8F9FE] px-4 py-3 text-[10px] font-medium leading-relaxed text-gray-500">
-                <ShieldCheckIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#6183FF]" />
+                <ShieldCheckIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                 Answers are stored without the participant name or contact details. You can see
                 counts and reward totals only.
               </p>
@@ -1124,7 +1124,7 @@ export default function ResearcherDashboard() {
                 className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold text-white transition-colors ${
                   activeSurvey.is_active
                     ? 'bg-[#101217] hover:bg-black'
-                    : 'bg-[#6183FF] hover:bg-[#4D6ED6]'
+                    : 'bg-primary hover:bg-primary-hover'
                 }`}
               >
                 {activeSurvey.is_active ? 'Pause survey' : 'Reopen survey'}

@@ -27,6 +27,7 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Careers = lazy(() => import('./pages/Careers'));
+const CareersRole = lazy(() => import('./pages/CareersRole'));
 const CookiePolicy = lazy(() => import('./pages/CookiePolicy'));
 const DataProcessing = lazy(() => import('./pages/DataProcessing'));
 const HospitalDashboard = lazy(() => import('./pages/hospital/HospitalDashboard'));
@@ -72,6 +73,7 @@ export default function App() {
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/careers" element={<Careers />} />
+              <Route path="/careers/:slug" element={<CareersRole />} />
               <Route path="/cookie-policy" element={<CookiePolicy />} />
               <Route path="/dpa" element={<DataProcessing />} />
               <Route path="/hospital/*" element={<RoleGuard><HospitalDashboard /></RoleGuard>} />

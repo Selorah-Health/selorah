@@ -275,7 +275,7 @@ export default function Security() {
     <div className="space-y-8 font-sora">
       <button
         onClick={() => navigate('/dashboard/profile')}
-        className="flex items-center gap-2 text-gray-400 hover:text-[#6183FF] transition-all group"
+        className="flex items-center gap-2 text-gray-400 hover:text-primary transition-all group"
       >
         <ArrowLeftIcon className="w-4 h-4" />
         <span className="font-bold text-sm">Back to Profile</span>
@@ -285,7 +285,7 @@ export default function Security() {
         <div className="p-6 sm:p-10 border-b border-gray-50">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center shrink-0">
-              <ShieldCheckIcon className="w-6 h-6 text-[#6183FF]" />
+              <ShieldCheckIcon className="w-6 h-6 text-primary" />
             </div>
             <div>
               <h2 className="text-2xl font-black text-[#101217] tracking-tight">
@@ -317,7 +317,7 @@ export default function Security() {
                   value={currentPassword}
                   onChange={(event) => setCurrentPassword(event.target.value)}
                   placeholder="Enter current password"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 focus:outline-none focus:border-[#6183FF] transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 focus:outline-none focus:border-primary transition-all"
                 />
               </div>
               <div>
@@ -330,7 +330,7 @@ export default function Security() {
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                   placeholder="At least 8 characters"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 focus:outline-none focus:border-[#6183FF] transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 focus:outline-none focus:border-primary transition-all"
                 />
               </div>
               <div>
@@ -343,7 +343,7 @@ export default function Security() {
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   placeholder="Repeat the new password"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 focus:outline-none focus:border-[#6183FF] transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 focus:outline-none focus:border-primary transition-all"
                 />
               </div>
 
@@ -409,7 +409,7 @@ export default function Security() {
                   type="button"
                   onClick={startEnrollment}
                   disabled={loadingFactors}
-                  className="min-h-[44px] rounded-xl bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] disabled:opacity-50"
+                  className="min-h-[44px] rounded-xl bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:opacity-50"
                 >
                   Set up 2FA
                 </button>
@@ -449,7 +449,7 @@ export default function Security() {
 
             {enrolling ? (
               <div className="flex flex-col items-center gap-3 py-12">
-                <ArrowPathIcon className="h-7 w-7 animate-spin text-[#6183FF]" />
+                <ArrowPathIcon className="h-7 w-7 animate-spin text-primary" />
                 <p className="text-xs font-semibold text-gray-400">Creating your secure key...</p>
               </div>
             ) : enrollError && !qrCode ? (
@@ -488,7 +488,7 @@ export default function Security() {
                     value={code}
                     onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="000000"
-                    className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-center text-lg font-bold tracking-[0.3em] text-[#101217] outline-none focus:border-[#6183FF] focus:bg-white"
+                    className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-center text-lg font-bold tracking-[0.3em] text-[#101217] outline-none focus:border-primary focus:bg-white"
                   />
                 </label>
 
@@ -499,7 +499,7 @@ export default function Security() {
                 <button
                   type="submit"
                   disabled={verifying || code.length !== 6}
-                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 disabled:opacity-50"
+                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 disabled:opacity-50"
                 >
                   {verifying ? (
                     <>
@@ -560,7 +560,7 @@ export default function Security() {
                     setDisableCode(event.target.value.replace(/\D/g, '').slice(0, 6))
                   }
                   placeholder="000000"
-                  className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-center text-lg font-bold tracking-[0.3em] text-[#101217] outline-none focus:border-[#6183FF] focus:bg-white"
+                  className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-center text-lg font-bold tracking-[0.3em] text-[#101217] outline-none focus:border-primary focus:bg-white"
                 />
               </label>
 

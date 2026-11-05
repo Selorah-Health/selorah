@@ -15,7 +15,7 @@ import { useToast } from '../contexts/ToastContext';
 
 // Use the monitored support inbox for every channel. The topic in the subject
 // keeps privacy and security requests easy to route.
-const CONTACT_EMAIL = 'selorahealth@gmail.com';
+const CONTACT_EMAIL = 'support@selorah.app';
 const PRIVACY_EMAIL = CONTACT_EMAIL;
 const SECURITY_EMAIL = CONTACT_EMAIL;
 const WHATSAPP_URL = 'https://chat.whatsapp.com/JI2LK41IF8yHiJjEuWKk2M?mode=gi_t';
@@ -114,7 +114,7 @@ export default function Contact() {
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="rounded-[32px] border border-gray-100 bg-white p-6 shadow-[0_24px_80px_-56px_rgba(15,23,42,0.45)] sm:p-8">
           <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <PaperAirplaneIcon className="h-5 w-5" />
             </span>
             <div>
@@ -137,7 +137,7 @@ export default function Contact() {
                   onChange={(event) => setForm({ ...form, name: event.target.value })}
                   autoComplete="name"
                   placeholder="Ada Okafor"
-                  className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-[#FAFBFF] px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-[#6183FF] focus:bg-white"
+                  className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-[#FAFBFF] px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-primary focus:bg-white"
                 />
               </label>
               <label className="block">
@@ -150,7 +150,7 @@ export default function Contact() {
                   onChange={(event) => setForm({ ...form, email: event.target.value })}
                   autoComplete="email"
                   placeholder="you@example.com"
-                  className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-[#FAFBFF] px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-[#6183FF] focus:bg-white"
+                  className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-[#FAFBFF] px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-primary focus:bg-white"
                 />
               </label>
             </div>
@@ -162,7 +162,7 @@ export default function Contact() {
               <select
                 value={form.topic}
                 onChange={(event) => setForm({ ...form, topic: event.target.value })}
-                className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-[#FAFBFF] px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-[#6183FF] focus:bg-white"
+                className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-[#FAFBFF] px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-primary focus:bg-white"
               >
                 {TOPICS.map((topic) => (
                   <option key={topic} value={topic}>
@@ -181,7 +181,7 @@ export default function Contact() {
                 onChange={(event) => setForm({ ...form, message: event.target.value })}
                 rows={5}
                 placeholder="Tell us what you need help with. Do not include full medical records in this form."
-                className="w-full resize-none rounded-2xl border border-gray-200 bg-[#FAFBFF] px-4 py-3 text-sm font-medium leading-relaxed text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-[#6183FF] focus:bg-white"
+                className="w-full resize-none rounded-2xl border border-gray-200 bg-[#FAFBFF] px-4 py-3 text-sm font-medium leading-relaxed text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-primary focus:bg-white"
               />
             </label>
 
@@ -205,7 +205,7 @@ export default function Contact() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="submit"
-                className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+                className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
               >
                 <PaperAirplaneIcon className="h-4 w-4" />
                 Open email and send
@@ -213,7 +213,7 @@ export default function Contact() {
               <button
                 type="button"
                 onClick={copyMessage}
-                className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-bold text-gray-600 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-bold text-gray-600 transition-colors hover:border-primary/40 hover:text-primary"
               >
                 <ClipboardDocumentIcon className="h-4 w-4" />
                 Copy message
@@ -229,7 +229,7 @@ export default function Contact() {
 
         <div className="space-y-4">
           <section className="rounded-[28px] border border-gray-100 bg-[#101217] p-6 text-white">
-            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#8FA8FF]">
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
               Direct email
             </p>
             <h3 className="mt-2 text-lg font-black tracking-tight">Reach the right team</h3>
@@ -257,9 +257,9 @@ export default function Contact() {
                 <a
                   key={item.label}
                   href={`mailto:${item.email}?subject=${encodeURIComponent(item.subject)}`}
-                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-3 transition-colors hover:border-[#6183FF]/40 hover:bg-[#6183FF]/10"
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-3 transition-colors hover:border-primary/40 hover:bg-primary/10"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#6183FF]/15 text-[#8FA8FF]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
                     <item.icon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
@@ -289,7 +289,7 @@ export default function Contact() {
               href={WHATSAPP_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-start gap-3 rounded-[24px] border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:border-[#6183FF]/30"
+              className="flex items-start gap-3 rounded-[24px] border border-gray-100 bg-white p-4 shadow-sm transition-colors hover:border-primary/30"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAFBF2] text-[#15955C]">
                 <ChatBubbleLeftRightIcon className="h-5 w-5" />
@@ -303,7 +303,7 @@ export default function Contact() {
             </a>
 
             <div className="flex items-start gap-3 rounded-[24px] border border-gray-100 bg-white p-4 shadow-sm">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <MapPinIcon className="h-5 w-5" />
               </span>
               <div>
@@ -315,7 +315,7 @@ export default function Contact() {
             </div>
 
             <div className="flex items-start gap-3 rounded-[24px] border border-gray-100 bg-white p-4 shadow-sm">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <ClockIcon className="h-5 w-5" />
               </span>
               <div>

@@ -276,7 +276,7 @@ export default function RecordDetails() {
   if (!record) {
     return (
       <div className="rounded-[32px] border border-gray-50 bg-white p-10 text-center font-sora shadow-sm">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <LockClosedIcon className="h-7 w-7" />
         </div>
         <h1 className="mt-4 text-xl font-bold tracking-tight text-[#101217]">
@@ -291,7 +291,7 @@ export default function RecordDetails() {
         <button
           type="button"
           onClick={() => navigate('/dashboard/records')}
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white"
+          className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-primary px-5 text-xs font-bold text-white"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to records
@@ -306,7 +306,7 @@ export default function RecordDetails() {
         <button
           type="button"
           onClick={() => navigate('/dashboard/records')}
-          className="group flex items-center gap-2 text-xs font-bold text-gray-400 transition-colors hover:text-[#6183FF]"
+          className="group flex items-center gap-2 text-xs font-bold text-gray-400 transition-colors hover:text-primary"
         >
           <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
           Back to records
@@ -318,7 +318,7 @@ export default function RecordDetails() {
             onClick={handleDownload}
             disabled={!fileUrl}
             title={fileUrl ? 'Download document' : 'No document attached'}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 shadow-sm transition-colors hover:border-[#6183FF]/30 hover:text-[#6183FF] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 shadow-sm transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
           >
             <DocumentArrowDownIcon className="h-5 w-5" />
           </button>
@@ -326,7 +326,7 @@ export default function RecordDetails() {
             type="button"
             onClick={() => window.print()}
             title="Print"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 shadow-sm transition-colors hover:border-[#6183FF]/30 hover:text-[#6183FF]"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-100 bg-white text-gray-400 shadow-sm transition-colors hover:border-primary/30 hover:text-primary"
           >
             <PrinterIcon className="h-5 w-5" />
           </button>
@@ -339,7 +339,7 @@ export default function RecordDetails() {
               aria-label="Record actions"
               className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
                 showMenu
-                  ? 'bg-[#6183FF] text-white shadow-lg shadow-[#6183FF]/20'
+                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
                   : 'border border-gray-100 bg-white text-gray-400 hover:bg-gray-50'
               }`}
             >
@@ -363,7 +363,7 @@ export default function RecordDetails() {
                   <button
                     type="button"
                     onClick={handleShare}
-                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-[#6183FF] transition-colors hover:bg-[#EEF2FF]"
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary/10"
                   >
                     <ShareIcon className="h-4 w-4" />
                     Share with a clinician
@@ -398,7 +398,7 @@ export default function RecordDetails() {
         <div className="relative bg-[#0A0B14] p-6 text-white sm:p-9">
           <div
             aria-hidden
-            className="absolute -right-24 top-0 h-64 w-64 rounded-full bg-[#6183FF]/20 blur-3xl"
+            className="absolute -right-24 top-0 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
           />
           <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
@@ -511,7 +511,7 @@ export default function RecordDetails() {
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-gray-200 px-3.5 text-[11px] font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-gray-200 px-3.5 text-[11px] font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
                 >
                   <DocumentArrowDownIcon className="h-3.5 w-3.5" />
                   Download
@@ -550,7 +550,7 @@ export default function RecordDetails() {
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-gray-200 bg-[#F8F9FE] px-5 py-10 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#6183FF] shadow-sm">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
                   <DocumentArrowDownIcon className="h-6 w-6" />
                 </div>
                 <p className="mt-3 text-sm font-bold text-[#101217]">
@@ -562,7 +562,7 @@ export default function RecordDetails() {
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="mt-4 inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-[#6183FF] px-4 text-xs font-bold text-white"
+                  className="mt-4 inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-primary px-4 text-xs font-bold text-white"
                 >
                   <DocumentArrowDownIcon className="h-4 w-4" />
                   Download document
@@ -579,7 +579,7 @@ export default function RecordDetails() {
             <button
               type="button"
               onClick={handleShare}
-              className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-[#EEF2FF] px-4 text-[11px] font-bold text-[#6183FF] transition-colors hover:bg-[#6183FF]/15"
+              className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-primary/10 px-4 text-[11px] font-bold text-primary transition-colors hover:bg-primary/15"
             >
               <QrCodeIcon className="h-4 w-4" />
               Share with a code
@@ -629,7 +629,7 @@ export default function RecordDetails() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, title: event.target.value }))
                   }
-                  className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+                  className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
                   placeholder="e.g. Full blood count"
                 />
               </label>
@@ -643,7 +643,7 @@ export default function RecordDetails() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, recordType: event.target.value }))
                   }
-                  className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-[#6183FF]"
+                  className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-primary"
                 >
                   {Object.values(FILE_CATEGORY_TO_TYPE).map((type) => (
                     <option key={type} value={type}>
@@ -670,7 +670,7 @@ export default function RecordDetails() {
                 type="button"
                 onClick={handleSaveEdit}
                 disabled={saving}
-                className="flex min-h-[48px] flex-[2] items-center justify-center gap-2 rounded-2xl bg-[#6183FF] text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] disabled:opacity-60"
+                className="flex min-h-[48px] flex-[2] items-center justify-center gap-2 rounded-2xl bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:opacity-60"
               >
                 {saving ? (
                   <>

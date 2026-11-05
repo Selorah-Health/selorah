@@ -177,7 +177,7 @@ export default function Signup() {
   };
 
   const inputClass =
-    'min-h-[50px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]';
+    'min-h-[50px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary';
 
   return (
     <div className="min-h-screen bg-white font-sora text-[#101217] lg:grid lg:grid-cols-[1.05fr_1fr]">
@@ -254,7 +254,7 @@ export default function Signup() {
           {step === 1 ? (
             <>
               <div className="hidden items-center justify-between lg:flex">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
                   Get started
                 </p>
                 <div className="flex items-center gap-2">
@@ -274,7 +274,7 @@ export default function Signup() {
               </h1>
               <p className="mt-2 text-sm font-medium leading-relaxed text-gray-500">
                 Already have one?{' '}
-                <Link to="/login" className="font-bold text-[#6183FF] hover:underline">
+                <Link to="/login" className="font-bold text-primary hover:underline">
                   Log in
                 </Link>
               </p>
@@ -286,11 +286,11 @@ export default function Signup() {
                   </div>
                   <p className="mt-2 px-1 text-[10px] font-medium leading-relaxed text-gray-400">
                     By continuing with Google you agree to the{' '}
-                    <Link to="/terms" className="font-bold text-[#6183FF] hover:underline">
+                    <Link to="/terms" className="font-bold text-primary hover:underline">
                       Terms
                     </Link>{' '}
                     and{' '}
-                    <Link to="/privacy" className="font-bold text-[#6183FF] hover:underline">
+                    <Link to="/privacy" className="font-bold text-primary hover:underline">
                       Privacy Policy
                     </Link>
                     . Google sign up creates a patient account.
@@ -333,14 +333,14 @@ export default function Signup() {
                           }}
                           className={`flex min-h-[70px] items-start gap-2.5 rounded-2xl border p-3 text-left transition-all ${
                             selected
-                              ? 'border-[#6183FF] bg-[#EEF2FF]'
+                              ? 'border-primary bg-primary/10'
                               : 'border-gray-200 bg-white hover:border-gray-300'
                           }`}
                         >
                           <span
                             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
                               selected
-                                ? 'bg-[#6183FF] text-white'
+                                ? 'bg-primary text-white'
                                 : 'bg-gray-50 text-gray-400'
                             }`}
                           >
@@ -522,7 +522,7 @@ export default function Signup() {
                             index < passwordScore
                               ? passwordScore >= 3
                                 ? 'bg-[#5FFAB0]'
-                                : 'bg-[#6183FF]'
+                                : 'bg-primary'
                               : 'bg-gray-100'
                           }`}
                         />
@@ -536,15 +536,15 @@ export default function Signup() {
                     type="checkbox"
                     checked={formData.agree}
                     onChange={(event) => update('agree', event.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-[#6183FF] focus:ring-[#6183FF]"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-primary focus:ring-primary"
                   />
                   <span className="text-[11px] font-medium leading-relaxed text-gray-500">
                     I agree to the{' '}
-                    <Link to="/terms" className="font-bold text-[#6183FF] hover:underline">
+                    <Link to="/terms" className="font-bold text-primary hover:underline">
                       Terms and Conditions
                     </Link>{' '}
                     and the{' '}
-                    <Link to="/privacy" className="font-bold text-[#6183FF] hover:underline">
+                    <Link to="/privacy" className="font-bold text-primary hover:underline">
                       Privacy Policy
                     </Link>
                     .
@@ -554,7 +554,7 @@ export default function Signup() {
                 <button
                   type="submit"
                   disabled={loading || !formData.agree}
-                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-all hover:bg-[#4D6ED6] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -591,7 +591,7 @@ export default function Signup() {
 
               <Link
                 to="/login"
-                className="mt-7 flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-colors hover:bg-[#4D6ED6]"
+                className="mt-7 flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover"
               >
                 Go to log in
               </Link>

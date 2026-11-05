@@ -33,7 +33,7 @@ export default function StaticPage({
   const dark = heroTone === 'dark';
 
   return (
-    <div className="min-h-screen bg-white font-sora text-[#101217] selection:bg-[#6183FF]/15">
+    <div className="min-h-screen bg-white font-sora text-[#101217] selection:bg-primary/15">
       <SEOTitle title={title} />
       <Header theme={dark ? 'dark' : 'light'} />
 
@@ -57,7 +57,7 @@ export default function StaticPage({
               Back to Selorah
             </Link>
             {eyebrow && (
-              <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-[#8FA8FF]">
+              <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
                 {eyebrow}
               </p>
             )}
@@ -76,13 +76,13 @@ export default function StaticPage({
           <div className="mx-auto max-w-6xl px-5 pb-16 pt-10 sm:px-8 sm:pb-20 lg:px-10">
             <Link
               to="/"
-              className="group inline-flex items-center gap-2 text-[11px] font-bold text-gray-400 transition-colors hover:text-[#6183FF]"
+              className="group inline-flex items-center gap-2 text-[11px] font-bold text-gray-400 transition-colors hover:text-primary"
             >
               <ArrowLeftIcon className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
               Back to Selorah
             </Link>
             {eyebrow && (
-              <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-[#6183FF]">
+              <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
                 {eyebrow}
               </p>
             )}

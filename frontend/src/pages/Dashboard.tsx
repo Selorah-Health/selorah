@@ -6,7 +6,9 @@ import {
   CloudArrowUpIcon,
   CreditCardIcon,
   DocumentDuplicateIcon,
+  ExclamationTriangleIcon,
   FingerPrintIcon,
+  HeartIcon,
   HomeIcon,
   MagnifyingGlassIcon,
   PlusIcon,
@@ -44,6 +46,8 @@ import Security from './Security';
 import Billing from './Billing';
 import ProUpgrade from './ProUpgrade';
 import Family from './Family';
+import Emergency from './Emergency';
+import PeriodTracker from './PeriodTracker';
 import SearchResults from './SearchResults';
 import SelorahCard from './SelorahCard';
 import Resilience from './Resilience';
@@ -129,7 +133,7 @@ export default function Dashboard() {
               day: 'numeric',
             })
           : '',
-        color: log.color || 'bg-[#6183FF]',
+        color: log.color || 'bg-primary',
       }));
     } catch {
       // Access logs are optional on older projects.
@@ -409,6 +413,8 @@ export default function Dashboard() {
     { name: 'QR codes', icon: QrCodeIcon, path: '/dashboard/qrcodes' },
     { name: 'Selorah card', icon: CreditCardIcon, path: '/dashboard/card' },
     { name: 'Rewards', icon: TrophyIcon, path: '/dashboard/rewards' },
+    { name: 'Cycle', icon: HeartIcon, path: '/dashboard/cycle' },
+    { name: 'Emergency', icon: ExclamationTriangleIcon, path: '/dashboard/emergency' },
     { name: 'Resilience', icon: FingerPrintIcon, path: '/dashboard/resilience' },
   ];
 
@@ -457,7 +463,7 @@ export default function Dashboard() {
       <SEOTitle title={getPageTitle()} />
 
       <aside
-        className={`relative z-50 hidden h-full shrink-0 flex-col bg-[#6183FF] text-white transition-all duration-300 md:flex ${
+        className={`relative z-50 hidden h-full shrink-0 flex-col bg-primary text-white transition-all duration-300 md:flex ${
           isCollapsed ? 'w-[84px]' : 'w-[248px] xl:w-[264px]'
         }`}
       >
@@ -571,7 +577,7 @@ export default function Dashboard() {
               <div
                 className={`absolute ${
                   isCollapsed ? '-bottom-2' : '-bottom-1 -right-1'
-                } z-10 rounded-full border-2 border-white bg-[#DCE4FF] px-1.5 py-0.5 text-[8px] font-black uppercase text-[#6183FF] shadow-sm`}
+                } z-10 rounded-full border-2 border-white bg-[#DCE4FF] px-1.5 py-0.5 text-[8px] font-black uppercase text-primary shadow-sm`}
               >
                 {isPro ? 'Pro' : 'Free'}
               </div>
@@ -636,7 +642,7 @@ export default function Dashboard() {
                   }
                 }}
                 placeholder="Search records..."
-                className="min-h-[44px] w-full rounded-full border border-gray-200 bg-white py-2.5 pl-11 pr-4 text-sm font-medium text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-[#6183FF]"
+                className="min-h-[44px] w-full rounded-full border border-gray-200 bg-white py-2.5 pl-11 pr-4 text-sm font-medium text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-primary"
               />
             </div>
 
@@ -657,9 +663,9 @@ export default function Dashboard() {
               type="button"
               onClick={() => navigate('/dashboard/earnings')}
               title="Available earnings"
-              className="hidden h-10 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 text-[11px] font-bold text-[#101217] transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] sm:flex"
+              className="hidden h-10 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 text-[11px] font-bold text-[#101217] transition-colors hover:border-primary/40 hover:text-primary sm:flex"
             >
-              <WalletIcon className="h-4 w-4 text-[#6183FF]" />
+              <WalletIcon className="h-4 w-4 text-primary" />
               {formatNaira(summary.earningsAvailable)}
             </button>
 
@@ -667,7 +673,7 @@ export default function Dashboard() {
               type="button"
               onClick={() => navigate('/dashboard/qrcodes')}
               aria-label="Open QR codes"
-              className="hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] sm:flex"
+              className="hidden h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-primary/40 hover:text-primary sm:flex"
             >
               <QrCodeIcon className="h-5 w-5" />
             </button>
@@ -678,13 +684,13 @@ export default function Dashboard() {
               type="button"
               onClick={() => navigate('/dashboard/notifications')}
               aria-label="Notifications"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
             >
               <BellIcon className="h-5 w-5" />
               {summary.unreadNotifications > 0 && (
                 <span className="absolute right-2 top-2 flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#6183FF] opacity-60" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full border border-white bg-[#6183FF]" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full border border-white bg-primary" />
                 </span>
               )}
             </button>
@@ -710,7 +716,7 @@ export default function Dashboard() {
                 <div className={`h-full w-full rounded-full ${avatarGradient}`} />
               )}
               {isPro && (
-                <span className="absolute -bottom-1 -right-1 z-10 rounded-full border-2 border-white bg-[#DCE4FF] px-1.5 py-0.5 text-[8px] font-black uppercase text-[#6183FF]">
+                <span className="absolute -bottom-1 -right-1 z-10 rounded-full border-2 border-white bg-[#DCE4FF] px-1.5 py-0.5 text-[8px] font-black uppercase text-primary">
                   Pro
                 </span>
               )}
@@ -734,7 +740,7 @@ export default function Dashboard() {
                   }
                 }}
                 placeholder="Search records by name or type"
-                className="min-h-[46px] w-full rounded-2xl border border-gray-200 bg-white py-2.5 pl-11 pr-4 text-sm font-medium outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                className="min-h-[46px] w-full rounded-2xl border border-gray-200 bg-white py-2.5 pl-11 pr-4 text-sm font-medium outline-none placeholder:text-gray-300 focus:border-primary"
               />
             </div>
           </div>
@@ -801,6 +807,8 @@ export default function Dashboard() {
               <Route path="billing" element={<Billing />} />
               <Route path="upgrade" element={<ProUpgrade />} />
               <Route path="family" element={<Family />} />
+              <Route path="cycle" element={<PeriodTracker />} />
+              <Route path="emergency" element={<Emergency />} />
             </Routes>
           )}
 
@@ -822,7 +830,7 @@ export default function Dashboard() {
               end={item.path === '/dashboard'}
               className={({ isActive }) =>
                 `flex min-w-[54px] flex-col items-center gap-1 rounded-xl py-1.5 transition-all ${
-                  isActive ? 'text-[#6183FF]' : 'text-gray-400'
+                  isActive ? 'text-primary' : 'text-gray-400'
                 }`
               }
             >
@@ -835,7 +843,7 @@ export default function Dashboard() {
             type="button"
             onClick={() => setShowAddModal(true)}
             aria-label="Add a record"
-            className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#6183FF] text-white shadow-xl shadow-[#6183FF]/35 transition-transform active:scale-95"
+            className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/35 transition-transform active:scale-95"
           >
             <PlusIcon className="h-6 w-6" />
           </button>
@@ -849,7 +857,7 @@ export default function Dashboard() {
               to={item.path}
               className={({ isActive }) =>
                 `flex min-w-[54px] flex-col items-center gap-1 rounded-xl py-1.5 transition-all ${
-                  isActive ? 'text-[#6183FF]' : 'text-gray-400'
+                  isActive ? 'text-primary' : 'text-gray-400'
                 }`
               }
             >
@@ -889,7 +897,7 @@ export default function Dashboard() {
                   setShowAddModal(true);
                   setIsSidebarOpen(false);
                 }}
-                className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#6183FF] py-3.5 text-sm font-bold text-white"
+                className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-bold text-white"
               >
                 <PlusIcon className="h-5 w-5" />
                 Add a record

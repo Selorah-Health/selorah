@@ -82,7 +82,7 @@ export default function MobileWalkthrough() {
         className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl"
       >
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#6183FF]">
+          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
             Step {index + 1} of {STEPS.length}
           </span>
           <button
@@ -94,7 +94,7 @@ export default function MobileWalkthrough() {
           </button>
         </div>
 
-        <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+        <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <step.icon className="h-7 w-7" />
         </div>
 
@@ -112,9 +112,9 @@ export default function MobileWalkthrough() {
               key={item.title}
               className={`h-1.5 rounded-full transition-all ${
                 stepIndex === index
-                  ? 'w-6 bg-[#6183FF]'
+                  ? 'w-6 bg-primary'
                   : stepIndex < index
-                    ? 'w-1.5 bg-[#6183FF]/50'
+                    ? 'w-1.5 bg-primary/50'
                     : 'w-1.5 bg-gray-200'
               }`}
             />
@@ -124,7 +124,7 @@ export default function MobileWalkthrough() {
         <button
           type="button"
           onClick={() => (last ? finish() : setIndex((current) => current + 1))}
-          className="mt-5 min-h-[50px] w-full rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-colors hover:bg-[#4D6ED6]"
+          className="mt-5 min-h-[50px] w-full rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover"
         >
           {last ? 'Start using Selorah' : 'Next'}
         </button>

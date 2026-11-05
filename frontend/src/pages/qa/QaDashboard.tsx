@@ -80,7 +80,7 @@ function roleLabel(role?: string | null) {
 function roleTone(role?: string | null) {
   switch ((role || '').toLowerCase()) {
     case 'patient':
-      return 'bg-[#EEF2FF] text-[#4D6ED6]';
+      return 'bg-primary/10 text-primary-hover';
     case 'provider':
     case 'hospital':
       return 'bg-[#EAFBF2] text-[#15955C]';
@@ -171,8 +171,8 @@ function StatCard({
       disabled={!onClick}
       className={`group flex min-h-[142px] flex-col justify-between rounded-[24px] border p-5 text-left transition-all ${
         primary
-          ? 'border-transparent bg-[#6183FF] text-white shadow-lg shadow-[#6183FF]/20'
-          : 'border-gray-50 bg-white shadow-sm hover:border-[#6183FF]/25 disabled:cursor-default'
+          ? 'border-transparent bg-primary text-white shadow-lg shadow-primary/20'
+          : 'border-gray-50 bg-white shadow-sm hover:border-primary/25 disabled:cursor-default'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -194,7 +194,7 @@ function StatCard({
         </div>
         <span
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-            primary ? 'bg-white/15 text-white' : 'bg-[#F8F9FE] text-[#6183FF]'
+            primary ? 'bg-white/15 text-white' : 'bg-[#F8F9FE] text-primary'
           }`}
         >
           <Icon className="h-4.5 w-4.5" />
@@ -222,7 +222,7 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center rounded-2xl border border-dashed border-gray-200 bg-[#F8F9FE] px-5 py-9 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#6183FF] shadow-sm">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-primary shadow-sm">
         <SparklesIcon className="h-7 w-7" />
       </div>
       <p className="mt-3 text-sm font-bold text-[#101217]">{title}</p>
@@ -231,7 +231,7 @@ function EmptyState({
         <button
           type="button"
           onClick={action.onClick}
-          className="mt-4 min-h-[40px] rounded-full bg-[#6183FF] px-4 text-xs font-bold text-white"
+          className="mt-4 min-h-[40px] rounded-full bg-primary px-4 text-xs font-bold text-white"
         >
           {action.label}
         </button>
@@ -243,7 +243,7 @@ function EmptyState({
 function LoadingState({ label }: { label: string }) {
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center">
-      <span className="h-8 w-8 animate-spin rounded-full border-2 border-[#6183FF]/25 border-t-[#6183FF]" />
+      <span className="h-8 w-8 animate-spin rounded-full border-2 border-primary/25 border-t-primary" />
       <p className="mt-3 text-xs font-semibold text-gray-400">{label}</p>
     </div>
   );
@@ -425,7 +425,7 @@ export default function QaDashboard() {
         roleTag="QA"
         menuItems={menuItems}
         user={user}
-        sidebarBg="bg-[#6183FF]"
+        sidebarBg="bg-primary"
         logoutBg="bg-white/15"
         avatarGradient="bg-[#DCE4FF]"
         roleDescription="Quality assurance"
@@ -442,7 +442,7 @@ export default function QaDashboard() {
                 {pageTitle}
               </h1>
               <p className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold text-gray-400">
-                <ShieldCheckIcon className="h-3 w-3 text-[#6183FF]" />
+                <ShieldCheckIcon className="h-3 w-3 text-primary" />
                 QA workspace
               </p>
             </div>
@@ -473,7 +473,7 @@ export default function QaDashboard() {
               onClick={() => void load(true)}
               disabled={refreshing}
               aria-label="Refresh QA data"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-50"
             >
               <ArrowPathIcon className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
@@ -586,7 +586,7 @@ function Overview({
             <h2 className="text-2xl font-bold tracking-tight text-[#101217] sm:text-3xl">
               Welcome back, {firstName}
             </h2>
-            <span className="rounded-full bg-[#6183FF]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-primary">
               QA
             </span>
           </div>
@@ -595,7 +595,7 @@ function Overview({
         <button
           type="button"
           onClick={onExportUsers}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-all hover:bg-[#4D6ED6] active:scale-[0.98]"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98]"
         >
           <ArrowDownTrayIcon className="h-4 w-4" />
           Export users
@@ -645,7 +645,7 @@ function Overview({
             </div>
             <Link
               to="/qa/users"
-              className="group flex items-center gap-1 text-xs font-bold text-[#6183FF] hover:underline"
+              className="group flex items-center gap-1 text-xs font-bold text-primary hover:underline"
             >
               See all
               <ChevronRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -665,7 +665,7 @@ function Overview({
                   className="flex items-center justify-between gap-3 py-3.5 first:pt-0 last:pb-0"
                 >
                   <div className="flex min-w-0 items-center gap-3.5">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[11px] font-black uppercase text-[#6183FF]">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[11px] font-black uppercase text-primary">
                       {initials(row.email)}
                     </span>
                     <div className="min-w-0">
@@ -700,7 +700,7 @@ function Overview({
               </div>
               <Link
                 to="/qa/waitlist"
-                className="flex items-center gap-1 text-xs font-bold text-[#6183FF] hover:underline"
+                className="flex items-center gap-1 text-xs font-bold text-primary hover:underline"
               >
                 Full list
                 <ChevronRightIcon className="h-3.5 w-3.5" />
@@ -719,7 +719,7 @@ function Overview({
               <div className="space-y-4">
                 {waitlist.slice(0, 4).map((row) => (
                   <div key={row.id} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[10px] font-black uppercase text-[#6183FF]">
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[10px] font-black uppercase text-primary">
                       {initials(row.full_name || row.email)}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -768,9 +768,9 @@ function Overview({
           <button
             type="button"
             onClick={onExportWaitlist}
-            className="flex w-full items-center gap-3 rounded-[24px] border border-gray-50 bg-white p-4 text-left shadow-sm transition-colors hover:border-[#6183FF]/25"
+            className="flex w-full items-center gap-3 rounded-[24px] border border-gray-50 bg-white p-4 text-left shadow-sm transition-colors hover:border-primary/25"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6183FF]/10 text-[#6183FF]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <ArrowDownTrayIcon className="h-5 w-5" />
             </span>
             <span className="min-w-0 flex-1">
@@ -830,7 +830,7 @@ function WaitlistPage({
         <button
           type="button"
           onClick={onExport}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-all hover:bg-[#4D6ED6] active:scale-[0.98]"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98]"
         >
           <ArrowDownTrayIcon className="h-4 w-4" />
           Export CSV
@@ -845,7 +845,7 @@ function WaitlistPage({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search name, email, role, or frustration"
-            className="min-h-[42px] w-full rounded-xl border border-gray-100 bg-[#F8F9FE] pl-10 pr-3 text-xs font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+            className="min-h-[42px] w-full rounded-xl border border-gray-100 bg-[#F8F9FE] pl-10 pr-3 text-xs font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
           />
         </label>
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
@@ -853,7 +853,7 @@ function WaitlistPage({
             type="button"
             onClick={() => setRole('all')}
             className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition-colors ${
-              role === 'all' ? 'bg-[#6183FF] text-white' : 'bg-[#F8F9FE] text-gray-400'
+              role === 'all' ? 'bg-primary text-white' : 'bg-[#F8F9FE] text-gray-400'
             }`}
           >
             All
@@ -864,7 +864,7 @@ function WaitlistPage({
               type="button"
               onClick={() => setRole(item)}
               className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition-colors ${
-                role === item ? 'bg-[#6183FF] text-white' : 'bg-[#F8F9FE] text-gray-400'
+                role === item ? 'bg-primary text-white' : 'bg-[#F8F9FE] text-gray-400'
               }`}
             >
               {roleLabel(item)}
@@ -903,7 +903,7 @@ function WaitlistPage({
                 className="grid gap-2 px-4 py-3.5 transition-colors hover:bg-[#F8F9FE] lg:grid-cols-[1.4fr_1.5fr_0.7fr_0.8fr_0.7fr] lg:items-center lg:gap-3"
               >
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[10px] font-black uppercase text-[#6183FF]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[10px] font-black uppercase text-primary">
                     {initials(row.full_name || row.email)}
                   </span>
                   <div className="min-w-0">
@@ -1142,7 +1142,7 @@ function QaLabPage() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] disabled:opacity-50"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-50"
         >
           <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -1166,7 +1166,7 @@ function QaLabPage() {
             type="button"
             onClick={() => setTab(item.id)}
             className={`flex min-h-[40px] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl px-3 text-[11px] font-black uppercase tracking-[0.08em] transition-all ${
-              tab === item.id ? 'bg-[#6183FF] text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
+              tab === item.id ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
             {item.label}
@@ -1200,7 +1200,7 @@ function QaLabPage() {
                   className="rounded-[24px] border border-gray-50 bg-white p-5 shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                       <ClipboardDocumentListIcon className="h-5 w-5" />
                     </span>
                     <span className="rounded-full bg-[#F8F9FE] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-gray-400">
@@ -1237,7 +1237,7 @@ function QaLabPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-[#6183FF]">
+                      <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-primary">
                         {planName(testCase.plan_id)}
                       </span>
                       <span
@@ -1325,7 +1325,7 @@ function QaLabPage() {
             className="rounded-[24px] border border-gray-50 bg-white p-5 shadow-sm"
           >
             <h3 className="flex items-center gap-2 text-sm font-bold text-[#101217]">
-              <PlusIcon className="h-4 w-4 text-[#6183FF]" />
+              <PlusIcon className="h-4 w-4 text-primary" />
               Log a defect
             </h3>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -1333,20 +1333,20 @@ function QaLabPage() {
                 value={defectForm.title}
                 onChange={(event) => setDefectForm({ ...defectForm, title: event.target.value })}
                 placeholder="Short defect title"
-                className="min-h-[42px] rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 text-xs font-semibold text-[#101217] outline-none placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF] sm:col-span-2"
+                className="min-h-[42px] rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 text-xs font-semibold text-[#101217] outline-none placeholder:font-medium placeholder:text-gray-300 focus:border-primary sm:col-span-2"
               />
               <input
                 value={defectForm.area}
                 onChange={(event) => setDefectForm({ ...defectForm, area: event.target.value })}
                 placeholder="Area"
-                className="min-h-[42px] rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 text-xs font-semibold text-[#101217] outline-none placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+                className="min-h-[42px] rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 text-xs font-semibold text-[#101217] outline-none placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
               />
               <select
                 value={defectForm.severity}
                 onChange={(event) =>
                   setDefectForm({ ...defectForm, severity: event.target.value })
                 }
-                className="min-h-[42px] rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 text-xs font-semibold text-[#101217] outline-none focus:border-[#6183FF]"
+                className="min-h-[42px] rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 text-xs font-semibold text-[#101217] outline-none focus:border-primary"
               >
                 {['low', 'medium', 'high', 'critical'].map((level) => (
                   <option key={level} value={level}>
@@ -1359,14 +1359,14 @@ function QaLabPage() {
                 onChange={(event) => setDefectForm({ ...defectForm, steps: event.target.value })}
                 rows={2}
                 placeholder="Steps to reproduce"
-                className="rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 py-2.5 text-xs font-medium text-[#101217] outline-none placeholder:text-gray-300 focus:border-[#6183FF] sm:col-span-2"
+                className="rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 py-2.5 text-xs font-medium text-[#101217] outline-none placeholder:text-gray-300 focus:border-primary sm:col-span-2"
               />
               <textarea
                 value={defectForm.actual}
                 onChange={(event) => setDefectForm({ ...defectForm, actual: event.target.value })}
                 rows={2}
                 placeholder="What happened"
-                className="rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 py-2.5 text-xs font-medium text-[#101217] outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                className="rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 py-2.5 text-xs font-medium text-[#101217] outline-none placeholder:text-gray-300 focus:border-primary"
               />
               <textarea
                 value={defectForm.expected}
@@ -1375,13 +1375,13 @@ function QaLabPage() {
                 }
                 rows={2}
                 placeholder="What should happen"
-                className="rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 py-2.5 text-xs font-medium text-[#101217] outline-none placeholder:text-gray-300 focus:border-[#6183FF] sm:col-span-2"
+                className="rounded-xl border border-gray-100 bg-[#F8F9FE] px-3.5 py-2.5 text-xs font-medium text-[#101217] outline-none placeholder:text-gray-300 focus:border-primary sm:col-span-2"
               />
             </div>
             <button
               type="submit"
               disabled={busy === 'defect'}
-              className="mt-3 inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full bg-[#6183FF] px-4 text-[11px] font-bold text-white disabled:opacity-50"
+              className="mt-3 inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full bg-primary px-4 text-[11px] font-bold text-white disabled:opacity-50"
             >
               <PlusIcon className="h-3.5 w-3.5" />
               Save defect
@@ -1401,7 +1401,7 @@ function QaLabPage() {
                   className="rounded-[24px] border border-gray-50 bg-white p-5 shadow-sm"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-[#6183FF]">
+                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-primary">
                       {defect.area}
                     </span>
                     <span
@@ -1538,7 +1538,7 @@ function WithdrawalsPage() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] disabled:opacity-50"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-50"
         >
           <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -1558,7 +1558,7 @@ function WithdrawalsPage() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Pending', value: pending, tone: 'text-amber-600 bg-amber-50' },
-          { label: 'Processing', value: processing, tone: 'text-[#6183FF] bg-[#EEF2FF]' },
+          { label: 'Processing', value: processing, tone: 'text-primary bg-primary/10' },
           { label: 'Paid', value: paid, tone: 'text-green-600 bg-green-50' },
         ].map((item) => (
           <div key={item.label} className="rounded-[20px] border border-gray-50 bg-white p-4 shadow-sm">
@@ -1601,7 +1601,7 @@ function WithdrawalsPage() {
                             : row.status === 'rejected'
                               ? 'bg-red-50 text-red-500'
                               : row.status === 'processing'
-                                ? 'bg-[#EEF2FF] text-[#6183FF]'
+                                ? 'bg-primary/10 text-primary'
                                 : 'bg-amber-50 text-amber-600'
                         }`}
                       >
@@ -1628,7 +1628,7 @@ function WithdrawalsPage() {
                         type="button"
                         onClick={() => void review(row, 'processing')}
                         disabled={busy === row.id}
-                        className="min-h-[34px] rounded-full bg-[#EEF2FF] px-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#6183FF] disabled:opacity-50"
+                        className="min-h-[34px] rounded-full bg-primary/10 px-3 text-[9px] font-black uppercase tracking-[0.08em] text-primary disabled:opacity-50"
                       >
                         Processing
                       </button>
@@ -1659,7 +1659,7 @@ function WithdrawalsPage() {
                       setNotes((previous) => ({ ...previous, [row.id]: event.target.value }))
                     }
                     placeholder="Optional note shown to the patient"
-                    className="mt-3 min-h-[38px] w-full rounded-xl border border-gray-100 bg-[#F8F9FE] px-3 text-[11px] font-medium text-[#101217] outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                    className="mt-3 min-h-[38px] w-full rounded-xl border border-gray-100 bg-[#F8F9FE] px-3 text-[11px] font-medium text-[#101217] outline-none placeholder:text-gray-300 focus:border-primary"
                   />
                 )}
               </article>
@@ -1725,7 +1725,7 @@ function UsersPage({
         <button
           type="button"
           onClick={onExport}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-all hover:bg-[#4D6ED6] active:scale-[0.98]"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98]"
         >
           <ArrowDownTrayIcon className="h-4 w-4" />
           Export CSV
@@ -1740,7 +1740,7 @@ function UsersPage({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search email, role, or verification"
-            className="min-h-[42px] w-full rounded-xl border border-gray-100 bg-[#F8F9FE] pl-10 pr-3 text-xs font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+            className="min-h-[42px] w-full rounded-xl border border-gray-100 bg-[#F8F9FE] pl-10 pr-3 text-xs font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
           />
         </label>
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
@@ -1748,7 +1748,7 @@ function UsersPage({
             type="button"
             onClick={() => setRole('all')}
             className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition-colors ${
-              role === 'all' ? 'bg-[#6183FF] text-white' : 'bg-[#F8F9FE] text-gray-400'
+              role === 'all' ? 'bg-primary text-white' : 'bg-[#F8F9FE] text-gray-400'
             }`}
           >
             All
@@ -1759,7 +1759,7 @@ function UsersPage({
               type="button"
               onClick={() => setRole(item)}
               className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition-colors ${
-                role === item ? 'bg-[#6183FF] text-white' : 'bg-[#F8F9FE] text-gray-400'
+                role === item ? 'bg-primary text-white' : 'bg-[#F8F9FE] text-gray-400'
               }`}
             >
               {roleLabel(item)}
@@ -1798,7 +1798,7 @@ function UsersPage({
                 className="grid gap-2 px-4 py-3.5 transition-colors hover:bg-[#F8F9FE] sm:grid-cols-[1.7fr_0.8fr_0.9fr_0.7fr_auto] sm:items-center sm:gap-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[10px] font-black uppercase text-[#6183FF]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[10px] font-black uppercase text-primary">
                     {initials(row.email)}
                   </span>
                   <div className="min-w-0">
@@ -1830,7 +1830,7 @@ function UsersPage({
                   type="button"
                   onClick={() => void copyEmail(row)}
                   aria-label={`Copy ${row.email}`}
-                  className="flex h-8 w-8 items-center justify-center justify-self-end rounded-lg border border-gray-100 bg-white text-gray-300 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                  className="flex h-8 w-8 items-center justify-center justify-self-end rounded-lg border border-gray-100 bg-white text-gray-300 transition-colors hover:border-primary/40 hover:text-primary"
                 >
                   {copiedId === row.id ? (
                     <CheckIcon className="h-3.5 w-3.5 text-green-500" />

@@ -10,12 +10,15 @@ import {
   FingerPrintIcon,
   HeartIcon,
   IdentificationIcon,
+  MoonIcon,
   PhoneIcon,
   PlusIcon,
   QrCodeIcon,
   ShieldCheckIcon,
   SparklesIcon,
   StarIcon,
+  SunIcon,
+  SwatchIcon,
   TrashIcon,
   TrophyIcon,
   UserCircleIcon,
@@ -26,6 +29,17 @@ import { isValidNin, readLocalSession, writeLocalSession } from '../../lib/auth/
 import { readProState, type ProState } from '../../lib/pro';
 import { markReleaseSeen, readSeenRelease } from '../../lib/releases';
 import { openPrivacyChoices } from '../../lib/privacy';
+import {
+  ACCENT_PRESETS,
+  applyAccent,
+  applyTheme,
+  listenForAccent,
+  listenForTheme,
+  readAccent,
+  readTheme,
+  type AccentId,
+  type Theme,
+} from '../../lib/theme';
 import WhatsNewModal from './WhatsNewModal';
 
 interface ProfileProps {
@@ -130,6 +144,8 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
   const [bioTone, setBioTone] = useState<'success' | 'error'>('success');
   const [releaseSeen, setReleaseSeen] = useState(() => readSeenRelease());
   const [whatsNewOpen, setWhatsNewOpen] = useState(() => !readSeenRelease());
+  const [theme, setTheme] = useState<Theme>(() => readTheme());
+  const [accent, setAccent] = useState<AccentId>(() => readAccent());
   const navigate = useNavigate();
   const supabase = createClient();
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -201,6 +217,9 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
       window.removeEventListener('storage', refreshPro);
     };
   }, [loadProfile]);
+
+  useEffect(() => listenForTheme(setTheme), []);
+  useEffect(() => listenForAccent(setAccent), []);
 
   const saveContactDetails = async () => {
     setMessage(null);
@@ -532,16 +551,16 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
       <button
         type="button"
         onClick={() => setWhatsNewOpen(true)}
-        className="flex w-full items-center gap-3 rounded-[24px] border border-gray-50 bg-white p-4 text-left shadow-sm transition-colors hover:border-[#6183FF]/25"
+        className="flex w-full items-center gap-3 rounded-[24px] border border-gray-50 bg-white p-4 text-left shadow-sm transition-colors hover:border-primary/25"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6183FF]/10 text-[#6183FF]">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <SparklesIcon className="h-5 w-5" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-bold text-[#101217]">What&apos;s new in Selorah</span>
             {!releaseSeen && (
-              <span className="rounded-full bg-[#6183FF] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-white">
+              <span className="rounded-full bg-primary px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-white">
                 New
               </span>
             )}
@@ -574,7 +593,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                 <div className={`h-full w-full rounded-full ${avatarGradient}`} />
               )}
               {isPro && (
-                <span className="absolute bottom-0 right-0 z-10 rounded-full border-2 border-white bg-[#DCE4FF] px-2 py-0.5 text-[8px] font-black uppercase text-[#6183FF]">
+                <span className="absolute bottom-0 right-0 z-10 rounded-full border-2 border-white bg-[#DCE4FF] px-2 py-0.5 text-[8px] font-black uppercase text-primary">
                   Pro
                 </span>
               )}
@@ -592,7 +611,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               onClick={() => avatarInputRef.current?.click()}
               disabled={avatarUploading}
               aria-label="Change profile photo"
-              className="absolute -bottom-1 -left-1 z-20 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#6183FF] text-white shadow-md transition-colors hover:bg-[#4D6ED6] disabled:opacity-60"
+              className="absolute -bottom-1 -left-1 z-20 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-primary text-white shadow-md transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
               {avatarUploading ? (
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
@@ -611,7 +630,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               <span
                 className={`rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] ${
                   isPro
-                    ? 'border-[#6183FF] bg-[#6183FF] text-white'
+                    ? 'border-primary bg-primary text-white'
                     : 'border-gray-200 bg-white text-gray-400'
                 }`}
               >
@@ -621,7 +640,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                 <button
                   type="button"
                   onClick={() => navigate('/dashboard/upgrade')}
-                  className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#6183FF] transition-colors hover:bg-[#6183FF]/15"
+                  className="rounded-full bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-primary transition-colors hover:bg-primary/15"
                 >
                   Upgrade
                 </button>
@@ -630,7 +649,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                 type="button"
                 onClick={() => setAvatarPanelOpen((value) => !value)}
                 disabled={avatarUploading}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] disabled:opacity-60"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-gray-500 transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-60"
               >
                 {avatarUploading ? 'Saving...' : avatarUrl ? 'Change photo' : 'Add photo'}
               </button>
@@ -670,7 +689,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
           <button
             type="button"
             onClick={() => navigate('/dashboard/billing')}
-            className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-full border border-gray-200 px-4 text-[11px] font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+            className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-full border border-gray-200 px-4 text-[11px] font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
           >
             <CreditCardIcon className="h-3.5 w-3.5" />
             Billing
@@ -696,7 +715,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                 <button
                   type="button"
                   onClick={() => setShowAllAvatars((value) => !value)}
-                  className="min-h-[34px] rounded-full border border-gray-200 px-3 text-[9px] font-black uppercase tracking-[0.1em] text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                  className="min-h-[34px] rounded-full border border-gray-200 px-3 text-[9px] font-black uppercase tracking-[0.1em] text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
                 >
                   {showAllAvatars ? 'Match my gender' : 'Show all'}
                 </button>
@@ -724,7 +743,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                     aria-pressed={selected}
                     className={`overflow-hidden rounded-2xl border-2 p-0.5 transition-all disabled:opacity-60 ${
                       selected
-                        ? 'border-[#6183FF] ring-2 ring-[#6183FF]/20'
+                        ? 'border-primary ring-2 ring-primary/20'
                         : 'border-transparent hover:border-gray-200'
                     }`}
                   >
@@ -745,6 +764,92 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
             )}
           </div>
         )}
+      </section>
+
+      <section className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-7">
+        <div className="mb-5 flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <SwatchIcon className="h-5 w-5" />
+          </span>
+          <div>
+            <h3 className="text-base font-bold text-[#101217]">Appearance</h3>
+            <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-gray-400">
+              Choose a light or dark interface and an accent color that feels like you.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+              Theme
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {[
+                { id: 'light' as Theme, label: 'Light', icon: SunIcon },
+                { id: 'dark' as Theme, label: 'Dark', icon: MoonIcon },
+              ].map((option) => {
+                const selected = theme === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      applyTheme(option.id);
+                      setTheme(option.id);
+                    }}
+                    aria-pressed={selected}
+                    className={`flex min-h-[46px] items-center justify-center gap-2 rounded-xl border text-xs font-bold transition-colors ${
+                      selected
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-gray-200 bg-white text-gray-500 hover:border-primary/30'
+                    }`}
+                  >
+                    <option.icon className="h-4 w-4" />
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+              Accent color
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {Object.values(ACCENT_PRESETS).map((preset) => {
+                const selected = accent === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      applyAccent(preset.id);
+                      setAccent(preset.id);
+                    }}
+                    aria-label={`Use ${preset.label}`}
+                    aria-pressed={selected}
+                    title={preset.label}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
+                      selected
+                        ? 'border-primary'
+                        : 'border-transparent hover:border-gray-200'
+                    }`}
+                  >
+                    <span
+                      className="h-6 w-6 rounded-full"
+                      style={{ backgroundColor: preset.primary }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[10px] font-medium leading-relaxed text-gray-400">
+              The accent applies across buttons, links, and highlights. It is saved on this device.
+            </p>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-7">
@@ -774,7 +879,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               value={firstName}
               onChange={(event) => setFirstName(event.target.value)}
               placeholder="Ada"
-              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
             />
           </label>
           <label className="block">
@@ -787,7 +892,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               value={lastName}
               onChange={(event) => setLastName(event.target.value)}
               placeholder="Okafor"
-              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
             />
           </label>
         </div>
@@ -803,7 +908,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               autoComplete="bday"
               value={dateOfBirth}
               onChange={(event) => setDateOfBirth(event.target.value)}
-              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-[#6183FF]"
+              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-primary"
             />
           </label>
           <label className="block">
@@ -825,7 +930,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
             <select
               value={gender}
               onChange={(event) => setGender(event.target.value)}
-              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-[#6183FF]"
+              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-primary"
             >
               <option value="">Select gender</option>
               <option value="female">Female</option>
@@ -847,7 +952,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               value={height}
               onChange={(event) => setHeight(event.target.value)}
               placeholder="cm"
-              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
             />
           </label>
           <label className="block">
@@ -860,7 +965,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               value={weight}
               onChange={(event) => setWeight(event.target.value)}
               placeholder="kg"
-              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
             />
           </label>
           <label className="block">
@@ -870,7 +975,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
             <select
               value={bloodGroup}
               onChange={(event) => setBloodGroup(event.target.value)}
-              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-[#6183FF]"
+              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-primary"
             >
               <option value="">Select</option>
               {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
@@ -887,7 +992,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
             <select
               value={genotype}
               onChange={(event) => setGenotype(event.target.value)}
-              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-[#6183FF]"
+              className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors focus:border-primary"
             >
               <option value="">Select</option>
               {['AA', 'AS', 'SS', 'AC', 'SC'].map((type) => (
@@ -909,7 +1014,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               value={allergies}
               onChange={(event) => setAllergies(event.target.value)}
               placeholder="Penicillin, peanuts, latex"
-              className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+              className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
             />
           </label>
           <label className="block">
@@ -921,7 +1026,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               value={medicalConditions}
               onChange={(event) => setMedicalConditions(event.target.value)}
               placeholder="Asthma, hypertension, sickle cell"
-              className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+              className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
             />
           </label>
         </div>
@@ -929,7 +1034,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
         <div className="mt-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <HeartIcon className="h-4 w-4 text-[#6183FF]" />
+              <HeartIcon className="h-4 w-4 text-primary" />
               <h4 className="text-xs font-black uppercase tracking-[0.12em] text-[#101217]">
                 Emergency contacts
               </h4>
@@ -948,7 +1053,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                     value={contact.name}
                     onChange={(event) => updateEmergencyContact(index, 'name', event.target.value)}
                     placeholder="Full name"
-                    className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                    className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-primary"
                   />
                   <input
                     type="text"
@@ -957,14 +1062,14 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                       updateEmergencyContact(index, 'relationship', event.target.value)
                     }
                     placeholder="Relationship"
-                    className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                    className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-primary"
                   />
                   <input
                     type="tel"
                     value={contact.phone}
                     onChange={(event) => updateEmergencyContact(index, 'phone', event.target.value)}
                     placeholder="Phone number"
-                    className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-[#6183FF]"
+                    className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold outline-none placeholder:text-gray-300 focus:border-primary"
                   />
                   <button
                     type="button"
@@ -982,7 +1087,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               <button
                 type="button"
                 onClick={addEmergencyContact}
-                className="flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 text-[10px] font-black uppercase tracking-[0.1em] text-gray-400 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                className="flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 text-[10px] font-black uppercase tracking-[0.1em] text-gray-400 transition-colors hover:border-primary/40 hover:text-primary"
               >
                 <PlusIcon className="h-4 w-4" />
                 Add emergency contact
@@ -992,7 +1097,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               <button
                 type="button"
                 onClick={() => navigate('/dashboard/upgrade')}
-                className="flex min-h-[42px] w-full items-center justify-center gap-1.5 rounded-2xl bg-[#EEF2FF] text-[10px] font-black uppercase tracking-[0.1em] text-[#6183FF]"
+                className="flex min-h-[42px] w-full items-center justify-center gap-1.5 rounded-2xl bg-primary/10 text-[10px] font-black uppercase tracking-[0.1em] text-primary"
               >
                 <StarIcon className="h-3.5 w-3.5" />
                 Unlock up to 10 contacts with Pro
@@ -1016,7 +1121,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
           type="button"
           onClick={() => void savePersonalDetails()}
           disabled={bioSaving}
-          className="mt-5 flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] disabled:opacity-60"
+          className="mt-5 flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:opacity-60"
         >
           {bioSaving ? (
             <>
@@ -1031,7 +1136,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
 
       <section className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-7">
         <div className="mb-5 flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <IdentificationIcon className="h-5 w-5" />
           </span>
           <div>
@@ -1056,7 +1161,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                 placeholder="0801 234 5678"
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
-                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
               />
             </span>
           </label>
@@ -1076,7 +1181,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
                 onChange={(event) =>
                   setNin(event.target.value.replace(/\D/g, '').slice(0, 11))
                 }
-                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-white pl-11 pr-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
               />
             </span>
           </label>
@@ -1097,7 +1202,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
           type="button"
           onClick={saveContactDetails}
           disabled={saving}
-          className="mt-5 flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] disabled:opacity-60"
+          className="mt-5 flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:opacity-60"
         >
           {saving ? (
             <>
@@ -1111,14 +1216,14 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
       </section>
 
       {isPro ? (
-        <section className="relative overflow-hidden rounded-[28px] border border-[#6183FF]/15 bg-[#EEF2FF] p-6">
+        <section className="relative overflow-hidden rounded-[28px] border border-primary/15 bg-primary/10 p-6">
           <div
             aria-hidden
-            className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#6183FF]/20 blur-2xl"
+            className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/20 blur-2xl"
           />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#6183FF] text-white shadow-lg shadow-[#6183FF]/25">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25">
                 <StarIcon className="h-5 w-5" />
               </span>
               <div>
@@ -1137,7 +1242,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
             <button
               type="button"
               onClick={() => navigate('/dashboard/billing')}
-              className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-white px-4 text-[11px] font-bold text-[#6183FF] shadow-sm"
+              className="flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-white px-4 text-[11px] font-bold text-primary shadow-sm"
             >
               Manage billing
               <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -1148,7 +1253,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
         <section className="relative overflow-hidden rounded-[28px] bg-[#020924] p-6 text-white">
           <div
             aria-hidden
-            className="absolute -right-12 -top-14 h-40 w-40 rounded-full bg-[#6183FF]/30 blur-3xl"
+            className="absolute -right-12 -top-14 h-40 w-40 rounded-full bg-primary/30 blur-3xl"
           />
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
@@ -1166,7 +1271,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
             <button
               type="button"
               onClick={() => navigate('/dashboard/upgrade')}
-              className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/25"
+              className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/25"
             >
               Unlock Pro
               <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -1218,9 +1323,9 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
             key={item.title}
             type="button"
             onClick={() => navigate(item.path)}
-            className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 text-left transition-all hover:border-[#6183FF]/30 hover:shadow-sm"
+            className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 text-left transition-all hover:border-primary/30 hover:shadow-sm"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-gray-400 transition-colors group-hover:text-[#6183FF]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-gray-400 transition-colors group-hover:text-primary">
               <item.icon className="h-5 w-5" />
             </span>
             <span className="min-w-0 flex-1">
@@ -1237,7 +1342,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
       <button
         type="button"
         onClick={() => openPrivacyChoices()}
-        className="flex w-full items-center gap-3 rounded-[24px] border border-gray-50 bg-white p-4 text-left shadow-sm transition-colors hover:border-[#6183FF]/25"
+        className="flex w-full items-center gap-3 rounded-[24px] border border-gray-50 bg-white p-4 text-left shadow-sm transition-colors hover:border-primary/25"
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-gray-400">
           <ShieldCheckIcon className="h-5 w-5" />

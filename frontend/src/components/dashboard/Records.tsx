@@ -33,8 +33,8 @@ export default function Records({
       label: 'Total records',
       value: String(records.length).padStart(2, '0'),
       icon: DocumentTextIcon,
-      color: 'text-[#6183FF]',
-      bg: 'bg-[#EEF2FF]',
+      color: 'text-primary',
+      bg: 'bg-primary/10',
     },
     {
       label: 'Active grants',
@@ -66,7 +66,7 @@ export default function Records({
         <button
           type="button"
           onClick={handleUploadClick}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-all hover:bg-[#4D6ED6]"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover"
         >
           <CloudArrowUpIcon className="h-4 w-4" />
           Upload a record
@@ -109,7 +109,7 @@ export default function Records({
 
           {records.length === 0 ? (
             <div className="flex flex-col items-center rounded-2xl border border-dashed border-gray-200 bg-[#F8F9FE] px-5 py-11 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#6183FF] shadow-sm">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-primary shadow-sm">
                 <DocumentTextIcon className="h-7 w-7" />
               </div>
               <p className="mt-3 text-sm font-bold text-[#101217]">
@@ -124,7 +124,7 @@ export default function Records({
                 <button
                   type="button"
                   onClick={handleUploadClick}
-                  className="mt-4 min-h-[40px] rounded-full bg-[#6183FF] px-4 text-xs font-bold text-white"
+                  className="mt-4 min-h-[40px] rounded-full bg-primary px-4 text-xs font-bold text-white"
                 >
                   Upload your first record
                 </button>
@@ -144,7 +144,7 @@ export default function Records({
                       <img src={record.icon} alt="" className="h-full w-full object-contain" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-[#101217] transition-colors group-hover:text-[#6183FF]">
+                      <p className="truncate text-sm font-bold text-[#101217] transition-colors group-hover:text-primary">
                         {record.name}
                       </p>
                       <p className="mt-0.5 truncate text-[11px] font-medium text-gray-400">
@@ -154,10 +154,10 @@ export default function Records({
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className="hidden rounded-full bg-[#6183FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white sm:inline">
+                    <span className="hidden rounded-full bg-primary px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white sm:inline">
                       {record.status}
                     </span>
-                    <ChevronRightIcon className="h-4 w-4 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-[#6183FF]" />
+                    <ChevronRightIcon className="h-4 w-4 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
                   </div>
                 </button>
               ))}
@@ -169,7 +169,7 @@ export default function Records({
           <button
             type="button"
             onClick={() => navigate('/dashboard/qrcodes')}
-            className="flex w-full flex-col items-center justify-center rounded-[28px] bg-[#6183FF] p-6 text-center text-white shadow-lg shadow-[#6183FF]/20 transition-all hover:bg-[#5577EE]"
+            className="flex w-full flex-col items-center justify-center rounded-[28px] bg-primary p-6 text-center text-white shadow-lg shadow-primary/20 transition-all hover:bg-[#5577EE]"
           >
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
               <QrCodeIcon className="h-6 w-6" />
@@ -189,7 +189,7 @@ export default function Records({
               <button
                 type="button"
                 onClick={() => navigate('/dashboard/access-log')}
-                className="text-[11px] font-bold text-[#6183FF] hover:underline"
+                className="text-[11px] font-bold text-primary hover:underline"
               >
                 View all
               </button>

@@ -59,7 +59,7 @@ export default function SearchResults() {
   return (
     <div className="space-y-6 font-sora">
       <div>
-        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
           Search results
         </p>
         <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#101217] sm:text-3xl">
@@ -77,7 +77,7 @@ export default function SearchResults() {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Try asthma, lab result, 2026, or a clinic name"
           autoFocus
-          className="min-h-[52px] w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-12 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]"
+          className="min-h-[52px] w-full rounded-2xl border border-gray-200 bg-white py-3 pl-12 pr-12 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary"
         />
         {query && (
           <button
@@ -102,7 +102,7 @@ export default function SearchResults() {
         </div>
       ) : !needle ? (
         <div className="rounded-[28px] border border-gray-50 bg-white p-10 text-center shadow-sm">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <MagnifyingGlassIcon className="h-7 w-7" />
           </div>
           <h3 className="mt-4 text-base font-bold text-[#101217]">Start typing to search</h3>
@@ -112,7 +112,7 @@ export default function SearchResults() {
         </div>
       ) : results.length === 0 ? (
         <div className="rounded-[28px] border border-gray-50 bg-white p-10 text-center shadow-sm">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F8F9FE] text-[#6183FF]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F8F9FE] text-primary">
             <DocumentTextIcon className="h-7 w-7" />
           </div>
           <h3 className="mt-4 text-base font-bold text-[#101217]">No matching records</h3>
@@ -129,7 +129,7 @@ export default function SearchResults() {
             <button
               type="button"
               onClick={() => navigate('/dashboard/records')}
-              className="text-[11px] font-bold text-[#6183FF] hover:underline"
+              className="text-[11px] font-bold text-primary hover:underline"
             >
               All records
             </button>
@@ -146,7 +146,7 @@ export default function SearchResults() {
                   <img src={record.icon} alt="" className="h-full w-full object-contain" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-[#101217] group-hover:text-[#6183FF]">
+                  <span className="block truncate text-sm font-bold text-[#101217] group-hover:text-primary">
                     {record.name}
                   </span>
                   <span className="mt-0.5 block truncate text-[11px] font-medium text-gray-400">

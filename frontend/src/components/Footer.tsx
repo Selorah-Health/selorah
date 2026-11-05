@@ -30,7 +30,7 @@ export default function Footer() {
       </div>
 
       {/* ── Blue footer content ── */}
-      <footer className="bg-[#6183FF] text-white relative overflow-hidden font-sora">
+      <footer className="bg-primary text-white relative overflow-hidden font-sora">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-10 pt-10 sm:pt-12 pb-10 relative z-10">
           {/* Social icons */}
           <div className="flex items-center gap-4 sm:gap-5 mb-10 sm:mb-12">

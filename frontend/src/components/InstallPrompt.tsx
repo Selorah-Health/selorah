@@ -107,11 +107,11 @@ export default function InstallPrompt() {
       <div className="relative mx-auto max-w-md overflow-hidden rounded-[28px] border border-white/60 bg-white/95 shadow-[0_24px_70px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl animate-in slide-in-from-bottom-4">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#6183FF]/10 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-primary/10 to-transparent"
         />
 
         <div className="relative flex items-start gap-3.5 p-4 pr-3">
-          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#6183FF] to-[#4D6ED6] text-white shadow-lg shadow-[#6183FF]/25">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary-hover text-white shadow-lg shadow-primary/25">
             <ArrowDownTrayIcon className="h-6 w-6" strokeWidth={1.8} />
           </div>
 
@@ -132,11 +132,11 @@ export default function InstallPrompt() {
             ) : (
               <div className="mt-1.5 space-y-1 text-[11.5px] font-medium leading-snug text-gray-500">
                 <p className="flex items-center gap-1.5">
-                  <ShareIcon className="h-3.5 w-3.5 shrink-0 text-[#6183FF]" />
+                  <ShareIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
                   Tap the Share button in Safari
                 </p>
                 <p className="flex items-center gap-1.5">
-                  <CheckCircleIcon className="h-3.5 w-3.5 shrink-0 text-[#6183FF]" />
+                  <CheckCircleIcon className="h-3.5 w-3.5 shrink-0 text-primary" />
                   Choose &quot;Add to Home Screen&quot;
                 </p>
               </div>
@@ -159,7 +159,7 @@ export default function InstallPrompt() {
               type="button"
               onClick={install}
               disabled={installing}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#6183FF] to-[#4D6ED6] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-all active:scale-[0.99] disabled:opacity-60"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-hover px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.99] disabled:opacity-60"
             >
               <ArrowDownTrayIcon className="h-4.5 w-4.5" />
               {installing ? 'Opening installer...' : 'Install app'}

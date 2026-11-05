@@ -797,7 +797,7 @@ export default function AddRecordModal({
   };
 
   const inputClass =
-    'min-h-[46px] w-full rounded-xl border border-gray-100 bg-gray-50 px-3.5 text-sm font-semibold text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF] focus:bg-white';
+    'min-h-[46px] w-full rounded-xl border border-gray-100 bg-gray-50 px-3.5 text-sm font-semibold text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary focus:bg-white';
 
   const isImage = Boolean(selectedFile?.type.startsWith('image/'));
 
@@ -815,11 +815,11 @@ export default function AddRecordModal({
         <div className="relative shrink-0 overflow-hidden border-b border-gray-100 px-5 pb-5 pt-5 sm:px-7 sm:pb-6 sm:pt-6">
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-[#6183FF]/10 blur-3xl"
+            className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl"
           />
           <div className="relative flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6183FF] to-[#4D6ED6] text-white shadow-lg shadow-[#6183FF]/25">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover text-white shadow-lg shadow-primary/25">
                 <CloudArrowUpIcon className="h-5 w-5" />
               </div>
               <div>
@@ -904,7 +904,7 @@ export default function AddRecordModal({
 
               <div className="rounded-2xl border border-gray-100 bg-[#F8F9FE]/60 p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <UserGroupIcon className="h-4 w-4 text-[#6183FF]" />
+                  <UserGroupIcon className="h-4 w-4 text-primary" />
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
                     Emergency contact
                   </p>
@@ -936,7 +936,7 @@ export default function AddRecordModal({
                 type="button"
                 onClick={saveProfile}
                 disabled={saving}
-                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-all hover:bg-[#4D6ED6] active:scale-[0.99] disabled:opacity-50"
+                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.99] disabled:opacity-50"
               >
                 {saving ? (
                   <>
@@ -984,26 +984,26 @@ export default function AddRecordModal({
                       type="button"
                       onClick={() => void openCamera()}
                       disabled={cameraBusy}
-                      className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-[#6183FF]/40 bg-[#6183FF]/5 p-5 text-[#6183FF] transition-colors hover:bg-[#6183FF]/10 disabled:opacity-60"
+                      className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-primary/40 bg-primary/5 p-5 text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
                     >
                       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
                         {cameraBusy ? (
-                          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#6183FF]/30 border-t-[#6183FF]" />
+                          <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
                         ) : (
                           <CameraIcon className="h-6 w-6" />
                         )}
                       </span>
                       <span className="text-sm font-bold">Take a photo</span>
-                      <span className="text-[11px] font-medium text-[#6183FF]/70">
+                      <span className="text-[11px] font-medium text-primary/70">
                         Opens the camera inside the app
                       </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => fileRef.current?.click()}
-                      className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-gray-200 bg-[#F8F9FE] p-5 text-gray-600 transition-colors hover:border-[#6183FF]/30 hover:text-[#6183FF]"
+                      className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-gray-200 bg-[#F8F9FE] p-5 text-gray-600 transition-colors hover:border-primary/30 hover:text-primary"
                     >
-                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#6183FF] shadow-sm">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary shadow-sm">
                         <ArrowUpTrayIcon className="h-6 w-6" />
                       </span>
                       <span className="text-sm font-bold">Choose a file</span>
@@ -1029,7 +1029,7 @@ export default function AddRecordModal({
                       />
                     ) : (
                       <div className="flex min-h-[120px] items-center justify-center gap-3 text-sm font-bold text-gray-500">
-                        <DocumentTextIcon className="h-7 w-7 text-[#6183FF]" />
+                        <DocumentTextIcon className="h-7 w-7 text-primary" />
                         <span className="max-w-[220px] break-all">{selectedFile.name}</span>
                       </div>
                     )}
@@ -1057,7 +1057,7 @@ export default function AddRecordModal({
                       </p>
                     </div>
                     {ocrState === 'running' ? (
-                      <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#6183FF]">
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold text-primary">
                         <ArrowPathIcon className="h-4 w-4 animate-spin" />
                         {ocrProgress}%
                       </span>
@@ -1065,7 +1065,7 @@ export default function AddRecordModal({
                       <button
                         type="button"
                         onClick={() => selectedFile && void runOcr(selectedFile)}
-                        className="shrink-0 text-[11px] font-bold text-[#6183FF] hover:underline"
+                        className="shrink-0 text-[11px] font-bold text-primary hover:underline"
                       >
                         {ocrState === 'done' ? 'Read again' : 'Read text'}
                       </button>
@@ -1082,17 +1082,17 @@ export default function AddRecordModal({
               )}
 
               {ocrState === 'running' && (
-                <div className="rounded-2xl border border-[#6183FF]/15 bg-[#EEF2FF]/60 p-4">
+                <div className="rounded-2xl border border-primary/15 bg-primary/10 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="flex items-center gap-2 text-[11px] font-bold text-[#6183FF]">
+                    <span className="flex items-center gap-2 text-[11px] font-bold text-primary">
                       <SparklesIcon className="h-4 w-4" />
                       {ocrMessage || 'Reading document text'}
                     </span>
-                    <span className="text-[11px] font-black text-[#6183FF]">{ocrProgress}%</span>
+                    <span className="text-[11px] font-black text-primary">{ocrProgress}%</span>
                   </div>
                   <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white">
                     <div
-                      className="h-full rounded-full bg-[#6183FF] transition-all duration-300"
+                      className="h-full rounded-full bg-primary transition-all duration-300"
                       style={{ width: `${Math.max(4, Math.min(100, ocrProgress))}%` }}
                     />
                   </div>
@@ -1127,7 +1127,7 @@ export default function AddRecordModal({
                       onClick={() => setCategory(item)}
                       className={`min-h-[36px] rounded-full border px-3.5 text-[11px] font-bold transition-all ${
                         category === item
-                          ? 'border-[#6183FF] bg-[#6183FF]/10 text-[#6183FF]'
+                          ? 'border-primary bg-primary/10 text-primary'
                           : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
                       }`}
                     >
@@ -1140,7 +1140,7 @@ export default function AddRecordModal({
               <div>
                 <div className="mb-1.5 flex items-center justify-between gap-3">
                   <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
-                    <SparklesIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                    <SparklesIcon className="h-3.5 w-3.5 text-primary" />
                     Extracted text
                   </span>
                   <button
@@ -1151,7 +1151,7 @@ export default function AddRecordModal({
                       info('Text cleaned up. Review it before saving.');
                     }}
                     disabled={!ocrText.trim()}
-                    className="text-[10px] font-bold text-[#6183FF] hover:underline disabled:opacity-40"
+                    className="text-[10px] font-bold text-primary hover:underline disabled:opacity-40"
                   >
                     Auto-correct
                   </button>
@@ -1161,7 +1161,7 @@ export default function AddRecordModal({
                   onChange={(event) => setOcrText(event.target.value)}
                   rows={5}
                   placeholder="Text from the document appears here. Correct anything that looks wrong before saving."
-                  className="w-full resize-y rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3 text-sm font-medium leading-relaxed text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF] focus:bg-white"
+                  className="w-full resize-y rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3 text-sm font-medium leading-relaxed text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary focus:bg-white"
                 />
                 {ocrMessage && (
                   <p
@@ -1183,12 +1183,12 @@ export default function AddRecordModal({
                   onChange={(event) => setNotes(event.target.value)}
                   rows={3}
                   placeholder="Anything a clinician should know about this record."
-                  className="w-full resize-none rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3 text-sm font-medium leading-relaxed text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF] focus:bg-white"
+                  className="w-full resize-none rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3 text-sm font-medium leading-relaxed text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary focus:bg-white"
                 />
               </label>
 
-              <div className="flex items-start gap-2 rounded-2xl border border-[#6183FF]/10 bg-[#EEF2FF]/60 px-4 py-3">
-                <IdentificationIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#6183FF]" />
+              <div className="flex items-start gap-2 rounded-2xl border border-primary/10 bg-primary/10 px-4 py-3">
+                <IdentificationIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <p className="text-[11px] font-medium leading-relaxed text-gray-500">
                   Your image is stored as the original record. Extracted text makes it searchable,
                   and you can edit or clear it before saving.
@@ -1200,7 +1200,7 @@ export default function AddRecordModal({
                 type="button"
                 onClick={saveRecord}
                 disabled={saving || readingFile}
-                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-all hover:bg-[#4D6ED6] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? (
                   <>
@@ -1263,7 +1263,7 @@ export default function AddRecordModal({
               aria-label="Capture photo"
               className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white/40 bg-white"
             >
-              <span className="h-12 w-12 rounded-full bg-[#6183FF]" />
+              <span className="h-12 w-12 rounded-full bg-primary" />
             </button>
             <span className="w-[70px]" aria-hidden />
           </div>
@@ -1297,14 +1297,14 @@ function Field({
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           rows={3}
-          className="w-full resize-none rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3 text-sm font-semibold text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF] focus:bg-white"
+          className="w-full resize-none rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3 text-sm font-semibold text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary focus:bg-white"
         />
       ) : (
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
-          className="min-h-[46px] w-full rounded-xl border border-gray-100 bg-gray-50 px-3.5 text-sm font-semibold text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF] focus:bg-white"
+          className="min-h-[46px] w-full rounded-xl border border-gray-100 bg-gray-50 px-3.5 text-sm font-semibold text-gray-700 outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary focus:bg-white"
         />
       )}
     </label>

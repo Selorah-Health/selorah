@@ -110,7 +110,7 @@ export default function AccessLog() {
             time: timeLabel(row.accessed_at),
             date: dateLabel(row.accessed_at),
             sortAt: createdAt,
-            color: row.color || 'bg-[#6183FF]',
+            color: row.color || 'bg-primary',
             status,
             device: row.device_label || 'Provider portal',
             verified: Boolean(row.provider_id || row.organization_name),
@@ -289,7 +289,7 @@ export default function AccessLog() {
       <div className="rounded-[28px] border border-gray-50 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <ShieldExclamationIcon className="h-6 w-6" />
             </div>
             <div>
@@ -320,7 +320,7 @@ export default function AccessLog() {
         </div>
       ) : logs.length === 0 ? (
         <div className="rounded-[28px] border border-gray-50 bg-white p-8 text-center shadow-sm sm:p-12">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F8F9FE] text-[#6183FF]">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F8F9FE] text-primary">
             <QrCodeIcon className="h-8 w-8" />
           </div>
           <h3 className="mt-4 text-lg font-bold text-[#101217]">No access activity yet</h3>
@@ -331,7 +331,7 @@ export default function AccessLog() {
           <button
             type="button"
             onClick={() => navigate('/dashboard/qrcodes')}
-            className="mt-5 inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white"
+            className="mt-5 inline-flex min-h-[42px] items-center gap-2 rounded-full bg-primary px-5 text-xs font-bold text-white"
           >
             Create a QR code
             <ArrowRightIcon className="h-4 w-4" />
@@ -350,13 +350,13 @@ export default function AccessLog() {
                 className={`flex flex-col gap-4 rounded-[24px] border bg-white p-5 transition-all sm:flex-row sm:items-center sm:p-6 ${
                   revoked
                     ? 'border-gray-100 opacity-65'
-                    : 'border-gray-50 hover:border-[#6183FF]/25 hover:shadow-sm'
+                    : 'border-gray-50 hover:border-primary/25 hover:shadow-sm'
                 }`}
               >
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
                     isQr || isDevice
-                      ? 'bg-[#EEF2FF] text-[#6183FF]'
+                      ? 'bg-primary/10 text-primary'
                       : isMobile
                         ? 'bg-orange-50 text-orange-500'
                         : 'bg-blue-50 text-blue-500'

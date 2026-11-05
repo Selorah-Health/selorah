@@ -42,8 +42,8 @@ interface HomeProps {
 
 function statusClasses(status: string) {
   return status === 'Shared Once'
-    ? 'bg-[#EEF2FF] text-[#6183FF]'
-    : 'bg-[#6183FF] text-white';
+    ? 'bg-primary/10 text-primary'
+    : 'bg-primary text-white';
 }
 
 export default function Home({
@@ -158,7 +158,7 @@ export default function Home({
               {greeting}
             </h2>
             {isPro && (
-              <span className="rounded-full bg-[#6183FF]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#6183FF]">
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-primary">
                 Pro
               </span>
             )}
@@ -168,7 +168,7 @@ export default function Home({
         <button
           type="button"
           onClick={onAddRecord}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-all hover:bg-[#4D6ED6] active:scale-[0.98]"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover active:scale-[0.98]"
         >
           <CloudArrowUpIcon className="h-4 w-4" />
           Add a record
@@ -187,8 +187,8 @@ export default function Home({
               disabled={!card.onClick}
               className={`group flex min-h-[142px] flex-col justify-between rounded-[24px] border p-5 text-left transition-all ${
                 isPrimary
-                  ? 'border-transparent bg-[#6183FF] text-white shadow-lg shadow-[#6183FF]/20'
-                  : 'border-gray-50 bg-white shadow-sm hover:border-[#6183FF]/25 disabled:cursor-default'
+                  ? 'border-transparent bg-primary text-white shadow-lg shadow-primary/20'
+                  : 'border-gray-50 bg-white shadow-sm hover:border-primary/25 disabled:cursor-default'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -210,7 +210,7 @@ export default function Home({
                 </div>
                 <span
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                    isPrimary ? 'bg-white/15 text-white' : 'bg-[#F8F9FE] text-[#6183FF]'
+                    isPrimary ? 'bg-white/15 text-white' : 'bg-[#F8F9FE] text-primary'
                   }`}
                 >
                   <Icon className="h-4.5 w-4.5" />
@@ -275,9 +275,9 @@ export default function Home({
               key={action.label}
               type="button"
               onClick={action.onClick}
-              className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-[#F8F9FE] p-3 text-left transition-colors hover:border-[#6183FF]/30 hover:bg-white"
+              className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-[#F8F9FE] p-3 text-left transition-colors hover:border-primary/30 hover:bg-white"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#6183FF] shadow-sm group-hover:bg-[#6183FF] group-hover:text-white">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm group-hover:bg-primary group-hover:text-white">
                 <action.icon className="h-4.5 w-4.5" />
               </span>
               <span className="min-w-0">
@@ -305,7 +305,7 @@ export default function Home({
             <button
               type="button"
               onClick={() => navigate('/dashboard/records')}
-              className="group flex items-center gap-1 text-xs font-bold text-[#6183FF] hover:underline"
+              className="group flex items-center gap-1 text-xs font-bold text-primary hover:underline"
             >
               See all
               <ChevronRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -314,7 +314,7 @@ export default function Home({
 
           {records.length === 0 ? (
             <div className="flex flex-col items-center rounded-2xl border border-dashed border-gray-200 bg-[#F8F9FE] px-5 py-9 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#6183FF] shadow-sm">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-primary shadow-sm">
                 <DocumentTextIcon className="h-7 w-7" />
               </div>
               <p className="mt-3 text-sm font-bold text-[#101217]">
@@ -329,7 +329,7 @@ export default function Home({
                 <button
                   type="button"
                   onClick={onAddRecord}
-                  className="mt-4 min-h-[40px] rounded-full bg-[#6183FF] px-4 text-xs font-bold text-white"
+                  className="mt-4 min-h-[40px] rounded-full bg-primary px-4 text-xs font-bold text-white"
                 >
                   Add your first record
                 </button>
@@ -349,7 +349,7 @@ export default function Home({
                       <img src={record.icon} alt="" className="h-full w-full object-contain" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-[#101217] transition-colors group-hover:text-[#6183FF]">
+                      <p className="truncate text-sm font-bold text-[#101217] transition-colors group-hover:text-primary">
                         {record.name}
                       </p>
                       <p className="mt-0.5 truncate text-[11px] font-medium text-gray-400">
@@ -381,7 +381,7 @@ export default function Home({
               <button
                 type="button"
                 onClick={() => navigate('/dashboard/access-log')}
-                className="flex items-center gap-1 text-xs font-bold text-[#6183FF] hover:underline"
+                className="flex items-center gap-1 text-xs font-bold text-primary hover:underline"
               >
                 Full audit
                 <ChevronRightIcon className="h-3.5 w-3.5" />
@@ -418,13 +418,13 @@ export default function Home({
           </div>
 
           {isPro ? (
-            <div className="relative overflow-hidden rounded-[28px] border border-[#6183FF]/15 bg-[#EEF2FF] p-6">
+            <div className="relative overflow-hidden rounded-[28px] border border-primary/15 bg-primary/10 p-6">
               <div
                 aria-hidden
-                className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#6183FF]/20 blur-2xl"
+                className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/20 blur-2xl"
               />
               <div className="relative flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#6183FF] text-white shadow-lg shadow-[#6183FF]/25">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25">
                   <StarIcon className="h-5 w-5" />
                 </div>
                 <div>
@@ -436,7 +436,7 @@ export default function Home({
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/billing')}
-                    className="mt-3 flex items-center gap-1 text-xs font-bold text-[#6183FF] hover:underline"
+                    className="mt-3 flex items-center gap-1 text-xs font-bold text-primary hover:underline"
                   >
                     Manage billing
                     <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -448,7 +448,7 @@ export default function Home({
             <div className="relative overflow-hidden rounded-[28px] bg-[#020924] p-6 text-white">
               <div
                 aria-hidden
-                className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-[#6183FF]/30 blur-2xl"
+                className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-primary/30 blur-2xl"
               />
               <div className="relative">
                 <div className="flex items-center gap-2">
@@ -479,9 +479,9 @@ export default function Home({
           <button
             type="button"
             onClick={() => navigate('/dashboard/qrcodes')}
-            className="flex w-full items-center gap-3 rounded-[24px] border border-gray-50 bg-white p-4 text-left shadow-sm transition-colors hover:border-[#6183FF]/25"
+            className="flex w-full items-center gap-3 rounded-[24px] border border-gray-50 bg-white p-4 text-left shadow-sm transition-colors hover:border-primary/25"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6183FF]/10 text-[#6183FF]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <ShieldCheckIcon className="h-5 w-5" />
             </span>
             <span className="min-w-0 flex-1">

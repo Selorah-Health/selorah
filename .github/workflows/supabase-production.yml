@@ -1,0 +1,50 @@
+name: Supabase production
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_functions:
+        description: Deploy the send-email and verify-nin Edge Functions after migrations
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Apply migrations
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Push migrations
+        run: supabase db push
+
+      - name: Deploy product email function
+        if: ${{ inputs.deploy_functions }}
+        run: supabase functions deploy send-email --no-verify-jwt --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Deploy NIN verification function
+        if: ${{ inputs.deploy_functions }}
+        run: supabase functions deploy verify-nin --project-ref "$SUPABASE_PROJECT_ID"

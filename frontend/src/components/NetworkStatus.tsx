@@ -19,8 +19,8 @@ export default function NetworkStatus() {
   const tone = !online
     ? 'bg-[#101217] text-white'
     : syncing
-      ? 'bg-[#6183FF] text-white'
-      : 'bg-[#EEF2FF] text-[#4D6ED6]';
+      ? 'bg-primary text-white'
+      : 'bg-primary/10 text-primary-hover';
 
   return (
     <div

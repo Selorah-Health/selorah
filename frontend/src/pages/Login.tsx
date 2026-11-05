@@ -219,7 +219,7 @@ export default function Login() {
         : '11-digit NIN';
 
   const inputClass =
-    'min-h-[50px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]';
+    'min-h-[50px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary';
 
   return (
     <div className="min-h-screen bg-white font-sora text-[#101217] lg:grid lg:grid-cols-[1.05fr_1fr]">
@@ -234,7 +234,7 @@ export default function Login() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#020924] via-[#020924]/70 to-[#020924]/30" />
         <div
           aria-hidden
-          className="absolute -right-24 top-1/3 h-72 w-72 rounded-full bg-[#6183FF]/25 blur-3xl"
+          className="absolute -right-24 top-1/3 h-72 w-72 rounded-full bg-primary/25 blur-3xl"
         />
 
         <Link to="/" className="relative z-10 flex items-center gap-3">
@@ -262,7 +262,7 @@ export default function Login() {
               { icon: CheckCircleIcon, text: 'No data sold, ever' },
             ].map((item) => (
               <div key={item.text} className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#8FA8FF]">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10 text-primary">
                   <item.icon className="h-4 w-4" />
                 </span>
                 <span className="text-xs font-semibold text-white/65">{item.text}</span>
@@ -296,7 +296,7 @@ export default function Login() {
           </div>
 
           <div className="hidden items-center justify-between lg:flex">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
               Welcome back
             </p>
             <div className="flex items-center gap-2">
@@ -316,7 +316,7 @@ export default function Login() {
           </h1>
           <p className="mt-2 text-sm font-medium leading-relaxed text-gray-500">
             Don&apos;t have an account?{' '}
-            <Link to="/signup" className="font-bold text-[#6183FF] hover:underline">
+            <Link to="/signup" className="font-bold text-primary hover:underline">
               Create one
             </Link>
           </p>
@@ -377,7 +377,7 @@ export default function Login() {
                     }}
                     className={`flex min-h-[62px] flex-col items-center justify-center gap-1 rounded-2xl border text-[11px] font-bold transition-all ${
                       isActive
-                        ? 'border-[#6183FF] bg-[#EEF2FF] text-[#6183FF]'
+                        ? 'border-primary bg-primary/10 text-primary'
                         : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
                     }`}
                   >
@@ -482,7 +482,7 @@ export default function Login() {
             <label className="block">
               <span className="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
                 Password
-                <Link to="/forgot-password" className="normal-case tracking-normal text-[#6183FF]">
+                <Link to="/forgot-password" className="normal-case tracking-normal text-primary">
                   Forgot?
                 </Link>
               </span>
@@ -517,7 +517,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-all hover:bg-[#4D6ED6] active:scale-[0.99] disabled:opacity-60"
+              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary-hover active:scale-[0.99] disabled:opacity-60"
             >
               {loading ? (
                 <>

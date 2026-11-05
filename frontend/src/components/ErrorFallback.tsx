@@ -59,7 +59,7 @@ export default function ErrorFallback({ error, errorId, onRetry }: ErrorFallback
       {/* Ambient brand light */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-40 -top-48 h-[34rem] w-[34rem] rounded-full bg-[#6183FF]/20 blur-[120px]"
+        className="pointer-events-none absolute -left-40 -top-48 h-[34rem] w-[34rem] rounded-full bg-primary/20 blur-[120px]"
       />
       <div
         aria-hidden
@@ -94,9 +94,9 @@ export default function ErrorFallback({ error, errorId, onRetry }: ErrorFallback
         <div className="relative mb-8 flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40">
           <span className="absolute inset-0 rounded-full border border-white/[0.06]" />
           <span className="absolute inset-5 rounded-full border border-white/[0.08]" />
-          <span className="absolute inset-10 rounded-full border border-[#6183FF]/25" />
-          <span className="absolute inset-0 animate-ping rounded-full border border-[#6183FF]/10 [animation-duration:3s]" />
-          <span className="relative flex h-16 w-16 items-center justify-center rounded-[22px] border border-white/10 bg-gradient-to-br from-[#6183FF] to-[#3F5ED8] shadow-[0_20px_60px_-18px_rgba(97,131,255,0.9)] sm:h-20 sm:w-20">
+          <span className="absolute inset-10 rounded-full border border-primary/25" />
+          <span className="absolute inset-0 animate-ping rounded-full border border-primary/10 [animation-duration:3s]" />
+          <span className="relative flex h-16 w-16 items-center justify-center rounded-[22px] border border-white/10 bg-gradient-to-br from-primary to-[#3F5ED8] shadow-[0_20px_60px_-18px_rgba(97,131,255,0.9)] sm:h-20 sm:w-20">
             <SignalSlashIcon className="h-8 w-8 sm:h-9 sm:w-9" strokeWidth={1.6} />
           </span>
           <span className="absolute -right-1 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-[#0B1120] text-[#14F1D9] shadow-lg">
@@ -104,7 +104,7 @@ export default function ErrorFallback({ error, errorId, onRetry }: ErrorFallback
           </span>
         </div>
 
-        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#8FA8FF]">
+        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-primary">
           Unexpected error
         </p>
         <h1 className="mt-3 max-w-3xl text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-6xl">
@@ -119,7 +119,7 @@ export default function ErrorFallback({ error, errorId, onRetry }: ErrorFallback
           <button
             type="button"
             onClick={reload}
-            className="group inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#6183FF] to-[#4D6ED6] px-6 text-sm font-bold text-white shadow-[0_18px_45px_-16px_rgba(97,131,255,0.9)] transition-all hover:brightness-110 active:scale-[0.99]"
+            className="group inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-hover px-6 text-sm font-bold text-white shadow-[0_18px_45px_-16px_rgba(97,131,255,0.9)] transition-all hover:brightness-110 active:scale-[0.99]"
           >
             <ArrowPathIcon className="h-4.5 w-4.5 transition-transform duration-500 group-hover:rotate-180" />
             Reload page
@@ -233,7 +233,7 @@ export default function ErrorFallback({ error, errorId, onRetry }: ErrorFallback
           </a>
           <a
             href={reportHref}
-            className="inline-flex items-center gap-1 text-[#8FA8FF] transition-colors hover:text-white"
+            className="inline-flex items-center gap-1 text-primary transition-colors hover:text-white"
           >
             Report this
             <ArrowRightIcon className="h-3 w-3" />

@@ -448,7 +448,7 @@ export default function SelorahCard() {
   if (!profile?.permanent_qr_token) {
     return (
       <div className="rounded-[28px] border border-gray-50 bg-white p-8 text-center shadow-sm">
-        <QrCodeIcon className="mx-auto h-10 w-10 text-[#6183FF]" />
+        <QrCodeIcon className="mx-auto h-10 w-10 text-primary" />
         <h2 className="mt-3 text-lg font-bold text-[#101217]">Your card is being prepared</h2>
         <p className="mx-auto mt-1.5 max-w-sm text-sm font-medium text-gray-400">
           Finish your profile so we can generate your permanent emergency QR code.
@@ -473,7 +473,7 @@ export default function SelorahCard() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
             Emergency identity
           </p>
           <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#101217] sm:text-3xl">
@@ -488,7 +488,7 @@ export default function SelorahCard() {
           type="button"
           onClick={downloadBoth}
           disabled={generating || !cards}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ArrowDownTrayIcon className="h-4 w-4" />
           {generating ? 'Building card...' : 'Download card'}
@@ -508,7 +508,7 @@ export default function SelorahCard() {
                     <button
                       type="button"
                       onClick={downloadCard}
-                      className="inline-flex min-h-[32px] items-center gap-1.5 rounded-full border border-gray-200 px-3 text-[10px] font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                      className="inline-flex min-h-[32px] items-center gap-1.5 rounded-full border border-gray-200 px-3 text-[10px] font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
                     >
                       <ArrowDownTrayIcon className="h-3.5 w-3.5" />
                       Download
@@ -528,7 +528,7 @@ export default function SelorahCard() {
                     <button
                       type="button"
                       onClick={downloadBack}
-                      className="inline-flex min-h-[32px] items-center gap-1.5 rounded-full border border-gray-200 px-3 text-[10px] font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                      className="inline-flex min-h-[32px] items-center gap-1.5 rounded-full border border-gray-200 px-3 text-[10px] font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
                     >
                       <ArrowDownTrayIcon className="h-3.5 w-3.5" />
                       Download
@@ -544,7 +544,7 @@ export default function SelorahCard() {
             ) : (
               <div className="flex aspect-[7/4] items-center justify-center rounded-[18px] bg-[#F4F7FF]">
                 <div className="text-center">
-                  <QrCodeIcon className="mx-auto h-8 w-8 text-[#6183FF]" />
+                  <QrCodeIcon className="mx-auto h-8 w-8 text-primary" />
                   <p className="mt-2 text-xs font-semibold text-gray-400">
                     {generating ? 'Building your card...' : 'Card preview unavailable'}
                   </p>
@@ -557,8 +557,8 @@ export default function SelorahCard() {
             The download uses this exact design. Only your QR code, name, and health details change.
           </p>
 
-          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[#6183FF]/15 bg-[#EEF2FF] p-4">
-            <ShieldCheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#6183FF]" />
+          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary/15 bg-primary/10 p-4">
+            <ShieldCheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div>
               <p className="text-xs font-bold text-[#101217]">Permanent and revocable</p>
               <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-gray-500">
@@ -585,15 +585,15 @@ export default function SelorahCard() {
               </div>
               <div className="mt-4 space-y-2 text-xs font-medium text-gray-500">
                 <p className="flex items-center gap-2">
-                  <CreditCardIcon className="h-4 w-4 text-[#6183FF]" />
+                  <CreditCardIcon className="h-4 w-4 text-primary" />
                   {order.tier === 'pro' ? 'Pro metal card' : 'Classic card'}
                 </p>
                 <p className="flex items-center gap-2">
-                  <PhoneIcon className="h-4 w-4 text-[#6183FF]" />
+                  <PhoneIcon className="h-4 w-4 text-primary" />
                   {order.phone}
                 </p>
                 <p className="flex items-start gap-2">
-                  <MapPinIcon className="h-4 w-4 shrink-0 text-[#6183FF]" />
+                  <MapPinIcon className="h-4 w-4 shrink-0 text-primary" />
                   <span>
                     {order.delivery_address}
                     {order.city ? `, ${order.city}` : ''}
@@ -601,7 +601,7 @@ export default function SelorahCard() {
                   </span>
                 </p>
                 <p className="flex items-center gap-2">
-                  <TruckIcon className="h-4 w-4 text-[#6183FF]" />
+                  <TruckIcon className="h-4 w-4 text-primary" />
                   Delivery is arranged after your details are confirmed.
                 </p>
               </div>
@@ -626,7 +626,7 @@ export default function SelorahCard() {
                   <input
                     value={form.fullName}
                     onChange={(event) => setForm({ ...form, fullName: event.target.value })}
-                    className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-[#6183FF]"
+                    className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-primary"
                     placeholder="Full name"
                   />
                 </label>
@@ -638,7 +638,7 @@ export default function SelorahCard() {
                     type="tel"
                     value={form.phone}
                     onChange={(event) => setForm({ ...form, phone: event.target.value })}
-                    className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-[#6183FF]"
+                    className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-primary"
                     placeholder="080 0000 0000"
                   />
                 </label>
@@ -650,7 +650,7 @@ export default function SelorahCard() {
                     value={form.address}
                     onChange={(event) => setForm({ ...form, address: event.target.value })}
                     rows={2}
-                    className="w-full resize-none rounded-xl border border-gray-200 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-[#6183FF]"
+                    className="w-full resize-none rounded-xl border border-gray-200 px-3.5 py-2.5 text-xs font-semibold outline-none focus:border-primary"
                     placeholder="Street, area, landmark"
                   />
                 </label>
@@ -658,13 +658,13 @@ export default function SelorahCard() {
                   <input
                     value={form.city}
                     onChange={(event) => setForm({ ...form, city: event.target.value })}
-                    className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-[#6183FF]"
+                    className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-primary"
                     placeholder="City"
                   />
                   <input
                     value={form.state}
                     onChange={(event) => setForm({ ...form, state: event.target.value })}
-                    className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-[#6183FF]"
+                    className="min-h-[44px] w-full rounded-xl border border-gray-200 px-3.5 text-xs font-semibold outline-none focus:border-primary"
                     placeholder="State"
                   />
                 </div>
@@ -679,7 +679,7 @@ export default function SelorahCard() {
                       onClick={() => setForm({ ...form, tier: tier.id })}
                       className={`min-h-[44px] rounded-xl border text-xs font-bold transition-colors ${
                         form.tier === tier.id
-                          ? 'border-[#6183FF] bg-[#EEF2FF] text-[#6183FF]'
+                          ? 'border-primary bg-primary/10 text-primary'
                           : 'border-gray-200 text-gray-500'
                       }`}
                     >
@@ -692,7 +692,7 @@ export default function SelorahCard() {
               <button
                 type="submit"
                 disabled={saving}
-                className="mt-4 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-[#6183FF] text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 disabled:opacity-60"
+                className="mt-4 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-bold text-white shadow-lg shadow-primary/20 disabled:opacity-60"
               >
                 <CreditCardIcon className="h-4 w-4" />
                 {saving ? 'Sending request...' : 'Request my card'}

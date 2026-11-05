@@ -20,7 +20,6 @@ env.txt
 *.env
 **/env.txt
 
-.github
 .vscode
 /shared
 env.txt

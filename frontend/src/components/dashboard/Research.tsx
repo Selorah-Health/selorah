@@ -403,7 +403,7 @@ export default function Research() {
           className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full px-5 text-xs font-bold transition-all disabled:opacity-60 ${
             optedIn
               ? 'bg-[#EAFBF2] text-[#15955C]'
-              : 'bg-[#6183FF] text-white shadow-lg shadow-[#6183FF]/20 hover:bg-[#4D6ED6]'
+              : 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-hover'
           }`}
         >
           {optedIn ? (
@@ -422,7 +422,7 @@ export default function Research() {
 
       <section className="flex flex-col gap-4 rounded-[24px] border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#6183FF] to-[#14F1D9] text-sm font-black text-white">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-[#14F1D9] text-sm font-black text-white">
             {initialsOf(identity.name, identity.email)}
           </div>
           <div className="min-w-0">
@@ -458,8 +458,8 @@ export default function Research() {
             label: 'Open surveys',
             value: String(openSurveys.length).padStart(2, '0'),
             icon: BeakerIcon,
-            color: 'text-[#6183FF]',
-            bg: 'bg-[#EEF2FF]',
+            color: 'text-primary',
+            bg: 'bg-primary/10',
           },
           {
             label: 'Completed',
@@ -542,12 +542,12 @@ export default function Research() {
               return (
                 <article
                   key={survey.id}
-                  className="rounded-[22px] border border-gray-100 bg-white p-4 transition-all hover:border-[#6183FF]/25 hover:shadow-lg hover:shadow-blue-500/5 sm:p-5"
+                  className="rounded-[22px] border border-gray-100 bg-white p-4 transition-all hover:border-primary/25 hover:shadow-lg hover:shadow-blue-500/5 sm:p-5"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-[#6183FF]">
+                        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-primary">
                           {survey.category}
                         </span>
                         {completed ? (
@@ -603,7 +603,7 @@ export default function Research() {
                         <button
                           type="button"
                           onClick={() => openSurvey(survey)}
-                          className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-[#6183FF] px-4 text-[11px] font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+                          className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-primary px-4 text-[11px] font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
                         >
                           Start survey
                           <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -638,7 +638,7 @@ export default function Research() {
             },
           ].map((step) => (
             <div key={step.title} className="rounded-2xl bg-[#F8F9FE] p-4">
-              <step.icon className="h-4 w-4 text-[#6183FF]" />
+              <step.icon className="h-4 w-4 text-primary" />
               <p className="mt-2 text-xs font-bold text-[#101217]">{step.title}</p>
               <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-400">
                 {step.body}
@@ -664,7 +664,7 @@ export default function Research() {
             <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-gray-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-7 sm:py-5">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-[#6183FF]">
+                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-primary">
                     {activeSurvey.category}
                   </span>
                   <span className="rounded-full bg-green-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-green-600">
@@ -695,11 +695,11 @@ export default function Research() {
             <div className="space-y-5 px-5 py-5 sm:px-7 sm:py-6">
               <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-[#F8F9FE] px-4 py-3 text-[10px] font-semibold text-gray-500">
                 <span className="inline-flex items-center gap-1.5">
-                  <ClockIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                  <ClockIcon className="h-3.5 w-3.5 text-primary" />
                   About {activeSurvey.estimated_minutes} minutes
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <DocumentTextIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                  <DocumentTextIcon className="h-3.5 w-3.5 text-primary" />
                   {activeSurvey.questions?.length || 0} questions
                 </span>
                 <span className="inline-flex items-center gap-1.5">
@@ -716,7 +716,7 @@ export default function Research() {
                   <div key={question.id}>
                     <div className="flex items-start justify-between gap-3">
                       <p className="text-sm font-bold leading-relaxed text-[#101217]">
-                        <span className="mr-1.5 text-[#6183FF]">{index + 1}.</span>
+                        <span className="mr-1.5 text-primary">{index + 1}.</span>
                         {question.prompt}
                         {question.required && <span className="ml-1 text-red-400">*</span>}
                       </p>
@@ -731,7 +731,7 @@ export default function Research() {
                         onChange={(event) => setAnswer(question.id, event.target.value)}
                         rows={3}
                         placeholder="Type your answer"
-                        className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs font-medium leading-relaxed text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-[#6183FF]"
+                        className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs font-medium leading-relaxed text-[#101217] outline-none transition-colors placeholder:text-gray-300 focus:border-primary"
                       />
                     ) : question.question_type === 'scale' ? (
                       <div className="mt-2">
@@ -743,7 +743,7 @@ export default function Research() {
                               onClick={() => setAnswer(question.id, option)}
                               className={`min-h-[46px] rounded-xl border text-sm font-bold transition-all ${
                                 value === option
-                                  ? 'border-[#6183FF] bg-[#EEF2FF] text-[#6183FF]'
+                                  ? 'border-primary bg-primary/10 text-primary'
                                   : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
                               }`}
                             >
@@ -775,7 +775,7 @@ export default function Research() {
                               }
                               className={`min-h-[40px] rounded-full border px-3.5 text-[11px] font-bold transition-all ${
                                 selected
-                                  ? 'border-[#6183FF] bg-[#EEF2FF] text-[#6183FF]'
+                                  ? 'border-primary bg-primary/10 text-primary'
                                   : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
                               }`}
                             >
@@ -797,7 +797,7 @@ export default function Research() {
                     setConsent(event.target.checked);
                     setFormError(null);
                   }}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-[#6183FF] focus:ring-[#6183FF]"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <span className="text-[11px] font-medium leading-relaxed text-gray-500">
                   I consent to my answers being used for this survey. I understand that my name
@@ -821,7 +821,7 @@ export default function Research() {
                 type="button"
                 onClick={() => void submitSurvey()}
                 disabled={submitting || !consent}
-                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#6183FF] px-6 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {submitting ? (
                   <>

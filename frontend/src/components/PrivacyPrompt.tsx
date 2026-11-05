@@ -33,7 +33,7 @@ function Toggle({
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={`relative flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
-        checked ? 'border-[#6183FF] bg-[#6183FF]' : 'border-gray-200 bg-gray-200'
+        checked ? 'border-primary bg-primary' : 'border-gray-200 bg-gray-200'
       }`}
     >
       <span
@@ -106,10 +106,10 @@ export default function PrivacyPrompt() {
       {!open && (
         <div className="fixed inset-x-0 bottom-0 z-[250] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5">
           <div className="mx-auto max-w-3xl overflow-hidden rounded-[26px] border border-white/60 bg-white/85 shadow-[0_28px_90px_-24px_rgba(5,8,26,0.55)] backdrop-blur-2xl">
-            <div className="h-1 w-full bg-[#6183FF]" aria-hidden />
+            <div className="h-1 w-full bg-primary" aria-hidden />
             <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
               <div className="flex min-w-0 flex-1 items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <ShieldCheckIcon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
@@ -127,7 +127,7 @@ export default function PrivacyPrompt() {
                 <button
                   type="button"
                   onClick={() => finish(true, true)}
-                  className="col-span-2 min-h-[42px] rounded-full bg-[#6183FF] px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] sm:col-span-1"
+                  className="col-span-2 min-h-[42px] rounded-full bg-primary px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover sm:col-span-1"
                 >
                   Accept all
                 </button>
@@ -141,7 +141,7 @@ export default function PrivacyPrompt() {
                 <button
                   type="button"
                   onClick={() => setOpen(true)}
-                  className="min-h-[42px] rounded-full px-3 text-[10px] font-black uppercase tracking-[0.08em] text-[#6183FF] transition-colors hover:bg-[#EEF2FF] hover:text-[#4D6ED6]"
+                  className="min-h-[42px] rounded-full px-3 text-[10px] font-black uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary/10 hover:text-primary-hover"
                 >
                   Manage
                 </button>
@@ -173,14 +173,14 @@ export default function PrivacyPrompt() {
             aria-labelledby="privacy-title"
             className="flex max-h-[calc(100dvh-0.25rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-white/60 bg-white/85 shadow-[0_40px_100px_-30px_rgba(5,8,26,0.65)] backdrop-blur-2xl sm:max-h-[min(90dvh,760px)] sm:rounded-[28px]"
           >
-            <div className="shrink-0 border-b border-white/40 bg-[#EEF2FF]/60 px-5 pb-5 pt-5 backdrop-blur-sm">
+            <div className="shrink-0 border-b border-white/40 bg-primary/10 px-5 pb-5 pt-5 backdrop-blur-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#6183FF] text-white shadow-lg shadow-[#6183FF]/25">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25">
                     <ShieldCheckIcon className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6183FF]">
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
                       Privacy choices
                     </p>
                     <h2
@@ -226,7 +226,7 @@ export default function PrivacyPrompt() {
               </div>
 
               <div className="flex items-start gap-3 rounded-2xl border border-gray-100 p-3.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <SparklesIcon className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -267,11 +267,11 @@ export default function PrivacyPrompt() {
 
               <p className="px-1 pt-1 text-[10px] font-medium leading-relaxed text-gray-400">
                 You can change this at any time in Profile and settings. Read the{' '}
-                <Link to="/privacy" className="font-bold text-[#6183FF] hover:underline">
+                <Link to="/privacy" className="font-bold text-primary hover:underline">
                   Privacy Policy
                 </Link>{' '}
                 and{' '}
-                <Link to="/cookie-policy" className="font-bold text-[#6183FF] hover:underline">
+                <Link to="/cookie-policy" className="font-bold text-primary hover:underline">
                   Storage Policy
                 </Link>
                 .
@@ -289,7 +289,7 @@ export default function PrivacyPrompt() {
               <button
                 type="button"
                 onClick={() => finish(personalisation, searchHistory)}
-                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-[#6183FF] px-5 text-xs font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
               >
                 <CheckIcon className="h-4 w-4" />
                 Save choices

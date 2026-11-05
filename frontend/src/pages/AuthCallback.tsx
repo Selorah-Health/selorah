@@ -146,14 +146,14 @@ export default function AuthCallback() {
             <p className="mt-2 text-sm font-medium leading-relaxed text-gray-500">{error}</p>
             <Link
               to="/login"
-              className="mt-6 flex min-h-[50px] w-full items-center justify-center rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-colors hover:bg-[#4D6ED6]"
+              className="mt-6 flex min-h-[50px] w-full items-center justify-center rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover"
             >
               Back to login
             </Link>
           </>
         ) : needsConfirmation ? (
           <>
-            <span className="mx-auto mt-7 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+            <span className="mx-auto mt-7 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <EnvelopeIcon className="h-7 w-7" />
             </span>
             <h1 className="mt-4 text-xl font-bold tracking-tight">Confirm your email</h1>
@@ -166,7 +166,7 @@ export default function AuthCallback() {
               type="button"
               onClick={() => void resend()}
               disabled={resending || !email}
-              className="mt-6 flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-colors hover:bg-[#4D6ED6] disabled:opacity-60"
+              className="mt-6 flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
               {resending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
               {resent ? 'Confirmation sent again' : resending ? 'Sending...' : 'Resend confirmation email'}
@@ -179,14 +179,14 @@ export default function AuthCallback() {
             )}
             <Link
               to="/login"
-              className="mt-4 inline-flex min-h-[44px] items-center justify-center text-xs font-bold text-gray-400 transition-colors hover:text-[#6183FF]"
+              className="mt-4 inline-flex min-h-[44px] items-center justify-center text-xs font-bold text-gray-400 transition-colors hover:text-primary"
             >
               Back to login
             </Link>
           </>
         ) : (
           <>
-            <span className="mx-auto mt-7 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+            <span className="mx-auto mt-7 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <ArrowPathIcon className="h-7 w-7 animate-spin" />
             </span>
             <h1 className="mt-4 text-xl font-bold tracking-tight">Completing sign in</h1>

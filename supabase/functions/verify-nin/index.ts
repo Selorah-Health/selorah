@@ -6,6 +6,9 @@
 // Required function secrets:
 //   DOJAH_APP_ID
 //   DOJAH_API_KEY
+// Optional:
+//   DOJAH_BASE_URL  use https://sandbox.dojah.io for sandbox testing, or
+//                   https://api.dojah.io for live verifications.
 //
 // The function never invents identity data. If the provider is not configured
 // it returns configured: false and the onboarding form asks the person to type
@@ -56,6 +59,7 @@ Deno.serve(async (request) => {
 
   const appId = Deno.env.get('DOJAH_APP_ID');
   const apiKey = Deno.env.get('DOJAH_API_KEY');
+  const baseUrl = (Deno.env.get('DOJAH_BASE_URL') || 'https://api.dojah.io').replace(/\/+$/, '');
 
   if (!appId || !apiKey) {
     return json({
@@ -68,7 +72,7 @@ Deno.serve(async (request) => {
 
   try {
     const response = await fetch(
-      `https://api.dojah.io/api/v1/kyc/nin?nin=${encodeURIComponent(nin)}`,
+      `${baseUrl}/api/v1/kyc/nin?nin=${encodeURIComponent(nin)}`,
       {
         headers: {
           AppId: appId,

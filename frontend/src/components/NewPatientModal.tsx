@@ -68,7 +68,7 @@ export default function NewPatientModal({ isOpen, onClose, onAdd }: NewPatientMo
 
         <div className="mb-10">
           <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
-            <UserIcon className="w-8 h-8 text-[#6183FF]" />
+            <UserIcon className="w-8 h-8 text-primary" />
           </div>
           <h3 className="text-3xl font-black text-[#101217] tracking-tight mb-2">Register New Patient</h3>
           <p className="text-gray-500 font-medium">Create a digital health token for a new patient in the Selorah network.</p>
@@ -86,7 +86,7 @@ export default function NewPatientModal({ isOpen, onClose, onAdd }: NewPatientMo
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="e.g. Chioma Adebayo"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-12 py-4 text-sm font-bold focus:outline-none focus:border-[#6183FF] focus:ring-4 focus:ring-blue-500/5 transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-12 py-4 text-sm font-bold focus:outline-none focus:border-primary focus:ring-4 focus:ring-blue-500/5 transition-all"
                 />
               </div>
             </div>
@@ -102,7 +102,7 @@ export default function NewPatientModal({ isOpen, onClose, onAdd }: NewPatientMo
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
                     placeholder="080 000 0000"
-                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-12 py-4 text-sm font-bold focus:outline-none focus:border-[#6183FF] focus:ring-4 focus:ring-blue-500/5 transition-all"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-12 py-4 text-sm font-bold focus:outline-none focus:border-primary focus:ring-4 focus:ring-blue-500/5 transition-all"
                   />
                 </div>
               </div>
@@ -115,7 +115,7 @@ export default function NewPatientModal({ isOpen, onClose, onAdd }: NewPatientMo
                     required
                     value={formData.dob}
                     onChange={(e) => setFormData({...formData, dob: e.target.value})}
-                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-12 py-4 text-sm font-bold focus:outline-none focus:border-[#6183FF] focus:ring-4 focus:ring-blue-500/5 transition-all"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-12 py-4 text-sm font-bold focus:outline-none focus:border-primary focus:ring-4 focus:ring-blue-500/5 transition-all"
                   />
                 </div>
               </div>
@@ -127,7 +127,7 @@ export default function NewPatientModal({ isOpen, onClose, onAdd }: NewPatientMo
                 <select
                   value={formData.gender}
                   onChange={(e) => setFormData({...formData, gender: e.target.value})}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#6183FF] transition-all appearance-none cursor-pointer"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer"
                 >
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
@@ -139,7 +139,7 @@ export default function NewPatientModal({ isOpen, onClose, onAdd }: NewPatientMo
                 <select
                   value={formData.bloodGroup}
                   onChange={(e) => setFormData({...formData, bloodGroup: e.target.value})}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-[#6183FF] transition-all appearance-none cursor-pointer"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer"
                 >
                   {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'].map(bg => (
                     <option key={bg} value={bg}>{bg}</option>
@@ -152,7 +152,7 @@ export default function NewPatientModal({ isOpen, onClose, onAdd }: NewPatientMo
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#6183FF] text-white font-black py-5 rounded-2xl hover:bg-[#4E6EEF] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 mt-4 active:scale-[0.98]"
+            className="w-full bg-primary text-white font-black py-5 rounded-2xl hover:bg-[#4E6EEF] transition-all shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 mt-4 active:scale-[0.98]"
           >
             {isSubmitting ? (
               <span className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></span>

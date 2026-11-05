@@ -5,58 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light only">
     <meta name="supported-color-schemes" content="light only">
-    <title>Your Selorah sign in link</title>
+    <title>Your Selorah sign-in link</title>
+    <style>
+      @media only screen and (max-width: 620px) {
+        .email-outer { padding: 0 !important; }
+        .email-card { width: 100% !important; border-radius: 0 !important; }
+        .banner-cell { padding: 26px 24px 28px !important; }
+        .banner-icon-cell { display: none !important; }
+        .body-cell { padding: 28px 24px 8px !important; }
+        .footer-cell { padding: 26px 24px 30px !important; }
+        .banner-heading { font-size: 26px !important; }
+      }
+    </style>
   </head>
-  <body style="margin:0;padding:0;background:#F4F6FC;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
-    <div style="display:none;font-size:1px;color:#F4F6FC;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Use this secure link to sign in to Selorah.</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6FC;padding:32px 16px;">
+  <body style="margin:0;padding:0;background:#06123A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+    <div style="display:none;font-size:1px;color:#06123A;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Use this secure link to sign in to Selorah.</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#06123A;padding:36px 14px;" class="email-outer">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#FFFFFF;border-radius:8px;overflow:hidden;" class="email-card">
             <tr>
-              <td style="padding:0 0 18px;">
-                <a href="{{ .SiteURL }}" style="text-decoration:none;">
-                  <img src="https://www.selorah.app/logo.png" width="34" height="34" alt="" style="vertical-align:middle;border-radius:9px;border:0;">
-                  <span style="display:inline-block;vertical-align:middle;margin-left:10px;font-size:16px;font-weight:800;letter-spacing:-0.02em;color:#101217;">Selorah Health</span>
-                </a>
-              </td>
-            </tr>
-            <tr>
-              <td style="background:#ffffff;border:1px solid #E6EAF6;border-radius:20px;padding:36px 34px;">
-                <p style="margin:0 0 12px;font-size:10px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#6183FF;">Secure sign in</p>
-                <h1 style="margin:0 0 16px;font-size:25px;line-height:1.25;letter-spacing:-0.02em;color:#101217;">Your sign in link</h1>
-                <p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#101217;">Use the button below to sign in to your Selorah account. This link works once and expires shortly.</p>
-                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 0;">
+              <td style="background:#06123A;padding:0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="border-radius:12px;background:#6183FF;">
-                      <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 24px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">Sign in to Selorah</a>
+                    <td style="padding:28px 30px 30px;" class="banner-cell" valign="top">
+                      <a href="{{ .SiteURL }}" style="text-decoration:none;">
+                        <img src="https://www.selorah.app/logo.png" width="42" height="42" alt="Selorah Health" style="display:block;border:0;border-radius:11px;">
+                      </a>
+                      <p style="margin:22px 0 0;font-size:10px;line-height:1.4;letter-spacing:0.2em;text-transform:uppercase;color:#8FA8FF;font-weight:800;">Selorah Health</p>
+                      <h1 class="banner-heading" style="margin:10px 0 0;font-size:30px;line-height:1.16;color:#FFFFFF;font-weight:800;letter-spacing:-0.02em;">A secure link, just for you.</h1>
+                      <p style="margin:12px 0 0;max-width:390px;font-size:13px;line-height:1.65;color:rgba(255,255,255,0.62);">Skip the password and sign in with a single link. It works once and expires quickly.</p>
+                    </td>
+                    <td width="118" align="center" valign="middle" style="padding:0 24px 0 0;" class="banner-icon-cell">
+                      <div style="width:74px;height:74px;border-radius:22px;background:#6183FF;color:#FFFFFF;font-size:38px;line-height:74px;text-align:center;font-weight:300;box-shadow:0 18px 40px rgba(97,131,255,0.35);">+</div>
                     </td>
                   </tr>
                 </table>
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 0;background:#F7F9FF;border-radius:12px;">
-                  <tr>
-                    <td style="padding:14px 16px;font-size:12px;line-height:1.65;color:#6B7280;">
-                      If the button does not work, copy and paste this link into your browser:<br>
-                      <a href="{{ .ConfirmationURL }}" style="color:#6183FF;word-break:break-all;">{{ .ConfirmationURL }}</a>
-                    </td>
-                  </tr>
-                </table>
-                <p style="margin:18px 0 0;font-size:12px;line-height:1.65;color:#8A93A6;">If you did not request this link, you can ignore this email.</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:22px 10px 0;text-align:center;">
-                <p style="margin:0 0 6px;font-size:12px;line-height:1.6;color:#8A93A6;">Selorah Health, Lagos, Nigeria</p>
-                <p style="margin:0 0 6px;font-size:12px;line-height:1.6;color:#8A93A6;">
-                  <a href="https://www.selorah.app/privacy" style="color:#6183FF;text-decoration:none;">Privacy</a>
-                  &nbsp;&middot;&nbsp;
-                  <a href="https://www.selorah.app/terms" style="color:#6183FF;text-decoration:none;">Terms</a>
-                  &nbsp;&middot;&nbsp;
-                  <a href="mailto:selorahealth@gmail.com" style="color:#6183FF;text-decoration:none;">Contact</a>
-                </p>
+              <td style="padding:34px 36px 8px;" class="body-cell">
+                <p style="margin:0 0 18px;font-size:15px;line-height:1.7;color:#101217;font-weight:700;">Hi there,</p>
+                <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#101217;">Use the button below to sign in to your Selorah account.</p>
+            <p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#101217;">This link is single use. If you did not request it, you can ignore this email.</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 0;">
+                  <tr>
+                    <td align="center" style="border-radius:10px;background:#6183FF;">
+                      <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:15px 28px;font-size:14px;line-height:1.2;font-weight:800;color:#FFFFFF;text-decoration:none;border-radius:10px;">Sign in to Selorah</a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#5B6475;">If the button does not work, copy and paste this link into your browser:</p>
+                <p style="margin:6px 0 0;font-size:12px;line-height:1.6;color:#6183FF;word-break:break-all;">{{ .ConfirmationURL }}</p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 26px;">
+                  <tr>
+                    <td style="padding:16px 18px;background:#F5F7FF;border:1px solid #E6EAFF;border-radius:10px;">
+                      <p style="margin:0;font-size:12px;line-height:1.65;color:#5B6475;">For your safety, never forward this email or share the sign-in link with anyone.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#06123A;padding:28px 36px 30px;" class="footer-cell">
+                <p style="margin:0;font-size:14px;line-height:1.6;color:#FFFFFF;font-weight:800;">Stay in control. Stay informed.</p>
+                <p style="margin:6px 0 0;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.55);">Team Selorah</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px 0 0;">
+                  <tr>
+                    <td style="padding:0 5px;">
+                      <a href="https://instagram.com/selorahealth" style="text-decoration:none;">
+                        <img src="https://www.selorah.app/landing/social-instagram.png" width="20" height="20" alt="Instagram" style="display:block;border:0;opacity:0.9;">
+                      </a>
+                    </td>
+                    <td style="padding:0 5px;">
+                      <a href="https://x.com/selorahealth" style="text-decoration:none;">
+                        <img src="https://www.selorah.app/landing/social-x.png" width="20" height="20" alt="X" style="display:block;border:0;opacity:0.9;">
+                      </a>
+                    </td>
+                    <td style="padding:0 5px;">
+                      <a href="https://www.linkedin.com/company/selorahealth" style="text-decoration:none;">
+                        <img src="https://www.selorah.app/landing/social-linkedin.png" width="20" height="20" alt="LinkedIn" style="display:block;border:0;opacity:0.9;">
+                      </a>
+                    </td>
+                    <td style="padding:0 5px;">
+                      <a href="https://tiktok.com/@selorahealth" style="text-decoration:none;">
+                        <img src="https://www.selorah.app/landing/social-tiktok.png" width="20" height="20" alt="TikTok" style="display:block;border:0;opacity:0.9;">
+                      </a>
+                    </td>
+                    <td style="padding:0 5px;">
+                      <a href="https://chat.whatsapp.com/JI2LK41IF8yHiJjEuWKk2M?mode=gi_t" style="text-decoration:none;">
+                        <img src="https://www.selorah.app/landing/social-whatsapp.png" width="20" height="20" alt="WhatsApp" style="display:block;border:0;opacity:0.9;">
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:20px 0 0;font-size:11px;line-height:1.6;color:rgba(255,255,255,0.38);">Selorah Health Limited, Lagos, Nigeria. Questions? <a href="mailto:support@selorah.app" style="color:rgba(255,255,255,0.7);text-decoration:underline;">support@selorah.app</a></p>
               </td>
             </tr>
           </table>
+          <p style="margin:18px 0 0;max-width:600px;text-align:center;font-size:10px;line-height:1.6;color:rgba(255,255,255,0.38);">You received this email because this address was used on Selorah. If this was not you, you can ignore this message.</p>
         </td>
       </tr>
     </table>

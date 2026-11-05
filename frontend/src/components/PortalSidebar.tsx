@@ -148,7 +148,7 @@ export default function PortalSidebar({
               end={item.path === `/${role}`}
               className={({ isActive }) =>
                 `flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 transition-all ${
-                  isActive ? 'text-[#6183FF]' : 'text-gray-400'
+                  isActive ? 'text-primary' : 'text-gray-400'
                 }`
               }
             >

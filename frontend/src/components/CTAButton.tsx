@@ -29,8 +29,8 @@ export default function CTAButton({
 
   const variants = {
     primary: {
-      wrap: 'bg-gradient-to-r from-[#6183FF] to-[#4D6ED6] text-white border border-[#6183FF]/40 shadow-lg shadow-[#6183FF]/20',
-      circle: 'bg-white text-[#6183FF]',
+      wrap: 'bg-gradient-to-r from-primary to-primary-hover text-white border border-primary/40 shadow-lg shadow-primary/20',
+      circle: 'bg-white text-primary',
     },
     outline: {
       wrap: 'bg-transparent text-white border-2 border-white/70',

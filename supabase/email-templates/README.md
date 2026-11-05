@@ -1,12 +1,21 @@
 # Selorah email templates
 
 These files are designed for Supabase Auth emails and the `send-email` Edge
-Function. They use the same brand, colours, and layout as the app.
+Function. They use the same brand, colours, and layout as the app: a dark navy
+outer area, a white card, a dark banner, a blue call to action, and a dark
+footer with social links.
 
 ## Supabase Auth templates
 
-Paste each file into the matching screen in Supabase Dashboard > Authentication
-> Emails. Keep the Go template variables exactly as written.
+The five HTML files are generated from `generate.mjs`. Edit the shared shell or
+the template copy in that script, then run:
+
+```sh
+node supabase/email-templates/generate.mjs
+```
+
+Paste each generated file into the matching screen in Supabase Dashboard >
+Authentication > Emails. Keep the Go template variables exactly as written.
 
 | Supabase template | File |
 | --- | --- |

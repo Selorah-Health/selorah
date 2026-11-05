@@ -10,68 +10,9 @@ import {
   MapPinIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 import StaticPage from '../components/StaticPage';
-
-const CAREERS_EMAIL = 'selorahealth@gmail.com';
-
-type Role = {
-  title: string;
-  location: string;
-  type: string;
-  summary: string;
-  skills: string[];
-};
-
-const ROLES: Role[] = [
-  {
-    title: 'Senior Fullstack Engineer',
-    location: 'Remote',
-    type: 'Full-time',
-    summary:
-      'Build the secure record vault, sharing flows, and provider integrations. You will work across React, TypeScript, Postgres, and Supabase edge functions.',
-    skills: ['React', 'TypeScript', 'Postgres', 'Supabase', 'Security'],
-  },
-  {
-    title: 'Product Designer',
-    location: 'Lagos or remote',
-    type: 'Full-time',
-    summary:
-      'Own the end-to-end product experience for patients, clinicians, researchers, and insurers. Turn dense medical workflows into calm, clear screens.',
-    skills: ['Product design', 'Design systems', 'Research', 'Prototyping'],
-  },
-  {
-    title: 'Medical Data Analyst',
-    location: 'Remote',
-    type: 'Part-time',
-    summary:
-      'Help us structure clinical data, review record quality, and build privacy-preserving insights for research partners.',
-    skills: ['Clinical data', 'SQL', 'Data quality', 'Privacy'],
-  },
-  {
-    title: 'Blockchain Engineer',
-    location: 'Remote',
-    type: 'Full-time',
-    summary:
-      'Design auditable, privacy-preserving record anchoring and consent proofs without putting patient data on chain.',
-    skills: ['Solidity', 'Cryptography', 'Distributed systems', 'Security'],
-  },
-  {
-    title: 'Frontend Engineer (React)',
-    location: 'Remote',
-    type: 'Full-time',
-    summary:
-      'Make Selorah feel instant on low-bandwidth devices. You will own performance, accessibility, offline states, and the patient dashboard experience.',
-    skills: ['React', 'TypeScript', 'Tailwind', 'PWA', 'Accessibility'],
-  },
-  {
-    title: 'DevOps and Security Engineer',
-    location: 'Remote',
-    type: 'Full-time',
-    summary:
-      'Keep patient data safe and the platform reliable. You will own infrastructure, monitoring, incident response, and compliance automation.',
-    skills: ['Cloud infrastructure', 'CI/CD', 'Security', 'Observability'],
-  },
-];
+import { CAREER_ROLES, applyHref } from '../lib/careers';
 
 const PERKS = [
   {
@@ -106,24 +47,6 @@ const PERKS = [
   },
 ];
 
-function applyHref(role: string) {
-  const subject = `Application: ${role}`;
-  const body = [
-    'Hello Selorah team,',
-    '',
-    `I would like to apply for the ${role} role.`,
-    '',
-    'A short introduction:',
-    '',
-    'Portfolio or GitHub:',
-    'LinkedIn:',
-    'Resume: attach it to this email.',
-    '',
-    'Thank you,',
-  ].join('\n');
-  return `mailto:${CAREERS_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
 export default function Careers() {
   return (
     <StaticPage
@@ -142,7 +65,7 @@ export default function Careers() {
             key={stat.label}
             className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
           >
-            <stat.icon className="h-5 w-5 text-[#6183FF]" />
+            <stat.icon className="h-5 w-5 text-primary" />
             <p className="mt-3 text-3xl font-black tracking-tight text-[#101217]">{stat.value}</p>
             <p className="mt-0.5 text-[11px] font-semibold text-gray-400">{stat.label}</p>
           </div>
@@ -152,7 +75,7 @@ export default function Careers() {
       <section className="mt-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6183FF]">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
               Open roles
             </p>
             <h2 className="mt-3 text-3xl font-black tracking-tight text-[#101217] sm:text-4xl">
@@ -165,38 +88,47 @@ export default function Careers() {
           </div>
           <a
             href={applyHref('General application')}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-[#6183FF]/30"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-primary/30"
           >
-            <EnvelopeIcon className="h-4 w-4 text-[#6183FF]" />
+            <EnvelopeIcon className="h-4 w-4 text-primary" />
             Send a general application
           </a>
         </div>
 
         <div className="mt-8 grid gap-4">
-          {ROLES.map((role) => (
+          {CAREER_ROLES.map((role) => (
             <article
-              key={role.title}
-              className="group rounded-[28px] border border-gray-100 bg-white p-5 shadow-sm transition-all hover:border-[#6183FF]/25 hover:shadow-lg sm:p-6"
+              key={role.slug}
+              className="group rounded-[28px] border border-gray-100 bg-white p-5 shadow-sm transition-all hover:border-primary/25 hover:shadow-lg sm:p-6"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-lg font-black tracking-tight text-[#101217] sm:text-xl">
-                      {role.title}
+                      <Link
+                        to={`/careers/${role.slug}`}
+                        className="transition-colors hover:text-primary"
+                      >
+                        {role.title}
+                      </Link>
                     </h3>
-                    <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-[#4D6ED6]">
+                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-primary-hover">
                       {role.type}
                     </span>
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] font-bold text-gray-400">
                     <span className="inline-flex items-center gap-1">
-                      <MapPinIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                      <MapPinIcon className="h-3.5 w-3.5 text-primary" />
                       {role.location}
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <ClockIcon className="h-3.5 w-3.5 text-[#6183FF]" />
+                      <ClockIcon className="h-3.5 w-3.5 text-primary" />
                       {role.type}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <BriefcaseIcon className="h-3.5 w-3.5 text-primary" />
+                      {role.team}
                     </span>
                   </div>
 
@@ -216,13 +148,21 @@ export default function Careers() {
                   </div>
                 </div>
 
-                <a
-                  href={applyHref(role.title)}
-                  className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-full bg-[#6183FF] px-6 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
-                >
-                  Apply now
-                  <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </a>
+                <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
+                  <Link
+                    to={`/careers/${role.slug}`}
+                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-primary/30 hover:text-primary"
+                  >
+                    View details
+                  </Link>
+                  <a
+                    href={applyHref(role.title)}
+                    className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+                  >
+                    Apply now
+                    <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </a>
+                </div>
               </div>
             </article>
           ))}
@@ -231,7 +171,7 @@ export default function Careers() {
 
       <section className="mt-16">
         <div className="max-w-2xl">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6183FF]">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             Why Selorah
           </p>
           <h2 className="mt-3 text-3xl font-black tracking-tight text-[#101217] sm:text-4xl">
@@ -242,7 +182,7 @@ export default function Careers() {
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PERKS.map((perk) => (
             <article key={perk.title} className="rounded-[26px] border border-gray-100 bg-white p-5">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#6183FF]">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <perk.icon className="h-5 w-5" />
               </span>
               <h3 className="mt-4 text-base font-black tracking-tight text-[#101217]">
@@ -259,7 +199,7 @@ export default function Careers() {
       <section className="mt-16 rounded-[32px] bg-[#101217] px-6 py-10 text-white sm:px-10">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-2xl">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8FA8FF]">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
               Culture
             </p>
             <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
@@ -274,7 +214,7 @@ export default function Careers() {
             href={applyHref('General application')}
             className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-bold text-[#101217] transition-colors hover:bg-[#F4F7FF]"
           >
-            <EnvelopeIcon className="h-4 w-4 text-[#6183FF]" />
+            <EnvelopeIcon className="h-4 w-4 text-primary" />
             Introduce yourself
           </a>
         </div>
@@ -290,7 +230,7 @@ export default function Careers() {
         </p>
         <a
           href={applyHref('Open application')}
-          className="mt-6 inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-7 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+          className="mt-6 inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
         >
           Send your resume
           <ArrowRightIcon className="h-4 w-4" />

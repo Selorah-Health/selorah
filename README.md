@@ -5,7 +5,7 @@
 
   **Your health story, everywhere you go.**
 
-  [**View Live Application**](http://selorah.vercel.app/)
+  [**View Live Application**](https://www.selorah.app/)
 
   [𝕏 (@selorahealth)](https://x.com/selorahealth) • [LinkedIn (Selorah Health)](https://www.linkedin.com/company/selorahealth/) • [GitHub](https://github.com/Selorah-Health)
 
@@ -26,6 +26,12 @@ This repository is architected as a **Turborepo** separating concerns into disti
 - **Progressive Identity Verification**: Role-based progressive onboarding flows that intelligently distinguish between mild forms for patients and stricter validations for enterprise partners (providers, insurers, researchers).
 - **Time-restricted QR Access**: Utilizing smart contracts to enforce verifiable expiration periods on data access logic, resolving unauthorized long-term data scraping.
 - **Real-time Synchronicity**: Leveraging WebSocket architecture attached to Supabase payloads so that the moment records are updated at an administrative level, patient portals instantly reflect changes contextually.
+
+## Operations
+- [DevOps runbook](docs/DEVOPS.md)
+- [Launch setup](docs/LAUNCH_SETUP.md)
+- [Google sign in setup](docs/GOOGLE_AUTH_SETUP.md)
+- [Resend email setup](docs/RESEND_SETUP.md)
 
 > [!NOTE]
 > Ensure you have your `PRIVATE_KEY` set within the `/blockchain/.env` file and acquired MON Testnet tokens via official faucets before running Hardhat scripts.

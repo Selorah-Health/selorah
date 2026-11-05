@@ -184,13 +184,13 @@ export default function Family() {
   };
 
   const inputClass =
-    'min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#6183FF]';
+    'min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-primary';
 
   return (
     <div className="space-y-8 font-sora">
       <button
         onClick={() => navigate('/dashboard/profile')}
-        className="flex items-center gap-2 text-gray-400 hover:text-[#6183FF] transition-all group"
+        className="flex items-center gap-2 text-gray-400 hover:text-primary transition-all group"
       >
         <ArrowLeftIcon className="w-4 h-4" />
         <span className="font-bold text-sm">Back to Profile</span>
@@ -213,7 +213,7 @@ export default function Family() {
           </div>
           <button
             onClick={() => setShowAdd(true)}
-            className="bg-[#6183FF] text-white font-bold py-4 px-8 rounded-2xl shadow-xl shadow-blue-500/20 hover:bg-[#4E6EEF] transition-all flex items-center gap-2"
+            className="bg-primary text-white font-bold py-4 px-8 rounded-2xl shadow-xl shadow-blue-500/20 hover:bg-[#4E6EEF] transition-all flex items-center gap-2"
           >
             <PlusIcon className="w-5 h-5" /> Add Member
           </button>
@@ -237,7 +237,7 @@ export default function Family() {
               {members.map((member, index) => (
                 <div
                   key={member.id}
-                  className="p-6 bg-gray-50/50 border border-transparent hover:border-[#6183FF]/20 rounded-[32px] transition-all group flex items-center justify-between gap-4"
+                  className="p-6 bg-gray-50/50 border border-transparent hover:border-primary/20 rounded-[32px] transition-all group flex items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <div
@@ -252,7 +252,7 @@ export default function Family() {
                           {member.relation}
                         </span>
                         <span className="text-gray-200">•</span>
-                        <span className="text-[10px] font-black text-[#6183FF] uppercase tracking-widest">
+                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">
                           {member.access}
                         </span>
                       </div>
@@ -279,7 +279,7 @@ export default function Family() {
               <p className="text-gray-400 font-bold">No family members added yet.</p>
               <button
                 onClick={() => setShowAdd(true)}
-                className="mt-6 text-[#6183FF] font-bold hover:underline"
+                className="mt-6 text-primary font-bold hover:underline"
               >
                 Add your first member
               </button>
@@ -373,7 +373,7 @@ export default function Family() {
                       onClick={() => setForm((prev) => ({ ...prev, access: option }))}
                       className={`min-h-[38px] rounded-full border px-3.5 text-[11px] font-bold transition-all ${
                         form.access === option
-                          ? 'border-[#6183FF] bg-[#6183FF]/10 text-[#6183FF]'
+                          ? 'border-primary bg-primary/10 text-primary'
                           : 'border-gray-200 bg-white text-gray-500'
                       }`}
                     >
@@ -387,7 +387,7 @@ export default function Family() {
             <button
               type="submit"
               disabled={saving}
-              className="mt-6 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#6183FF] px-5 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 disabled:opacity-50"
+              className="mt-6 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 disabled:opacity-50"
             >
               {saving ? (
                 <>

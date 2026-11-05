@@ -18,7 +18,7 @@ const VALUES = [
     title: 'Absolute privacy',
     body: 'Your records are encrypted in transit and at rest. We do not sell health information, and we do not build advertising profiles from it.',
     icon: ShieldCheckIcon,
-    tone: 'bg-[#EEF2FF] text-[#6183FF]',
+    tone: 'bg-primary/10 text-primary',
   },
   {
     title: 'Data sovereignty',
@@ -74,7 +74,7 @@ export default function About() {
             key={stat.label}
             className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]"
           >
-            <stat.icon className="h-5 w-5 text-[#6183FF]" />
+            <stat.icon className="h-5 w-5 text-primary" />
             <p className="mt-3 text-3xl font-black tracking-tight text-[#101217]">{stat.value}</p>
             <p className="mt-0.5 text-[11px] font-semibold text-gray-400">{stat.label}</p>
           </div>
@@ -83,7 +83,7 @@ export default function About() {
 
       <section className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6183FF]">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             Our mission
           </p>
           <h2 className="mt-3 text-3xl font-black leading-[1.1] tracking-tight text-[#101217] sm:text-4xl">
@@ -108,14 +108,14 @@ export default function About() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               to="/signup"
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#6183FF] px-6 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6]"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
             >
               Create your vault
               <ArrowRightIcon className="h-4 w-4" />
             </Link>
             <Link
               to="/contact"
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 text-sm font-bold text-[#101217] transition-colors hover:border-[#6183FF]/30"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 text-sm font-bold text-[#101217] transition-colors hover:border-primary/30"
             >
               Talk to the team
             </Link>
@@ -148,7 +148,7 @@ export default function About() {
 
       <section className="mt-20">
         <div className="max-w-2xl">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6183FF]">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             What we stand on
           </p>
           <h2 className="mt-3 text-3xl font-black tracking-tight text-[#101217] sm:text-4xl">
@@ -185,7 +185,7 @@ export default function About() {
       <section className="mt-20 rounded-[36px] bg-[#101217] px-6 py-10 text-white sm:px-10 sm:py-12">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8FA8FF]">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
               How it works
             </p>
             <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
@@ -194,7 +194,7 @@ export default function About() {
           </div>
           <Link
             to="/#how-it-works"
-            className="inline-flex items-center gap-2 text-xs font-bold text-[#8FA8FF] transition-colors hover:text-white"
+            className="inline-flex items-center gap-2 text-xs font-bold text-primary transition-colors hover:text-white"
           >
             See the full journey
             <ArrowRightIcon className="h-4 w-4" />
@@ -205,7 +205,7 @@ export default function About() {
           {STEPS.map((step) => (
             <div key={step.number} className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
               <div className="flex items-center justify-between">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#6183FF]/15 text-[#8FA8FF]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
                   <step.icon className="h-5 w-5" />
                 </span>
                 <span className="text-[10px] font-black tracking-[0.18em] text-white/25">
@@ -223,7 +223,7 @@ export default function About() {
 
       <section className="mt-16 grid gap-4 sm:grid-cols-2">
         <div className="rounded-[28px] border border-gray-100 bg-[#F4F7FF] p-6">
-          <BeakerIcon className="h-6 w-6 text-[#6183FF]" />
+          <BeakerIcon className="h-6 w-6 text-primary" />
           <h3 className="mt-4 text-lg font-black tracking-tight text-[#101217]">
             Research with consent
           </h3>
@@ -233,7 +233,7 @@ export default function About() {
           </p>
         </div>
         <div className="rounded-[28px] border border-gray-100 bg-[#F4F7FF] p-6">
-          <ShieldCheckIcon className="h-6 w-6 text-[#6183FF]" />
+          <ShieldCheckIcon className="h-6 w-6 text-primary" />
           <h3 className="mt-4 text-lg font-black tracking-tight text-[#101217]">
             Built for African care
           </h3>
@@ -255,14 +255,14 @@ export default function About() {
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             to="/signup"
-            className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full bg-[#6183FF] px-7 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/20 transition-colors hover:bg-[#4D6ED6] sm:w-auto"
+            className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover sm:w-auto"
           >
             Get started now
             <ArrowRightIcon className="h-4 w-4" />
           </Link>
           <Link
             to="/careers"
-            className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-bold text-[#101217] transition-colors hover:border-[#6183FF]/30 sm:w-auto"
+            className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-bold text-[#101217] transition-colors hover:border-primary/30 sm:w-auto"
           >
             View openings
             <BeakerIcon className="h-4 w-4" />

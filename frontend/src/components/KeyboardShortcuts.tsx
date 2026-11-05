@@ -102,7 +102,7 @@ export default function KeyboardShortcuts({ onAddRecord }: { onAddRecord?: () =>
       >
         <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#6183FF]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <CommandLineIcon className="h-4.5 w-4.5" />
             </span>
             <div>

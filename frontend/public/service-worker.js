@@ -1,13 +1,19 @@
 /* Selorah Health service worker. Fast shell, bounded network waits, offline ready. */
-const VERSION = 'selorah-v4';
+const VERSION = 'selorah-v5';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 const PREVIOUS_CACHE_PREFIX = 'selorah-v3';
 const NETWORK_TIMEOUT_MS = 4500;
 
+const LEGAL_PATHS = new Set(['/privacy', '/terms', '/cookie-policy', '/dpa']);
+
 const SHELL_ASSETS = [
   '/',
   '/index.html',
+  '/privacy',
+  '/terms',
+  '/cookie-policy',
+  '/dpa',
   '/manifest.webmanifest',
   '/logo.png',
   '/logo.svg',
@@ -140,6 +146,19 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         const cache = await caches.open(SHELL_CACHE);
+        const pathname = url.pathname.replace(/\/+$/, '') || '/';
+
+        if (LEGAL_PATHS.has(pathname)) {
+          try {
+            const response = await fetchWithTimeout(request);
+            if (response.ok) await cache.put(request, response.clone());
+            return response;
+          } catch {
+            const cached = await cache.match(request);
+            if (cached) return cached;
+          }
+        }
+
         const cached =
           (await cache.match('/index.html')) ||
           (await caches.match('/index.html')) ||

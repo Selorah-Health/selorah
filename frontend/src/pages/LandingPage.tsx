@@ -148,7 +148,7 @@ function ProgressBar() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#6183FF]">
+    <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-primary">
       {children}
     </p>
   );
@@ -184,13 +184,13 @@ function ProblemSection() {
                 aria-pressed={isActive}
                 className={`group relative flex flex-col overflow-hidden rounded-3xl border p-6 text-left transition-all duration-300 sm:p-7 ${
                   isActive
-                    ? 'border-[#6183FF] bg-[#6183FF] text-white shadow-xl shadow-[#6183FF]/20'
-                    : 'border-gray-100 bg-[#F8F9FA] text-[#101217] hover:border-[#6183FF]/30'
+                    ? 'border-primary bg-primary text-white shadow-xl shadow-primary/20'
+                    : 'border-gray-100 bg-[#F8F9FA] text-[#101217] hover:border-primary/30'
                 }`}
               >
                 <span
                   className={`flex h-11 w-11 items-center justify-center rounded-2xl transition-colors ${
-                    isActive ? 'bg-white/15 text-white' : 'bg-white text-[#6183FF] shadow-sm'
+                    isActive ? 'bg-white/15 text-white' : 'bg-white text-primary shadow-sm'
                   }`}
                 >
                   <Icon className="h-5 w-5" strokeWidth={1.7} />
@@ -236,7 +236,7 @@ function HowItWorksSection() {
           <h2 className="text-3xl font-bold tracking-tight text-[#101217] sm:text-4xl md:text-[2.75rem]">
             THREE STEPS.
             <br />
-            <span className="text-[#6183FF]">YOU STAY IN CONTROL.</span>
+            <span className="text-primary">YOU STAY IN CONTROL.</span>
           </h2>
         </div>
       </div>
@@ -282,7 +282,7 @@ function HowItWorksSection() {
 
                     <div
                       className={`hidden h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-300 sm:flex ${
-                        isHovered ? 'bg-[#6183FF] text-white' : 'bg-gray-100 text-gray-500'
+                        isHovered ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'
                       }`}
                     >
                       <ArrowUpRightIcon className="h-4 w-4" strokeWidth={2.5} />
@@ -301,11 +301,11 @@ function HowItWorksSection() {
                         <span className="h-2.5 w-2.5 rounded-full bg-[#28C840]" />
                       </div>
                       <div className="grid min-h-[140px] grid-cols-2">
-                        <div className="flex flex-col items-center justify-center gap-2.5 bg-[#6183FF]/8 p-5">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#6183FF]">
+                        <div className="flex flex-col items-center justify-center gap-2.5 bg-primary/10 p-5">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
                             <Icon className="h-7 w-7 text-white" />
                           </div>
-                          <p className="text-center text-sm font-bold leading-tight text-[#6183FF]">
+                          <p className="text-center text-sm font-bold leading-tight text-primary">
                             {step.detailTitle}
                           </p>
                         </div>
@@ -338,7 +338,7 @@ function OwnershipSection() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 flex flex-col justify-between gap-6 sm:mb-16 md:flex-row md:items-end">
           <h2 className="max-w-lg text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-[2.75rem]">
-            OWNERSHIP YOU <span className="text-[#6183FF]">CAN FEEL</span>
+            OWNERSHIP YOU <span className="text-primary">CAN FEEL</span>
           </h2>
           <p className="max-w-sm text-base leading-relaxed text-white/50 sm:text-lg">
             Why Selorah exists, and why the timing matters for patients across Africa.
@@ -356,12 +356,12 @@ function OwnershipSection() {
                 onMouseLeave={() => setHovered(null)}
                 className={`rounded-2xl border p-6 transition-all duration-300 sm:p-7 ${
                   isHovered
-                    ? 'border-[#6183FF] bg-[#6183FF] shadow-xl shadow-[#6183FF]/30'
+                    ? 'border-primary bg-primary shadow-xl shadow-primary/30'
                     : 'border-white/10 bg-white/5'
                 }`}
               >
                 <Icon
-                  className={`mb-4 h-7 w-7 ${isHovered ? 'text-white' : 'text-[#6183FF]'}`}
+                  className={`mb-4 h-7 w-7 ${isHovered ? 'text-white' : 'text-primary'}`}
                   strokeWidth={1.6}
                 />
                 <h3 className="mb-2 text-lg font-bold">{card.title}</h3>
@@ -401,27 +401,27 @@ function FaqSection() {
           </p>
         </div>
 
-        <div className="divide-y divide-gray-100 border-y border-gray-100">
+        <div className="border-y border-gray-100">
           {FAQS.map((item, index) => {
             const isOpen = openIndex === index;
             return (
-              <div key={item.question}>
+              <div key={item.question} className={index > 0 ? 'border-t border-gray-100' : ''}>
                 <button
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   aria-expanded={isOpen}
-                  className="flex w-full items-start justify-between gap-4 py-5 text-left transition-colors hover:text-[#6183FF] sm:py-6"
+                  className="flex w-full items-start justify-between gap-4 py-5 text-left transition-colors hover:text-primary sm:py-6"
                 >
                   <span
                     className={`text-sm font-bold leading-snug sm:text-base ${
-                      isOpen ? 'text-[#6183FF]' : 'text-[#101217]'
+                      isOpen ? 'text-primary' : 'text-[var(--foreground)]'
                     }`}
                   >
                     {item.question}
                   </span>
                   <span
                     className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${
-                      isOpen ? 'bg-[#6183FF] text-white' : 'bg-gray-50 text-gray-400'
+                      isOpen ? 'bg-primary text-white' : 'bg-gray-50 text-gray-400'
                     }`}
                   >
                     {isOpen ? (
@@ -456,14 +456,14 @@ function FounderSection() {
     <section className="relative overflow-hidden bg-[#F8F9FA] px-5 py-16 sm:px-8 sm:py-20 md:py-24 lg:px-10">
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-32 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-[#6183FF]/10 blur-3xl"
+        className="pointer-events-none absolute -left-32 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl"
       />
       <div className="relative mx-auto max-w-6xl">
         <div className="mb-10 flex flex-col gap-4 sm:mb-14 md:flex-row md:items-end md:justify-between">
           <div>
             <SectionLabel>The founder</SectionLabel>
             <h2 className="text-3xl font-bold tracking-tight text-[#101217] sm:text-4xl md:text-[2.75rem]">
-              MEET <span className="text-[#6183FF]">SAMUEL</span>
+              MEET <span className="text-primary">SAMUEL</span>
             </h2>
           </div>
           <p className="max-w-sm text-sm font-medium leading-relaxed text-gray-500">
@@ -518,7 +518,7 @@ function FounderSection() {
                 { value: '0', label: 'data ever sold' },
               ].map((stat) => (
                 <div key={stat.label}>
-                  <p className="text-2xl font-bold tracking-tight text-[#6183FF]">{stat.value}</p>
+                  <p className="text-2xl font-bold tracking-tight text-primary">{stat.value}</p>
                   <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">
                     {stat.label}
                   </p>
@@ -532,9 +532,9 @@ function FounderSection() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Samuel Amanze on LinkedIn"
-                className="flex min-h-[44px] items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-[#101217] transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                className="flex min-h-[44px] items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-[#101217] transition-colors hover:border-primary/40 hover:text-primary"
               >
-                <svg className="h-4 w-4 text-[#6183FF]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg className="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 9H1.778V20.452H5.337V9zM3.557 1.018c1.144 0 2.063.926 2.063 2.065 0 1.138-.92 2.063-2.063 2.063-1.14 0-2.064-.925-2.064-2.063 0-1.139.925-2.065 2.064-2.065zm1.782 17.434H1.778V9h3.561v9.452z" />
                 </svg>
                 LinkedIn
@@ -544,9 +544,9 @@ function FounderSection() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Samuel Amanze on X"
-                className="flex min-h-[44px] items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-[#101217] transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF]"
+                className="flex min-h-[44px] items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-[#101217] transition-colors hover:border-primary/40 hover:text-primary"
               >
-                <svg className="h-4 w-4 text-[#6183FF]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg className="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.722-8.829L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
                 </svg>
                 X / Twitter

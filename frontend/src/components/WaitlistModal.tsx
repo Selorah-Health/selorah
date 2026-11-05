@@ -217,7 +217,7 @@ export default function WaitlistModal({
       <div className="relative max-h-[94dvh] w-full max-w-[440px] overflow-hidden rounded-t-[32px] border border-white/10 bg-[#0B0E1F] text-white shadow-[0_32px_120px_-20px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-4 sm:rounded-[32px]">
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-28 left-1/2 h-56 w-[130%] -translate-x-1/2 rounded-full bg-[#6183FF] opacity-25 blur-[90px]"
+          className="pointer-events-none absolute -top-28 left-1/2 h-56 w-[130%] -translate-x-1/2 rounded-full bg-primary opacity-25 blur-[90px]"
         />
         <div
           aria-hidden
@@ -268,7 +268,7 @@ export default function WaitlistModal({
                         type="button"
                         onClick={() => saveFrustration(frustration)}
                         disabled={savingSurvey}
-                        className="min-h-[38px] rounded-full border border-white/10 px-3 py-2 text-left text-[11px] font-medium text-[#B7BCDA] transition-all hover:border-[#6183FF]/60 hover:bg-[#6183FF]/10 hover:text-white disabled:opacity-50"
+                        className="min-h-[38px] rounded-full border border-white/10 px-3 py-2 text-left text-[11px] font-medium text-[#B7BCDA] transition-all hover:border-primary/60 hover:bg-primary/10 hover:text-white disabled:opacity-50"
                       >
                         {frustration}
                       </button>
@@ -294,7 +294,7 @@ export default function WaitlistModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#6183FF] to-[#4D6ED6] text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-all hover:brightness-110 active:scale-[0.99]"
+                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-hover text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:brightness-110 active:scale-[0.99]"
                 >
                   Back to home
                   <ArrowRightIcon className="h-4 w-4" />
@@ -324,7 +324,7 @@ export default function WaitlistModal({
                 >
                   Your records.
                   <br />
-                  <span className="text-[#6183FF]">Your rules.</span>
+                  <span className="text-primary">Your rules.</span>
                 </h3>
                 <p className="mt-2.5 text-sm leading-relaxed text-[#9AA0C4]">
                   Join the early wave and be first when Selorah opens in your city. Access updates
@@ -357,13 +357,13 @@ export default function WaitlistModal({
                           aria-pressed={selected}
                           className={`min-h-[54px] rounded-2xl border px-3 py-2 text-left transition-all ${
                             selected
-                              ? 'border-[#6183FF] bg-[#6183FF]/15 shadow-[inset_0_0_0_1px_rgba(97,131,255,0.65)]'
+                              ? 'border-primary bg-primary/15 shadow-[inset_0_0_0_1px_rgba(97,131,255,0.65)]'
                               : 'border-white/10 bg-white/[0.03] hover:border-white/25'
                           }`}
                         >
                           <span className="flex items-center justify-between gap-2">
                             <span className="text-sm font-bold text-white">{option.label}</span>
-                            {selected && <CheckIcon className="h-3.5 w-3.5 text-[#8FA8FF]" />}
+                            {selected && <CheckIcon className="h-3.5 w-3.5 text-primary" />}
                           </span>
                           <span className="mt-0.5 block text-[10px] font-medium text-white/40">
                             {option.hint}
@@ -391,7 +391,7 @@ export default function WaitlistModal({
                         setErrorMsg(null);
                       }}
                       placeholder="Your full name"
-                      className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-[#6183FF] focus:outline-none focus:ring-2 focus:ring-[#6183FF]/20"
+                      className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </span>
                 </label>
@@ -413,7 +413,7 @@ export default function WaitlistModal({
                         setErrorMsg(null);
                       }}
                       placeholder="you@email.com"
-                      className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-[#6183FF] focus:outline-none focus:ring-2 focus:ring-[#6183FF]/20"
+                      className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </span>
                 </label>
@@ -421,7 +421,7 @@ export default function WaitlistModal({
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#6183FF] to-[#4D6ED6] text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
+                  className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-hover text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
                 >
                   {status === 'loading' ? (
                     <>

@@ -244,7 +244,7 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
                         One record, every care setting
                       </p>
                     </div>
-                    <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[#6183FF]">
+                    <span className="rounded-full bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-primary">
                       4 roles
                     </span>
                   </div>
@@ -266,20 +266,20 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
                             }}
                             className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all ${
                               isActive
-                                ? 'bg-white text-[#101217] shadow-sm ring-1 ring-[#6183FF]/15'
+                                ? 'bg-white text-[#101217] shadow-sm ring-1 ring-primary/15'
                                 : 'text-gray-500 hover:bg-white/70 hover:text-[#101217]'
                             }`}
                           >
                             <span
                               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                                isActive ? 'bg-[#6183FF] text-white' : 'bg-white text-[#6183FF]'
+                                isActive ? 'bg-primary text-white' : 'bg-white text-primary'
                               }`}
                             >
                               <Icon className="h-4 w-4" strokeWidth={1.8} />
                             </span>
                             <span className="truncate">{portal.name}</span>
                             {isActive && (
-                              <ArrowRightIcon className="ml-auto h-3.5 w-3.5 text-[#6183FF]" />
+                              <ArrowRightIcon className="ml-auto h-3.5 w-3.5 text-primary" />
                             )}
                           </button>
                         );
@@ -294,7 +294,7 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
                         {activePortal.features.map((feature) => (
                           <li key={feature} className="flex items-start gap-2.5 text-sm text-gray-700">
                             <CheckCircleIcon
-                              className="mt-0.5 h-4 w-4 shrink-0 text-[#6183FF]"
+                              className="mt-0.5 h-4 w-4 shrink-0 text-primary"
                               strokeWidth={2}
                             />
                             <span>{feature}</span>
@@ -307,7 +307,7 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
                           navigate(activePortal.href);
                           setPortalsOpen(false);
                         }}
-                        className="mt-auto flex items-center gap-1.5 pt-4 text-xs font-bold text-[#6183FF] transition-colors hover:text-[#4D6ED6]"
+                        className="mt-auto flex items-center gap-1.5 pt-4 text-xs font-bold text-primary transition-colors hover:text-primary-hover"
                       >
                         Continue to {activePortal.name}
                         <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -344,11 +344,11 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
                       : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:text-[#101217]'
                   }`}
                 >
-                  <span className="flex h-7 w-7 overflow-hidden rounded-full border border-white/20 bg-[#EEF2FF]">
+                  <span className="flex h-7 w-7 overflow-hidden rounded-full border border-white/20 bg-primary/10">
                     {userAvatar ? (
                       <img src={userAvatar} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <UserCircleIcon className="h-full w-full text-[#6183FF]" />
+                      <UserCircleIcon className="h-full w-full text-primary" />
                     )}
                   </span>
                   Dashboard
@@ -440,9 +440,9 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
                     key={portal.id}
                     to={portal.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex min-h-[60px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors hover:border-[#6183FF]/40 hover:bg-[#6183FF]/10"
+                    className="flex min-h-[60px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors hover:border-primary/40 hover:bg-primary/10"
                   >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#6183FF]/15 text-[#8FA8FF]">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
                       <Icon className="h-5 w-5" />
                     </span>
                     <span className="min-w-0 flex-1">

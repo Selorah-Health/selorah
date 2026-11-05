@@ -284,7 +284,7 @@ export default function HospitalDashboard() {
     return 'Hospital Portal';
   };
 
-  const avatarGradient = "bg-gradient-to-tr from-[#6183FF] to-[#14F1D9]";
+  const avatarGradient = "bg-gradient-to-tr from-primary to-[#14F1D9]";
 
   const allPatients = [...dbPatients, ...mockPatients];
 
@@ -437,9 +437,9 @@ export default function HospitalDashboard() {
         roleTag="Provider"
         menuItems={menuItems}
         user={user}
-        sidebarBg="bg-[#6183FF]"
+        sidebarBg="bg-primary"
         logoutBg="bg-[#83A0FF]"
-        avatarGradient="bg-gradient-to-tr from-[#6183FF] to-[#14F1D9]"
+        avatarGradient="bg-gradient-to-tr from-primary to-[#14F1D9]"
         roleDescription="Verified Provider"
       />
 
@@ -457,19 +457,19 @@ export default function HospitalDashboard() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search prior patients (NIN, ID, or name)..."
-                className="w-full bg-white border border-gray-200 rounded-full py-2.5 pl-12 pr-6 text-sm focus:outline-none focus:border-[#6183FF] transition-all placeholder:text-gray-400 font-medium shadow-sm"
+                className="w-full bg-white border border-gray-200 rounded-full py-2.5 pl-12 pr-6 text-sm focus:outline-none focus:border-primary transition-all placeholder:text-gray-400 font-medium shadow-sm"
               />
             </form>
             <button
               onClick={() => setIsScanModalOpen(true)}
-              className="bg-white text-[#6183FF] border border-gray-100 px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm"
+              className="bg-white text-primary border border-gray-100 px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-blue-50 transition-all shadow-sm"
             >
               <QrCodeIcon className="w-4 h-4" />
               Scan QR Token
             </button>
             <button
               onClick={() => setIsNewPatientModalOpen(true)}
-              className="bg-[#6183FF] text-white px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-[#4E6EEF] transition-all shadow-lg shadow-blue-500/20"
+              className="bg-primary text-white px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-[#4E6EEF] transition-all shadow-lg shadow-blue-500/20"
             >
               <PlusIcon className="w-4 h-4" />
               New Patient
@@ -485,7 +485,7 @@ export default function HospitalDashboard() {
                   <div className="flex items-center justify-between mb-6 print:hidden gap-3 flex-wrap">
                     <button
                       onClick={() => setSelectedPatient(null)}
-                      className="flex items-center gap-2 text-gray-400 hover:text-[#6183FF] font-bold text-sm transition-colors"
+                      className="flex items-center gap-2 text-gray-400 hover:text-primary font-bold text-sm transition-colors"
                     >
                       <ArrowLeftIcon className="w-4 h-4" /> Back to Patient Directory
                     </button>
@@ -497,7 +497,7 @@ export default function HospitalDashboard() {
                       >
                         Download Chart
                       </button>
-                      <button type="button" className="flex items-center gap-2 bg-[#6183FF]/10 text-[#6183FF] px-5 py-2 rounded-xl font-bold text-sm hover:bg-[#6183FF] hover:text-white transition-all">
+                      <button type="button" className="flex items-center gap-2 bg-primary/10 text-primary px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-all">
                         <PlusIcon className="w-4 h-4" /> Share Chart
                       </button>
                     </div>
@@ -507,13 +507,13 @@ export default function HospitalDashboard() {
                     {/* Chart Header - CV Style */}
                     <div className="p-8 md:p-12 bg-white border-b border-gray-100 flex flex-col md:flex-row justify-between gap-8">
                       <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 rounded-[32px] bg-gradient-to-tr from-[#6183FF] to-[#14F1D9] flex items-center justify-center text-3xl font-black text-white shadow-lg">
+                        <div className="w-24 h-24 rounded-[32px] bg-gradient-to-tr from-primary to-[#14F1D9] flex items-center justify-center text-3xl font-black text-white shadow-lg">
                           {selectedPatient.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2)}
                         </div>
                         <div>
                           <h2 className="text-4xl font-black text-[#101217] tracking-tight mb-2">{selectedPatient.name}</h2>
                           <div className="flex flex-wrap gap-3">
-                            <span className="bg-blue-50 text-[#6183FF] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">NIN: {selectedPatient.nin || selectedPatient.id}</span>
+                            <span className="bg-blue-50 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">NIN: {selectedPatient.nin || selectedPatient.id}</span>
                             <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">DOB: {selectedPatient.date_of_birth ? new Date(selectedPatient.date_of_birth).toLocaleDateString() : '—'}</span>
                           </div>
                         </div>
@@ -532,13 +532,13 @@ export default function HospitalDashboard() {
                         {/* Vitals Column */}
                         <div className="space-y-10">
                           <section>
-                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#6183FF] mb-6 flex items-center gap-2">
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6 flex items-center gap-2">
                               <HeartIcon className="w-4 h-4" /> Physical Vitals
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Blood Group</p>
-                                <p className="text-xl font-black text-[#6183FF]">{selectedPatient.vitals?.bloodType || '—'}</p>
+                                <p className="text-xl font-black text-primary">{selectedPatient.vitals?.bloodType || '—'}</p>
                               </div>
                               <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Genotype</p>
@@ -556,7 +556,7 @@ export default function HospitalDashboard() {
                           </section>
 
                           <section>
-                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#6183FF] mb-6 flex items-center gap-2">
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6 flex items-center gap-2">
                               <ShieldCheckIcon className="w-4 h-4" /> Active Allergies
                             </h3>
                             <div className="flex flex-wrap gap-2">
@@ -574,7 +574,7 @@ export default function HospitalDashboard() {
                         {/* Medical History Column */}
                         <div className="lg:col-span-2 space-y-12">
                           <section>
-                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#6183FF] mb-8 flex items-center gap-2">
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-8 flex items-center gap-2">
                               <ClipboardDocumentCheckIcon className="w-4 h-4" /> Clinical Summary
                             </h3>
                             <div className="space-y-6">
@@ -591,10 +591,10 @@ export default function HospitalDashboard() {
 
                           <section>
                             <div className="flex items-center justify-between mb-8">
-                              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#6183FF] flex items-center gap-2">
+                              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
                                 <ClockIcon className="w-4 h-4" /> Recent Activity
                               </h3>
-                              <button className="text-[10px] font-black uppercase text-[#6183FF] hover:underline tracking-widest">Full History</button>
+                              <button className="text-[10px] font-black uppercase text-primary hover:underline tracking-widest">Full History</button>
                             </div>
                             <div className="space-y-3">
                               {((selectedPatient.fetchedRecords || []).length > 0
@@ -633,7 +633,7 @@ export default function HospitalDashboard() {
                   <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                     <h2 className="text-xl font-bold">{searchResultsMode ? `Search results${searchQuery ? ` for "${searchQuery}"` : ''}` : 'Patient Directory'}</h2>
                     {searchResultsMode && (
-                      <button type="button" onClick={() => { setSearchResultsMode(false); setRemoteSearchResults([]); setSearchQuery(''); setSearchQuery(''); }} className="text-sm font-bold text-[#6183FF] hover:underline">
+                      <button type="button" onClick={() => { setSearchResultsMode(false); setRemoteSearchResults([]); setSearchQuery(''); setSearchQuery(''); }} className="text-sm font-bold text-primary hover:underline">
                         Clear search
                       </button>
                     )}
@@ -668,7 +668,7 @@ export default function HospitalDashboard() {
                                 {patient.status === 'Discharged' ? (
                                   <button
                                     onClick={() => handleCheckIn(patient.id)}
-                                    className="text-white font-bold bg-[#6183FF] px-4 py-2 rounded-xl transition-all hover:bg-blue-600 text-xs"
+                                    className="text-white font-bold bg-primary px-4 py-2 rounded-xl transition-all hover:bg-blue-600 text-xs"
                                   >
                                     Check In
                                   </button>
@@ -682,7 +682,7 @@ export default function HospitalDashboard() {
                                 )}
                                 <button
                                   onClick={() => setSelectedPatient(patient)}
-                                  className="text-[#6183FF] font-bold hover:underline bg-blue-50 px-4 py-2 rounded-xl transition-all hover:bg-[#6183FF] hover:text-white text-xs"
+                                  className="text-primary font-bold hover:underline bg-blue-50 px-4 py-2 rounded-xl transition-all hover:bg-primary hover:text-white text-xs"
                                 >
                                   View Chart
                                 </button>
@@ -703,7 +703,7 @@ export default function HospitalDashboard() {
                   {allPatients.filter(p => p.status === 'Checked In').map(patient => (
                     <div key={patient.id} className="p-6 border border-gray-100 rounded-3xl bg-gray-50/50">
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="w-12 h-12 rounded-2xl bg-[#6183FF] flex items-center justify-center font-bold text-white">
+                        <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center font-bold text-white">
                           {patient.name[0]}
                         </div>
                         <div>
@@ -720,7 +720,7 @@ export default function HospitalDashboard() {
                         </button>
                         <button
                           onClick={() => setSelectedPatient(patient)}
-                          className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold hover:border-[#6183FF] hover:text-[#6183FF] transition-all"
+                          className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold hover:border-primary hover:text-primary transition-all"
                         >
                           Open Chart
                         </button>
@@ -737,7 +737,7 @@ export default function HospitalDashboard() {
               <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
                 {selectedReport ? (
                   <div>
-                    <button type="button" onClick={() => setSelectedReport(null)} className="text-sm font-bold text-gray-400 hover:text-[#6183FF] mb-6 flex items-center gap-2">
+                    <button type="button" onClick={() => setSelectedReport(null)} className="text-sm font-bold text-gray-400 hover:text-primary mb-6 flex items-center gap-2">
                       <ArrowLeftIcon className="w-4 h-4" /> Back to reports
                     </button>
                     <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
@@ -745,7 +745,7 @@ export default function HospitalDashboard() {
                         <h2 className="text-2xl font-bold text-gray-900 mb-1">{selectedReport.title}</h2>
                         <p className="text-sm text-gray-400">{selectedReport.date} · {selectedReport.type}</p>
                       </div>
-                      <button type="button" onClick={() => downloadReport(selectedReport)} className="bg-[#6183FF] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-[#4E6EEF]">
+                      <button type="button" onClick={() => downloadReport(selectedReport)} className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-[#4E6EEF]">
                         Download
                       </button>
                     </div>
@@ -772,7 +772,7 @@ export default function HospitalDashboard() {
                           className="flex items-center justify-between p-5 border border-gray-50 rounded-2xl hover:bg-gray-50 transition-all cursor-pointer"
                         >
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-blue-50 text-[#6183FF] flex items-center justify-center rounded-xl font-black text-xs">
+                            <div className="w-10 h-10 bg-blue-50 text-primary flex items-center justify-center rounded-xl font-black text-xs">
                               {report.type}
                             </div>
                             <div>
@@ -784,7 +784,7 @@ export default function HospitalDashboard() {
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); downloadReport(report); }}
-                              className="text-xs font-bold text-[#6183FF] hover:underline px-3 py-1.5"
+                              className="text-xs font-bold text-primary hover:underline px-3 py-1.5"
                             >
                               Download
                             </button>
@@ -802,7 +802,7 @@ export default function HospitalDashboard() {
                 <h2 className="text-xl font-bold mb-8">Hospital Settings</h2>
                 <div className="space-y-8">
                   <section>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-[#6183FF] mb-6">Institutional Profile</h3>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-6">Institutional Profile</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Hospital Name</label>
@@ -815,12 +815,12 @@ export default function HospitalDashboard() {
                     </div>
                   </section>
                   <section>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-[#6183FF] mb-6">Staff Management</h3>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-6">Staff Management</h3>
                     <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-blue-700 text-sm font-medium">
                       You have 12 registered providers under this institution.
                     </div>
                   </section>
-                  <button className="bg-[#6183FF] text-white px-8 py-4 rounded-2xl font-bold hover:shadow-lg transition-all shadow-blue-500/20">Save Changes</button>
+                  <button className="bg-primary text-white px-8 py-4 rounded-2xl font-bold hover:shadow-lg transition-all shadow-blue-500/20">Save Changes</button>
                 </div>
               </div>
             } />

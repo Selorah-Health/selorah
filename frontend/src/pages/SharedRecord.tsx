@@ -571,7 +571,7 @@ export default function SharedRecord() {
               </div>
 
               <div className="mt-12 flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-tr from-[#6183FF] to-[#14F1D9] text-2xl font-black text-white">
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-tr from-primary to-[#14F1D9] text-2xl font-black text-white">
                   {initials}
                 </div>
                 <div>
@@ -597,7 +597,7 @@ export default function SharedRecord() {
                     key={item.text}
                     className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3"
                   >
-                    <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-[#8FA8FF]" />
+                    <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                     <p className="text-xs font-semibold leading-relaxed text-white/65">
                       {item.text}
                     </p>
@@ -612,7 +612,7 @@ export default function SharedRecord() {
                 {formatTime(timeLeft)} left
               </span>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-[11px] font-bold text-white/70">
-                <DocumentTextIcon className="h-3.5 w-3.5 text-[#8FA8FF]" />
+                <DocumentTextIcon className="h-3.5 w-3.5 text-primary" />
                 {patient?.singleRecord ? 'Single record' : 'Full record'}
               </span>
             </div>
@@ -652,7 +652,7 @@ export default function SharedRecord() {
                         }
                         className={`min-h-[40px] rounded-full border px-4 text-xs font-bold transition-all ${
                           provider.role === option.id
-                            ? 'border-[#4262ff] bg-[#EEF2FF] text-[#4262ff]'
+                            ? 'border-[#4262ff] bg-primary/10 text-[#4262ff]'
                             : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
                         }`}
                       >
@@ -822,7 +822,7 @@ export default function SharedRecord() {
         )}
 
         <section className="overflow-hidden rounded-[32px] border border-gray-100 bg-white shadow-xl shadow-blue-500/5">
-          <div className="relative h-24 bg-gradient-to-r from-[#EEF2FF] via-[#F5F7FF] to-[#E8FBF7] sm:h-28">
+          <div className="relative h-24 bg-gradient-to-r from-primary/10 via-[#F5F7FF] to-[#E8FBF7] sm:h-28">
             <div
               aria-hidden
               className="absolute right-6 top-4 h-24 w-24 rounded-full border border-white/60 bg-white/30 backdrop-blur-sm sm:h-32 sm:w-32"
@@ -832,7 +832,7 @@ export default function SharedRecord() {
           <div className="px-5 pb-6 sm:px-8 sm:pb-8">
             <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex min-w-0 items-end gap-4">
-                <div className="relative z-10 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[24px] border-4 border-white bg-gradient-to-tr from-[#6183FF] to-[#14F1D9] text-2xl font-black text-white shadow-lg sm:h-24 sm:w-24 sm:text-3xl">
+                <div className="relative z-10 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[24px] border-4 border-white bg-gradient-to-tr from-primary to-[#14F1D9] text-2xl font-black text-white shadow-lg sm:h-24 sm:w-24 sm:text-3xl">
                   {patient?.avatarUrl ? (
                     <img
                       src={patient.avatarUrl}
@@ -849,7 +849,7 @@ export default function SharedRecord() {
                       {patient?.full_name}
                     </h1>
                     {patient?.singleRecord && (
-                      <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#4262ff]">
+                      <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#4262ff]">
                         Single record
                       </span>
                     )}
@@ -941,7 +941,7 @@ export default function SharedRecord() {
           <div className="space-y-6 lg:col-span-2">
             {isGuest ? (
               <section className="rounded-[28px] border border-gray-100 bg-white p-6 text-center shadow-sm sm:p-10">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EEF2FF] text-[#4262ff]">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-[#4262ff]">
                   <LockClosedIcon className="h-6 w-6" />
                 </div>
                 <h2 className="mt-4 text-xl font-black tracking-tight text-[#0A0B14]">
@@ -1028,7 +1028,7 @@ export default function SharedRecord() {
                         className="group rounded-2xl border border-gray-100 bg-white p-4 transition-all hover:border-[#4262ff]/25 hover:shadow-lg hover:shadow-blue-500/5 sm:p-5"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#4262ff]">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[#4262ff]">
                             <Icon className="h-5 w-5" />
                           </div>
                           <div className="min-w-0 flex-1">

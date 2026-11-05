@@ -168,7 +168,7 @@ export default function Notifications() {
               Notifications
             </h2>
             {unread > 0 && (
-              <span className="rounded-full bg-[#6183FF] px-2 py-0.5 text-[9px] font-black text-white">
+              <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-black text-white">
                 {unread}
               </span>
             )}
@@ -181,7 +181,7 @@ export default function Notifications() {
           type="button"
           onClick={markAllRead}
           disabled={unread === 0}
-          className="inline-flex min-h-[40px] w-fit items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 text-[11px] font-bold text-gray-500 transition-colors hover:border-[#6183FF]/40 hover:text-[#6183FF] disabled:cursor-default disabled:opacity-40"
+          className="inline-flex min-h-[40px] w-fit items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 text-[11px] font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-default disabled:opacity-40"
         >
           <CheckCircleIcon className="h-3.5 w-3.5" />
           Mark all as read
@@ -192,7 +192,7 @@ export default function Notifications() {
         <div className="relative overflow-hidden rounded-[24px] bg-[#020924] p-5 text-white sm:p-6">
           <div
             aria-hidden
-            className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#6183FF]/30 blur-2xl"
+            className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/30 blur-2xl"
           />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -227,7 +227,7 @@ export default function Notifications() {
           </div>
         ) : notifications.length === 0 ? (
           <div className="px-4 py-12 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F8F9FE] text-[#6183FF]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F8F9FE] text-primary">
               <BellIcon className="h-7 w-7" />
             </div>
             <h3 className="mt-4 text-base font-bold text-[#101217]">No notifications yet</h3>
@@ -239,7 +239,7 @@ export default function Notifications() {
               <button
                 type="button"
                 onClick={() => navigate('/dashboard/access-log')}
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-[#6183FF] px-4 text-[11px] font-bold text-white"
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-primary px-4 text-[11px] font-bold text-white"
               >
                 Check your access log
                 <ChevronRightIcon className="h-3.5 w-3.5" />
@@ -266,12 +266,12 @@ export default function Notifications() {
                   className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition-colors ${
                     item.is_read
                       ? 'border-gray-100 bg-white hover:border-gray-200'
-                      : 'border-[#6183FF]/15 bg-[#EEF2FF]/60 hover:border-[#6183FF]/30'
+                      : 'border-primary/15 bg-primary/10 hover:border-primary/30'
                   }`}
                 >
                   <span
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                      item.is_read ? 'bg-gray-50 text-gray-400' : 'bg-white text-[#6183FF]'
+                      item.is_read ? 'bg-gray-50 text-gray-400' : 'bg-white text-primary'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -280,7 +280,7 @@ export default function Notifications() {
                     <span className="flex items-start justify-between gap-3">
                       <span className="text-sm font-bold text-[#101217]">{item.title}</span>
                       {!item.is_read && (
-                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#6183FF]" />
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
                       )}
                     </span>
                     {item.body && (

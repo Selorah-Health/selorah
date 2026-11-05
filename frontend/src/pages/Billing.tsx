@@ -181,7 +181,7 @@ export default function Billing() {
       <button
         type="button"
         onClick={() => navigate('/dashboard/profile')}
-        className="group flex items-center gap-2 text-xs font-bold text-gray-400 transition-colors hover:text-[#6183FF]"
+        className="group flex items-center gap-2 text-xs font-bold text-gray-400 transition-colors hover:text-primary"
       >
         <ArrowLeftIcon className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         Back to profile
@@ -205,7 +205,7 @@ export default function Billing() {
       <section className="relative overflow-hidden rounded-[28px] bg-[#020924] p-6 text-white shadow-xl sm:p-8">
         <div
           aria-hidden
-          className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#6183FF]/30 blur-3xl"
+          className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/30 blur-3xl"
         />
         <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
@@ -232,7 +232,7 @@ export default function Billing() {
             <button
               type="button"
               onClick={() => navigate('/dashboard/upgrade')}
-              className="flex min-h-[50px] items-center justify-center gap-2 rounded-2xl bg-[#6183FF] px-6 text-sm font-bold text-white shadow-lg shadow-[#6183FF]/25 transition-colors hover:bg-[#4D6ED6]"
+              className="flex min-h-[50px] items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover"
             >
               {isPro ? (
                 <>
@@ -274,7 +274,7 @@ export default function Billing() {
             Payment method
           </h3>
           <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#F8F9FE] p-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#6183FF] shadow-sm">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
               <CreditCardIcon className="h-5 w-5" />
             </span>
             <div className="min-w-0">
@@ -297,7 +297,7 @@ export default function Billing() {
           <div className="mt-4 grid gap-2">
             {PRO_FEATURES.slice(0, 4).map((feature) => (
               <div key={feature} className="flex items-start gap-2">
-                <CheckCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#6183FF]" />
+                <CheckCircleIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="text-[11px] font-semibold leading-relaxed text-gray-600">
                   {feature}
                 </span>
@@ -307,7 +307,7 @@ export default function Billing() {
           <button
             type="button"
             onClick={() => navigate('/dashboard/upgrade')}
-            className="mt-4 text-[11px] font-bold text-[#6183FF] hover:underline"
+            className="mt-4 text-[11px] font-bold text-primary hover:underline"
           >
             See everything included
           </button>
@@ -327,7 +327,7 @@ export default function Billing() {
 
         {payments.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-[#F8F9FE] px-5 py-8 text-center">
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#6183FF] shadow-sm">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
               <DocumentTextIcon className="h-5 w-5" />
             </div>
             <p className="mt-3 text-xs font-bold text-[#101217]">No payments yet</p>

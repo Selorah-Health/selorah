@@ -94,7 +94,7 @@ export function ConfirmDialogHost() {
         <div className="flex items-start gap-3.5 px-5 pt-5">
           <span
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-              danger ? 'bg-red-50 text-red-500' : 'bg-[#EEF2FF] text-[#6183FF]'
+              danger ? 'bg-red-50 text-red-500' : 'bg-primary/10 text-primary'
             }`}
           >
             <Icon className="h-5 w-5" />
@@ -137,7 +137,7 @@ export function ConfirmDialogHost() {
             className={`min-h-[44px] rounded-full px-5 text-xs font-bold text-white shadow-lg transition-all active:scale-[0.99] ${
               danger
                 ? 'bg-red-500 shadow-red-500/20 hover:bg-red-600'
-                : 'bg-[#6183FF] shadow-[#6183FF]/20 hover:bg-[#4D6ED6]'
+                : 'bg-primary shadow-primary/20 hover:bg-primary-hover'
             }`}
           >
             {options.confirmLabel || 'Continue'}
