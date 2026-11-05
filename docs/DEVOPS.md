@@ -68,8 +68,9 @@ Checks:
 The build uses placeholder Supabase and Paystack values. The real values are
 only needed at runtime in Vercel.
 
-Before switching to `npm ci`, commit a `package-lock.json` generated with the
-same Node and npm versions used by CI. Until then CI uses `npm install`.
+The root `package-lock.json` is tracked. CI uses `npm install` until the
+lockfile is confirmed in sync with the workspace on a clean runner. After that,
+switch CI to `npm ci` for reproducible installs.
 
 ## 3. Vercel setup
 
@@ -216,7 +217,7 @@ If the site is down:
 
 ## Next DevOps tasks
 
-1. Commit a `package-lock.json` and switch CI to `npm ci`.
+1. Verify the root `package-lock.json` on a clean runner and switch CI to `npm ci`.
 2. Burn down the ESLint errors, then make lint blocking.
 3. Add Sentry and uptime checks.
 4. Add the GitHub secrets for the Supabase workflow.
