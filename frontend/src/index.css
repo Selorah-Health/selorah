@@ -420,6 +420,79 @@ a:hover .btn-arrow-right {
   background-color: rgba(17, 22, 36, 0.9) !important;
 }
 
+/* Tinted callouts and status surfaces */
+.dark .bg-emerald-50,
+.dark .bg-green-50 {
+  background-color: rgba(16, 185, 129, 0.14) !important;
+}
+
+.dark .bg-red-50,
+.dark [class~='bg-red-50/50'] {
+  background-color: rgba(239, 68, 68, 0.14) !important;
+}
+
+.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.14) !important;
+}
+
+.dark .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.14) !important;
+}
+
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.14) !important;
+}
+
+.dark .bg-yellow-50 {
+  background-color: rgba(234, 179, 8, 0.14) !important;
+}
+
+.dark .bg-purple-50,
+.dark .bg-violet-50 {
+  background-color: rgba(168, 85, 247, 0.14) !important;
+}
+
+.dark .bg-indigo-50 {
+  background-color: rgba(99, 102, 241, 0.14) !important;
+}
+
+.dark .bg-sky-50 {
+  background-color: rgba(14, 165, 233, 0.14) !important;
+}
+
+.dark .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.14) !important;
+}
+
+.dark .bg-teal-50 {
+  background-color: rgba(20, 184, 166, 0.14) !important;
+}
+
+.dark .bg-lime-50 {
+  background-color: rgba(132, 204, 22, 0.14) !important;
+}
+
+.dark .bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+.dark .bg-green-100,
+.dark .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.dark .bg-yellow-100 {
+  background-color: rgba(234, 179, 8, 0.2) !important;
+}
+
+.dark .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.dark .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
 /* Text */
 .dark .text-black,
 .dark .text-gray-900,
@@ -473,13 +546,26 @@ a:hover .btn-arrow-right {
 }
 
 .dark [class~='text-amber-700'],
-.dark [class~='text-amber-600'] {
+.dark [class~='text-amber-600'],
+.dark [class~='text-amber-800'],
+.dark [class~='text-amber-900'] {
   color: #fcd34d !important;
 }
 
+.dark [class~='text-yellow-700'],
+.dark [class~='text-yellow-800'] {
+  color: #fde68a !important;
+}
+
 .dark [class~='text-red-700'],
-.dark [class~='text-red-600'] {
+.dark [class~='text-red-600'],
+.dark [class~='text-red-800'] {
   color: #fca5a5 !important;
+}
+
+.dark [class~='text-green-800'],
+.dark [class~='text-emerald-800'] {
+  color: #6ee7b7 !important;
 }
 
 .dark [class~='text-blue-700'],
@@ -503,6 +589,40 @@ a:hover .btn-arrow-right {
 
 .dark .border-gray-300 {
   border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.dark .border-red-100 {
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+.dark .border-emerald-100,
+.dark .border-green-100 {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+.dark .border-amber-100 {
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+.dark .border-orange-100 {
+  border-color: rgba(249, 115, 22, 0.35) !important;
+}
+
+.dark .border-blue-100 {
+  border-color: rgba(59, 130, 246, 0.35) !important;
+}
+
+.dark .border-yellow-100 {
+  border-color: rgba(234, 179, 8, 0.35) !important;
+}
+
+.dark .border-purple-100,
+.dark .border-violet-100 {
+  border-color: rgba(168, 85, 247, 0.35) !important;
+}
+
+.dark .border-indigo-100 {
+  border-color: rgba(99, 102, 241, 0.35) !important;
 }
 
 .dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]),

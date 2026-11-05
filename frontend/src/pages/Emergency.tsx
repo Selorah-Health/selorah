@@ -74,6 +74,23 @@ function extensionFor(file: File | Blob, fallback: string) {
   return fallback;
 }
 
+const AUDIO_MIME_CANDIDATES = [
+  'audio/webm;codecs=opus',
+  'audio/webm',
+  'audio/mp4;codecs=mp4a.40.2',
+  'audio/mp4',
+  'audio/ogg;codecs=opus',
+];
+
+function preferredAudioMimeType() {
+  if (typeof MediaRecorder === 'undefined') return '';
+  if (typeof MediaRecorder.isTypeSupported !== 'function') return '';
+
+  const audio = document.createElement('audio');
+  const supported = AUDIO_MIME_CANDIDATES.filter((type) => MediaRecorder.isTypeSupported(type));
+  return supported.find((type) => audio.canPlayType(type) !== '') || supported[0] || '';
+}
+
 function haversineKm(a: Coordinates, b: Coordinates) {
   const toRad = (value: number) => (value * Math.PI) / 180;
   const earth = 6371;
@@ -416,17 +433,28 @@ export default function Emergency() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      const recorder = new MediaRecorder(stream);
+      const preferredMime = preferredAudioMimeType();
+      let recorder: MediaRecorder;
+      try {
+        recorder = preferredMime
+          ? new MediaRecorder(stream, { mimeType: preferredMime })
+          : new MediaRecorder(stream);
+      } catch {
+        recorder = new MediaRecorder(stream);
+      }
       chunksRef.current = [];
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        const type = recorder.mimeType || preferredMime || 'audio/webm';
+        const blob = new Blob(chunksRef.current, { type });
         if (blob.size > 25 * 1024 * 1024) {
           toastError('The voice note is too large. Record a shorter note or upload a smaller file.');
-        } else if (blob.size > 0) {
+        } else if (blob.size === 0) {
+          toastError('No audio was captured. Check your microphone and try again.');
+        } else {
           if (voicePreview) URL.revokeObjectURL(voicePreview);
           setVoiceBlob(blob);
           setVoicePreview(URL.createObjectURL(blob));
@@ -859,7 +887,17 @@ export default function Emergency() {
             </p>
             {voicePreview ? (
               <div className="mt-3">
-                <audio controls src={voicePreview} className="w-full" />
+                <audio
+                  controls
+                  preload="metadata"
+                  src={voicePreview}
+                  className="w-full"
+                  onError={() =>
+                    toastError(
+                      'This browser could not play the recording. Upload an audio file instead.',
+                    )
+                  }
+                />
                 <button
                   type="button"
                   onClick={removeVoice}

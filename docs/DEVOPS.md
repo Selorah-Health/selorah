@@ -98,9 +98,13 @@ Migrations live in `supabase/migrations`. Treat them as production code.
 Local flow:
 
 ```sh
-supabase link --project-ref dbpyyhrbekamyejizson
-supabase db push
+supabase link --project-ref dbpyyhrbekamyejizson --yes
+supabase db push --include-all --yes
 ```
+
+`--include-all` lets the push apply a local migration whose timestamp is older
+than the last migration already recorded on the remote. Run
+`supabase migration list --linked` first if the push reports a history mismatch.
 
 The manual GitHub workflow does the same thing in production after an approval
 on the `production` environment. It can also deploy `send-email` and

@@ -5,6 +5,7 @@ import {
   CloudArrowUpIcon,
   CreditCardIcon,
   DocumentTextIcon,
+  ExclamationTriangleIcon,
   LockClosedIcon,
   QrCodeIcon,
   ShieldCheckIcon,
@@ -244,47 +245,76 @@ export default function Home({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
           {[
             {
               label: 'Add a record',
               hint: 'Saves offline',
               icon: CloudArrowUpIcon,
               onClick: onAddRecord,
+              danger: false,
             },
             {
               label: 'Create QR code',
               hint: 'Share instantly',
               icon: QrCodeIcon,
               onClick: () => navigate('/dashboard/qrcodes'),
+              danger: false,
             },
             {
               label: 'Selorah card',
               hint: 'Permanent QR',
               icon: CreditCardIcon,
               onClick: () => navigate('/dashboard/card'),
+              danger: false,
             },
             {
               label: 'Rewards',
               hint: 'Earn points',
               icon: TrophyIcon,
               onClick: () => navigate('/dashboard/rewards'),
+              danger: false,
+            },
+            {
+              label: 'Emergency',
+              hint: 'Get help now',
+              icon: ExclamationTriangleIcon,
+              onClick: () => navigate('/dashboard/emergency'),
+              danger: true,
             },
           ].map((action) => (
             <button
               key={action.label}
               type="button"
               onClick={action.onClick}
-              className="group flex items-center gap-3 rounded-2xl border border-gray-100 bg-[#F8F9FE] p-3 text-left transition-colors hover:border-primary/30 hover:bg-white"
+              className={`group flex items-center gap-3 rounded-2xl border p-3 text-left transition-colors ${
+                action.danger
+                  ? 'border-red-100 bg-red-50 hover:border-red-300 hover:bg-red-100'
+                  : 'border-gray-100 bg-[#F8F9FE] hover:border-primary/30 hover:bg-white'
+              }`}
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm group-hover:bg-primary group-hover:text-white">
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ${
+                  action.danger
+                    ? 'text-red-500 group-hover:bg-red-500 group-hover:text-white'
+                    : 'text-primary group-hover:bg-primary group-hover:text-white'
+                }`}
+              >
                 <action.icon className="h-4.5 w-4.5" />
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-[11px] font-bold text-[#101217]">
+                <span
+                  className={`block truncate text-[11px] font-bold ${
+                    action.danger ? 'text-red-600' : 'text-[#101217]'
+                  }`}
+                >
                   {action.label}
                 </span>
-                <span className="mt-0.5 block truncate text-[9px] font-semibold uppercase tracking-[0.06em] text-gray-400">
+                <span
+                  className={`mt-0.5 block truncate text-[9px] font-semibold uppercase tracking-[0.06em] ${
+                    action.danger ? 'text-red-400' : 'text-gray-400'
+                  }`}
+                >
                   {action.hint}
                 </span>
               </span>

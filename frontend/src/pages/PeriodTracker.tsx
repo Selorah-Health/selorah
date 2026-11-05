@@ -307,7 +307,15 @@ export default function PeriodTracker() {
     setSymptoms(entry.symptoms || []);
     setNotes(entry.notes || '');
     setFormOpen(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.requestAnimationFrame(() => {
+      const scrollRoot = document.querySelector<HTMLElement>('[data-scroll-root]');
+      if (scrollRoot) {
+        scrollRoot.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      document.getElementById('cycle-start-date')?.focus({ preventScroll: true });
+    });
   };
 
   const toggleSymptom = (symptom: string) => {
@@ -489,6 +497,7 @@ export default function PeriodTracker() {
                 First day
               </span>
               <input
+                id="cycle-start-date"
                 type="date"
                 value={startDate}
                 max={todayIso()}
