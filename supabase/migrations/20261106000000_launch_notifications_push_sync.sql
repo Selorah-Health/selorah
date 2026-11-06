@@ -4,6 +4,18 @@
 -- Safe to run more than once.
 
 -- ---------------------------------------------------------------------------
+-- 0. Repair the legacy patient tier constraint
+-- ---------------------------------------------------------------------------
+-- Older projects created a tier check that only allowed free and premium.
+-- The app and paystack-verify write pro, so replace it before any update.
+alter table public.patient_profiles
+  drop constraint if exists patient_profiles_tier_check;
+
+alter table public.patient_profiles
+  add constraint patient_profiles_tier_check
+  check (tier is null or tier in ('free', 'premium', 'pro')) not valid;
+
+-- ---------------------------------------------------------------------------
 -- 1. Cross-device appearance
 -- ---------------------------------------------------------------------------
 alter table public.patient_profiles add column if not exists theme text;

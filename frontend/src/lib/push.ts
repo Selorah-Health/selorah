@@ -3,8 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export type PushStatus = 'unsupported' | 'unconfigured' | 'default' | 'granted' | 'denied';
 
 function vapidPublicKey() {
-  const env = import.meta.env as Record<string, string | undefined>;
-  return String(env.VITE_VAPID_PUBLIC_KEY || '').trim();
+  return String(import.meta.env.VITE_VAPID_PUBLIC_KEY || '').trim();
 }
 
 export function pushSupported() {
