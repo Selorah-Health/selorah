@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  BellAlertIcon,
   BellIcon,
   CheckCircleIcon,
   ChevronRightIcon,
   CreditCardIcon,
+  DevicePhoneMobileIcon,
   QrCodeIcon,
   ShieldCheckIcon,
   SparklesIcon,
@@ -21,6 +23,14 @@ import {
   type NotificationKind,
   type NotificationRow,
 } from '../lib/notifications';
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+  getPushStatus,
+  sendTestPush,
+  syncPushSubscription,
+  type PushStatus,
+} from '../lib/push';
 
 function relativeTime(value?: string | null) {
   if (!value) return 'Just now';
@@ -53,6 +63,9 @@ export default function Notifications() {
   const [userId, setUserId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pushStatus, setPushStatus] = useState<PushStatus>(() => getPushStatus());
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMessage, setPushMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const refreshPro = () => setIsPro(readProState().active);
@@ -96,15 +109,22 @@ export default function Notifications() {
             .limit(30);
 
           setNotifications(
-            (data || []).map((row: Record<string, any>) => ({
-              id: String(row.id),
-              kind: 'access' as const,
-              title: row.hospital_name || 'Record accessed',
-              body: row.action || 'A verified provider viewed your shared medical record.',
-              href: `/dashboard/access-log/${row.id}`,
-              is_read: true,
-              created_at: row.accessed_at || new Date().toISOString(),
-            }))
+            (data || []).map(
+              (row: {
+                id?: string;
+                hospital_name?: string | null;
+                action?: string | null;
+                accessed_at?: string | null;
+              }) => ({
+                id: String(row.id),
+                kind: 'access' as const,
+                title: row.hospital_name || 'Record accessed',
+                body: row.action || 'A verified provider viewed your shared medical record.',
+                href: `/dashboard/access-log/${row.id}`,
+                is_read: true,
+                created_at: row.accessed_at || new Date().toISOString(),
+              })
+            )
           );
         } catch {
           setNotifications([]);
@@ -117,8 +137,16 @@ export default function Notifications() {
   );
 
   useEffect(() => {
-    void loadNotifications();
+    const timer = window.setTimeout(() => {
+      void loadNotifications();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [loadNotifications]);
+
+  useEffect(() => {
+    if (getPushStatus() === 'granted') void syncPushSubscription(supabase);
+  }, [supabase]);
 
   // Realtime updates from scans, card orders, billing, and withdrawals.
   useEffect(() => {
@@ -129,6 +157,45 @@ export default function Notifications() {
   }, [userId, supabase, loadNotifications]);
 
   const unread = notifications.filter((item) => !item.is_read).length;
+
+  const enablePush = async () => {
+    setPushBusy(true);
+    setPushMessage(null);
+    try {
+      await enablePushNotifications(supabase);
+      setPushStatus(getPushStatus());
+      setPushMessage(
+        'Phone notifications are on. Cycle and account reminders can now reach this device.'
+      );
+      success('Phone notifications are on.', 'Notifications enabled');
+      try {
+        await sendTestPush(supabase);
+        window.setTimeout(() => void loadNotifications(true), 600);
+      } catch {
+        // The subscription is already saved. The test is best effort.
+      }
+    } catch (error) {
+      setPushStatus(getPushStatus());
+      const message =
+        error instanceof Error ? error.message : 'Could not turn on phone notifications.';
+      setPushMessage(message);
+      toastError(message);
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const disablePush = async () => {
+    setPushBusy(true);
+    setPushMessage(null);
+    try {
+      await disablePushNotifications(supabase);
+      setPushStatus(getPushStatus());
+      setPushMessage('Phone notifications are off for this device.');
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   const markAllRead = async () => {
     if (!unread) return;
@@ -217,6 +284,76 @@ export default function Notifications() {
           </div>
         </div>
       )}
+
+      <section className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <BellAlertIcon className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="text-base font-bold text-[#101217]">Phone notifications</h3>
+              <p className="mt-0.5 max-w-xl text-[11px] font-medium leading-relaxed text-gray-400">
+                Get cycle reminders, new record alerts, QR scans, and account changes on this
+                phone, even when Selorah is closed.
+              </p>
+              {pushMessage && (
+                <p className="mt-2 text-[11px] font-semibold leading-relaxed text-primary">
+                  {pushMessage}
+                </p>
+              )}
+              {pushStatus === 'denied' && !pushMessage && (
+                <p className="mt-2 text-[11px] font-semibold leading-relaxed text-amber-600">
+                  Notifications are blocked. Open this site in your browser settings and allow
+                  notifications for Selorah.
+                </p>
+              )}
+              {pushStatus === 'unconfigured' && !pushMessage && (
+                <p className="mt-2 text-[11px] font-semibold leading-relaxed text-gray-400">
+                  Phone notifications are being set up. In-app notifications still work.
+                </p>
+              )}
+              {pushStatus === 'unsupported' && !pushMessage && (
+                <p className="mt-2 text-[11px] font-semibold leading-relaxed text-gray-400">
+                  This browser does not support phone notifications. Install Selorah on your
+                  phone to use them.
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+            {pushStatus === 'granted' ? (
+              <button
+                type="button"
+                onClick={() => void disablePush()}
+                disabled={pushBusy}
+                className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-5 text-[11px] font-bold text-gray-500 transition-colors hover:border-red-200 hover:text-red-500 disabled:opacity-50"
+              >
+                <DevicePhoneMobileIcon className="h-4 w-4" />
+                {pushBusy ? 'Turning off' : 'Turn off on this device'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void enablePush()}
+                disabled={
+                  pushBusy ||
+                  pushStatus === 'unsupported' ||
+                  pushStatus === 'unconfigured' ||
+                  pushStatus === 'denied'
+                }
+                className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-[11px] font-bold text-white shadow-lg shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <BellAlertIcon className="h-4 w-4" />
+                {pushBusy ? 'Turning on' : 'Enable notifications'}
+              </button>
+            )}
+            <span className="text-center text-[9px] font-black uppercase tracking-[0.12em] text-gray-300 sm:text-right">
+              {pushStatus === 'granted' ? 'On for this phone' : 'Mobile web push'}
+            </span>
+          </div>
+        </div>
+      </section>
 
       <div className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-6">
         {loading ? (

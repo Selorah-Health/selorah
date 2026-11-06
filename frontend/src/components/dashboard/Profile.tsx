@@ -846,7 +846,7 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
               })}
             </div>
             <p className="mt-2 text-[10px] font-medium leading-relaxed text-gray-400">
-              The accent applies across buttons, links, and highlights. It is saved on this device.
+              The accent applies across buttons, links, and highlights. It syncs to your Selorah account.
             </p>
           </div>
         </div>

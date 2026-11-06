@@ -1,8 +1,11 @@
 /* Selorah Health service worker. Fast shell, bounded network waits, offline ready. */
-const VERSION = 'selorah-v6';
+// The build step replaces this stamp, so every deployment installs a fresh
+// worker. Old caches are removed on activation and the page updates silently.
+const BUILD_STAMP = '__SELORAH_BUILD_STAMP__';
+const VERSION = `selorah-${BUILD_STAMP}`;
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
-const PREVIOUS_CACHE_PREFIX = 'selorah-v3';
+const PREVIOUS_CACHE_PREFIX = 'selorah-keep-';
 const NETWORK_TIMEOUT_MS = 4500;
 
 const LEGAL_PATHS = new Set(['/privacy', '/terms', '/cookie-policy', '/dpa']);
@@ -110,6 +113,10 @@ self.addEventListener('install', (event) => {
           }
         })
       );
+
+      // A new build should take over immediately. The page listens for the
+      // controller change and reloads once, without asking the patient.
+      await self.skipWaiting();
     })()
   );
 });
@@ -228,4 +235,77 @@ self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+});
+
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {
+      title: 'Selorah Health',
+      body: event.data ? event.data.text() : '',
+    };
+  }
+
+  const title = payload.title || 'Selorah Health';
+  const url = payload.url || '/dashboard/notifications';
+  const tag = payload.tag || 'selorah-notification';
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: payload.body || '',
+      icon: '/pwa-192.png',
+      badge: '/pwa-192.png',
+      tag,
+      renotify: true,
+      data: { url, kind: payload.kind || 'system' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  const target = event.notification.data?.url || '/dashboard/notifications';
+  event.notification.close();
+
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
+
+      for (const client of clientList) {
+        if ('focus' in client) {
+          await client.focus();
+          if ('navigate' in client) {
+            try {
+              await client.navigate(target);
+            } catch {
+              // The focused tab is still the right destination.
+            }
+          }
+          return;
+        }
+      }
+
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(target);
+      }
+    })()
+  );
+});
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
+      for (const client of clientList) {
+        client.postMessage({ type: 'PUSH_SUBSCRIPTION_CHANGED' });
+      }
+    })()
+  );
 });

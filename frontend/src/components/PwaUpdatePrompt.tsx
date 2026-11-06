@@ -1,82 +1,79 @@
 import { useEffect, useState } from 'react';
-import { ArrowPathIcon, SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
+const UPDATE_RELOAD_KEY = 'selorah:update-reload-at';
+
+function reloadForUpdateOnce() {
+  try {
+    const last = Number(window.sessionStorage.getItem(UPDATE_RELOAD_KEY) || 0);
+    if (Date.now() - last < 5000) return;
+    window.sessionStorage.setItem(UPDATE_RELOAD_KEY, String(Date.now()));
+  } catch {
+    // Session storage can be blocked in private mode.
+  }
+  window.location.reload();
+}
+
+/**
+ * Applies a new service worker without asking the patient. The page reloads
+ * once after the new worker takes control, so a new push becomes visible on
+ * the next open even if the app was left in the background.
+ */
 export default function PwaUpdatePrompt() {
-  const [visible, setVisible] = useState(false);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
-    const show = () => setVisible(true);
-    window.addEventListener('selorah:update-ready', show);
+    let applying = false;
+    let timer: number | undefined;
+    let hideTimer: number | undefined;
 
-    // Ask the browser to look for a new build when the app regains focus and
-    // every 30 minutes while it stays open.
-    const check = async () => {
+    const apply = async () => {
+      if (applying) return;
+      applying = true;
+      setUpdating(true);
+
       try {
         const registration = await navigator.serviceWorker.getRegistration();
-        await registration?.update();
+        registration?.waiting?.postMessage('SKIP_WAITING');
       } catch {
-        // Offline or unsupported. The next online visit checks again.
+        // controllerchange still reloads when the worker activates.
+      }
+
+      // Fallback for browsers that do not fire controllerchange promptly.
+      timer = window.setTimeout(reloadForUpdateOnce, 1400);
+      hideTimer = window.setTimeout(() => setUpdating(false), 6000);
+    };
+
+    const applyIfWaiting = async () => {
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration?.waiting && navigator.serviceWorker.controller) {
+          void apply();
+        }
+      } catch {
+        // No worker yet.
       }
     };
 
-    const interval = window.setInterval(check, 30 * 60 * 1000);
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') void check();
-    };
-    document.addEventListener('visibilitychange', onVisible);
+    void applyIfWaiting();
+    window.addEventListener('selorah:update-ready', apply);
 
     return () => {
-      window.removeEventListener('selorah:update-ready', show);
-      window.clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('selorah:update-ready', apply);
+      if (timer) window.clearTimeout(timer);
+      if (hideTimer) window.clearTimeout(hideTimer);
     };
   }, []);
 
-  const update = async () => {
-    setUpdating(true);
-    try {
-      const registration = await navigator.serviceWorker.getRegistration();
-      registration?.waiting?.postMessage('SKIP_WAITING');
-      window.setTimeout(() => window.location.reload(), 400);
-    } catch {
-      window.location.reload();
-    }
-  };
-
-  if (!visible) return null;
+  if (!updating) return null;
 
   return (
-    <div className="fixed inset-x-0 top-[max(0.6rem,env(safe-area-inset-top))] z-[310] flex justify-center px-3">
-      <div className="flex w-full max-w-md items-center gap-3 rounded-2xl border border-white/60 bg-[#101217] p-2.5 pl-3.5 text-white shadow-[0_20px_50px_-20px_rgba(5,8,26,0.7)]">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#5FFAB0]">
-          <SparklesIcon className="h-4.5 w-4.5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-bold leading-tight">A new Selorah update is ready</p>
-          <p className="mt-0.5 text-[10px] font-medium text-white/50">
-            Refresh to get the latest fixes. Your data stays in place.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={update}
-          disabled={updating}
-          className="flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 text-[10px] font-black uppercase tracking-[0.08em] text-[#101217] disabled:opacity-60"
-        >
-          <ArrowPathIcon className={`h-3.5 w-3.5 ${updating ? 'animate-spin' : ''}`} />
-          {updating ? 'Updating' : 'Update'}
-        </button>
-        <button
-          type="button"
-          onClick={() => setVisible(false)}
-          aria-label="Dismiss update"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white/40 hover:text-white"
-        >
-          <XMarkIcon className="h-4 w-4" />
-        </button>
+    <div className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[320] flex justify-center px-4">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#101217] px-4 py-2.5 text-[11px] font-bold text-white shadow-[0_18px_45px_-18px_rgba(5,8,26,0.65)]">
+        <ArrowPathIcon className="h-3.5 w-3.5 animate-spin text-[#5FFAB0]" />
+        Updating Selorah
       </div>
     </div>
   );

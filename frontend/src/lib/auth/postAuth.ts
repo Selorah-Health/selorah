@@ -1,4 +1,6 @@
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import { recordLogin } from '../notifications';
+import { getDeviceLabel } from '../qr';
 import { homeForRole, normalizeRole, writeLocalSession } from './session';
 
 export type PostAuthResult = {
@@ -98,6 +100,12 @@ export async function resolvePostAuthDestination(
     is_pro: proIsActive(patientProfile),
     avatar_url: String(user.user_metadata?.avatar_url || ''),
   });
+
+  try {
+    await recordLogin(supabase, getDeviceLabel());
+  } catch {
+    // A login alert is helpful, but it must never block the callback.
+  }
 
   if (role === 'patient' && !patientProfile?.id) {
     return { destination: '/onboarding', session, needsEmailConfirmation: false };

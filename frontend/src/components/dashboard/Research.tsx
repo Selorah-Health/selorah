@@ -180,9 +180,10 @@ export default function Research() {
         ...row,
         questions: grouped.get(row.id) || [],
       }));
+      const surveyPoints = new Map(rows.map((row) => [row.id, row.points]));
       const nextResponses = ((responseRows || []) as SurveyResponse[]).map((row) => ({
         ...row,
-        reward_naira: normalizeSurveyReward(row),
+        reward_naira: normalizeSurveyReward(row, surveyPoints.get(row.survey_id)),
       }));
 
       setSurveys(nextSurveys);

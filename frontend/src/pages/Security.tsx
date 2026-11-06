@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
 import { confirmDialog } from '../lib/dialogs';
+import { createSelfNotification } from '../lib/notifications';
 
 type TotpFactor = {
   id: string;
@@ -118,6 +119,18 @@ export default function Security() {
         text: 'Password updated. Use the new password the next time you log in.',
       });
       toastSuccess('Your password has been updated.', 'Password changed');
+
+      try {
+        await createSelfNotification(supabase, {
+          kind: 'security',
+          title: 'Password changed',
+          body: 'Your Selorah password was changed. If this was not you, reset it immediately.',
+          href: '/dashboard/security',
+          metadata: { event: 'password-changed' },
+        });
+      } catch {
+        // The password change already succeeded.
+      }
     } catch (error) {
       setPasswordMessage({
         tone: 'error',

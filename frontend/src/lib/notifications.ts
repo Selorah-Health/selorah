@@ -78,7 +78,7 @@ export async function countUnreadNotifications(supabase: SupabaseClient) {
 export function subscribeNotifications(
   supabase: SupabaseClient,
   userId: string,
-  onChange: () => void
+  onChange: (notification?: NotificationRow) => void
 ) {
   const channel = supabase
     .channel(`notifications:${userId}`)
@@ -90,11 +90,36 @@ export function subscribeNotifications(
         table: 'notifications',
         filter: `user_id=eq.${userId}`,
       },
-      onChange
+      (payload) => onChange((payload.new as NotificationRow) || undefined)
     )
     .subscribe();
 
   return () => {
     void supabase.removeChannel(channel);
   };
+}
+
+export async function recordLogin(supabase: SupabaseClient, deviceLabel: string) {
+  await supabase.rpc('record_login', {
+    p_device: deviceLabel || 'a new device',
+  });
+}
+
+export async function createSelfNotification(
+  supabase: SupabaseClient,
+  input: {
+    kind?: NotificationKind;
+    title: string;
+    body?: string;
+    href?: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  await supabase.rpc('create_self_notification', {
+    p_kind: input.kind || 'system',
+    p_title: input.title,
+    p_body: input.body || null,
+    p_href: input.href || null,
+    p_metadata: input.metadata || {},
+  });
 }

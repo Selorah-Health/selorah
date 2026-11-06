@@ -88,13 +88,21 @@ function toList(value: unknown): string[] {
 
 function toContacts(value: unknown) {
   if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+
   return value
     .map((item: any) => ({
       name: String(item?.name || item?.full_name || '').trim(),
       relationship: String(item?.relationship || item?.relation || 'Contact').trim(),
       phone: String(item?.phone || item?.phone_number || '').trim(),
     }))
-    .filter((item) => item.name || item.phone);
+    .filter((item) => {
+      if (!item.name && !item.phone) return false;
+      const key = item.phone.replace(/\D/g, '') || item.name.toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 function formatTime(seconds: number | null) {
@@ -302,13 +310,9 @@ export default function SharedRecord() {
                 medicationHistory === 'Not provided'
               ) {
                 medicationHistory = content || row.title;
-              } else if (title.includes('emergency') || type.includes('emergency')) {
-                emergencyContacts.push({
-                  name: content.split(/[,\-|]/)[0]?.trim() || content || row.title,
-                  relationship: 'Contact',
-                  phone: content.match(/\+?[\d\s-]{7,}/)?.[0]?.trim() || '',
-                });
               }
+              // Emergency contacts come only from patient_profiles so the
+              // shared record matches what the patient saved in Settings.
             }
 
             const PROFILE_TYPES = new Set([

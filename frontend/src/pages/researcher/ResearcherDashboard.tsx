@@ -208,16 +208,20 @@ export default function ResearcherDashboard() {
         }))
       );
 
+      const surveyById = new Map(rows.map((row) => [row.id, row]));
       const statMap: Record<string, SurveyStats> = {};
       for (const row of (statsRes.data || []) as SurveyStats[]) {
         statMap[row.survey_id] = {
           survey_id: row.survey_id,
           responses: Number(row.responses || 0),
           points_awarded: Number(row.points_awarded || 0),
-          reward_naira: normalizeSurveyReward({
-            points_awarded: row.points_awarded,
-            reward_naira: row.reward_naira,
-          }),
+          reward_naira: normalizeSurveyReward(
+            {
+              points_awarded: row.points_awarded,
+              reward_naira: row.reward_naira,
+            },
+            surveyById.get(row.survey_id)?.points
+          ),
         };
       }
       setStats(statMap);

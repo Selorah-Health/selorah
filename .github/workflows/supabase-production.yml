@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy_functions:
-        description: Deploy the send-email and verify-nin Edge Functions after migrations
+        description: Deploy the email, verification, Paystack, and push Edge Functions after migrations
         required: true
         type: boolean
         default: true
@@ -46,8 +46,16 @@ jobs:
 
       - name: Deploy product email function
         if: ${{ inputs.deploy_functions }}
-        run: supabase functions deploy send-email --no-verify-jwt --project-ref "$SUPABASE_PROJECT_ID"
+        run: supabase functions deploy send-email --no-verify-jwt --project-ref "$SUPABASE_PROJECT_ID" --yes
 
       - name: Deploy NIN verification function
         if: ${{ inputs.deploy_functions }}
-        run: supabase functions deploy verify-nin --project-ref "$SUPABASE_PROJECT_ID"
+        run: supabase functions deploy verify-nin --project-ref "$SUPABASE_PROJECT_ID" --yes
+
+      - name: Deploy Paystack verification function
+        if: ${{ inputs.deploy_functions }}
+        run: supabase functions deploy paystack-verify --no-verify-jwt --project-ref "$SUPABASE_PROJECT_ID" --yes
+
+      - name: Deploy web push function
+        if: ${{ inputs.deploy_functions }}
+        run: supabase functions deploy send-push --no-verify-jwt --project-ref "$SUPABASE_PROJECT_ID" --yes

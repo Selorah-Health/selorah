@@ -26,6 +26,9 @@ import { clearLocalSession, readLocalSession, writeLocalSession } from '../lib/a
 import { fetchMedicalRecords, type MedicalRecord } from '../lib/records';
 import { readProState, refreshProFromProfile } from '../lib/pro';
 import { fetchEarnings, formatNaira } from '../lib/earnings';
+import { hydrateAppearance, startAppearanceSync } from '../lib/preferences';
+import { syncPushSubscription } from '../lib/push';
+import type { NotificationRow } from '../lib/notifications';
 import { prewarmOcr } from '../lib/ocr';
 
 // Tab Components
@@ -256,6 +259,8 @@ export default function Dashboard() {
           avatar_url: avatarUrl,
         });
 
+        void syncPushSubscription(supabase);
+
         await Promise.all([loadRecords(), loadSummary()]);
       } catch (error) {
         console.error('Dashboard bootstrap failed:', error);
@@ -322,6 +327,33 @@ export default function Dashboard() {
   }, [supabase, loadRecords, loadSummary]);
 
   useEffect(() => {
+    let stopSync: (() => void) | undefined;
+    let cancelled = false;
+
+    void hydrateAppearance(supabase).finally(() => {
+      if (!cancelled) stopSync = startAppearanceSync(supabase);
+    });
+
+    return () => {
+      cancelled = true;
+      stopSync?.();
+    };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PUSH_SUBSCRIPTION_CHANGED') {
+        void syncPushSubscription(supabase);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', handleMessage);
+  }, [supabase]);
+
+  useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let cancelled = false;
 
@@ -337,8 +369,34 @@ export default function Dashboard() {
             table: 'notifications',
             filter: `user_id=eq.${data.user.id}`,
           },
-          () => {
+          (payload) => {
             void loadSummary();
+
+            const notification = (payload.new as NotificationRow | undefined) || undefined;
+
+            // When the app is open but in the background, show the same
+            // notification locally. Server push uses the same tag, so the two
+            // paths do not stack duplicate alerts.
+            if (
+              notification?.id &&
+              notification.title &&
+              typeof Notification !== 'undefined' &&
+              Notification.permission === 'granted' &&
+              document.visibilityState !== 'visible' &&
+              'serviceWorker' in navigator
+            ) {
+              void navigator.serviceWorker.ready
+                .then((registration) =>
+                  registration.showNotification(notification.title, {
+                    body: notification.body || '',
+                    icon: '/pwa-192.png',
+                    badge: '/pwa-192.png',
+                    tag: `selorah:${notification.id}`,
+                    data: { url: notification.href || '/dashboard/notifications' },
+                  })
+                )
+                .catch(() => undefined);
+            }
           }
         )
         .subscribe();

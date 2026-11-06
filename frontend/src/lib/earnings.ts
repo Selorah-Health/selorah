@@ -85,7 +85,7 @@ export async function fetchEarnings(supabase: SupabaseClient): Promise<EarningsS
         .order('created_at', { ascending: false }),
       supabase
         .from('survey_responses')
-        .select('points_awarded, reward_naira, created_at')
+        .select('survey_id, points_awarded, reward_naira, created_at')
         .eq('user_id', user.id),
     ]);
 
@@ -97,14 +97,37 @@ export async function fetchEarnings(supabase: SupabaseClient): Promise<EarningsS
 
     // Normalize legacy survey earnings at read time. The migration does the same
     // in the database, but this keeps the balance correct before it runs.
-    const surveyRewards = ((surveyRes.data || []) as Array<{
+    const surveyRows = (surveyRes.data || []) as Array<{
+      survey_id?: string | null;
       points_awarded?: number | string | null;
       reward_naira?: number | string | null;
       created_at?: string | null;
-    }>)
+    }>;
+
+    const surveyIds = Array.from(
+      new Set(surveyRows.map((row) => row.survey_id).filter(Boolean))
+    ) as string[];
+    const surveyPoints = new Map<string, number>();
+    if (surveyIds.length > 0) {
+      const { data: surveyData } = await supabase
+        .from('surveys')
+        .select('id, points')
+        .in('id', surveyIds);
+      for (const survey of (surveyData || []) as Array<{
+        id: string;
+        points?: number | string | null;
+      }>) {
+        surveyPoints.set(String(survey.id), Number(survey.points || 0));
+      }
+    }
+
+    const surveyRewards = surveyRows
       .map((row) => ({
         at: row.created_at ? new Date(row.created_at).getTime() : Number.NaN,
-        amount: normalizeSurveyReward(row),
+        amount: normalizeSurveyReward(
+          row,
+          row.survey_id ? surveyPoints.get(row.survey_id) : undefined
+        ),
       }))
       .filter((row) => Number.isFinite(row.at));
 

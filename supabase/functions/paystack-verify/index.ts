@@ -54,6 +54,7 @@ type PaystackTransaction = {
   status?: string;
   amount?: number;
   currency?: string;
+  paid_at?: string | null;
   customer?: { email?: string };
   metadata?: Record<string, unknown> | string | null;
 };
@@ -104,21 +105,24 @@ Deno.serve(async (request) => {
     return json({ received: true, ...result });
   }
 
-  // App-initiated verification.
-  let payload: { reference?: string } = {};
+  // App-initiated verification. `reconcile` looks up recent successful
+  // Paystack charges for the signed-in email when the checkout callback never
+  // reached the app and no reference was saved.
+  let payload: { reference?: string; reconcile?: boolean } = {};
   try {
     payload = JSON.parse(rawBody);
   } catch {
     return json({ verified: false, message: 'A payment reference is required.' }, 400);
   }
 
-  if (!payload.reference || typeof payload.reference !== 'string') {
+  if (!payload.reconcile && (!payload.reference || typeof payload.reference !== 'string')) {
     return json({ verified: false, message: 'A payment reference is required.' }, 400);
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   let callerId: string | null = null;
+  let callerEmail: string | null = null;
 
   if (supabaseUrl && serviceKey) {
     const token = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
@@ -128,19 +132,90 @@ Deno.serve(async (request) => {
         data: { user },
       } = await admin.auth.getUser(token);
       callerId = user?.id || null;
+      callerEmail = user?.email || null;
     }
   }
 
-  const result = await confirmPayment(secret, payload.reference, null, callerId);
-  const status = result.pending ? 202 : result.verified ? 200 : 402;
+  const result = payload.reconcile
+    ? await reconcilePayments(secret, callerId, callerEmail)
+    : await confirmPayment(secret, payload.reference as string, null, callerId, callerEmail);
+  const status = result.pending
+    ? 202
+    : result.verified
+      ? 200
+      : payload.reconcile
+        ? 200
+        : 402;
   return json(result, status);
 });
+
+async function reconcilePayments(
+  secret: string,
+  callerId: string | null,
+  callerEmail: string | null
+) {
+  if (!callerId || !callerEmail) {
+    return {
+      verified: false,
+      message: 'Sign in again so we can match the payment to your account.',
+    };
+  }
+
+  const email = callerEmail.trim().toLowerCase();
+  const candidates: PaystackTransaction[] = [];
+
+  // Paystack's customer filter expects a customer code on some accounts, so
+  // scan a bounded set of recent transactions and match the account email.
+  for (let page = 1; page <= 5; page += 1) {
+    const response = await fetch(
+      `https://api.paystack.co/transaction?perPage=100&page=${page}`,
+      { headers: { Authorization: `Bearer ${secret}` } }
+    );
+    const body = (await response.json().catch(() => null)) as
+      | { status?: boolean; data?: PaystackTransaction[] }
+      | null;
+    if (!response.ok || !body?.status || !Array.isArray(body.data)) break;
+
+    for (const transaction of body.data) {
+      const transactionEmail = String(transaction.customer?.email || '')
+        .trim()
+        .toLowerCase();
+      if (transactionEmail !== email) continue;
+      if (String(transaction.status || '').toLowerCase() !== 'success') continue;
+      if (String(transaction.currency || 'NGN').toUpperCase() !== 'NGN') continue;
+      if (!resolvePlan(Number(transaction.amount || 0))) continue;
+      candidates.push(transaction);
+    }
+
+    if (body.data.length < 100) break;
+  }
+
+  candidates.sort((a, b) => {
+    const aTime = a.paid_at ? new Date(a.paid_at).getTime() : 0;
+    const bTime = b.paid_at ? new Date(b.paid_at).getTime() : 0;
+    return bTime - aTime;
+  });
+
+  for (const transaction of candidates) {
+    const reference = transaction.reference;
+    if (!reference) continue;
+    const result = await confirmPayment(secret, reference, transaction, callerId, callerEmail);
+    if (result.verified) return result;
+  }
+
+  return {
+    verified: false,
+    message:
+      'No successful payment was found for this email. If you paid with a different email, verify the Paystack reference on the upgrade page.',
+  };
+}
 
 async function confirmPayment(
   secret: string,
   reference: string,
   webhookData: PaystackTransaction | null = null,
-  callerId: string | null = null
+  callerId: string | null = null,
+  callerEmail: string | null = null
 ) {
   const response = await fetch(
     `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
@@ -182,6 +257,26 @@ async function confirmPayment(
   }
   if (currency !== 'NGN') {
     return { verified: false, message: 'Payments must be made in NGN.' };
+  }
+
+  const paymentEmail = String(data?.customer?.email || '').trim().toLowerCase();
+  const metadata =
+    typeof data?.metadata === 'string'
+      ? safeJson(data.metadata)
+      : (data?.metadata as Record<string, unknown> | null | undefined);
+  const metadataUserId = typeof metadata?.user_id === 'string' ? metadata.user_id : null;
+
+  if (
+    callerId &&
+    callerEmail &&
+    paymentEmail &&
+    paymentEmail !== callerEmail.trim().toLowerCase() &&
+    metadataUserId !== callerId
+  ) {
+    return {
+      verified: false,
+      message: 'This payment belongs to a different Selorah account. Sign in with the email used at checkout.',
+    };
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -237,6 +332,7 @@ async function confirmPayment(
         });
 
         await updateAuthMetadata(admin, userId, reference, expiresAt);
+        await notifyProActivated(admin, userId, reference, expiresAt);
 
         return {
           verified: true,
@@ -254,7 +350,10 @@ async function confirmPayment(
         };
       }
 
-      const base = new Date();
+      const paidAt = data?.paid_at ? new Date(data.paid_at) : null;
+      const paymentDate =
+        paidAt && !Number.isNaN(paidAt.getTime()) ? new Date(paidAt) : new Date();
+      const base = new Date(paymentDate);
       const currentExpiry = currentProfile?.pro_expires_at
         ? new Date(currentProfile.pro_expires_at)
         : null;
@@ -277,6 +376,7 @@ async function confirmPayment(
           status: 'paid',
           provider: 'paystack',
           plan: plan.label,
+          created_at: paymentDate.toISOString(),
         },
         { onConflict: 'reference' }
       );
@@ -295,6 +395,7 @@ async function confirmPayment(
       );
 
       await updateAuthMetadata(admin, userId, reference, expiresAt);
+      await notifyProActivated(admin, userId, reference, expiresAt);
 
       // Queue the upgrade receipt email. Delivery is handled by the
       // send-email function once a provider is configured.
@@ -396,6 +497,39 @@ async function updateAuthMetadata(
     });
   } catch {
     // The profile row is the source of truth. Metadata is a convenience.
+  }
+}
+
+async function notifyProActivated(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+  reference: string,
+  expiresAt: Date
+) {
+  try {
+    const { data: existing } = await admin
+      .from('notifications')
+      .select('id')
+      .eq('user_id', userId)
+      .contains('metadata', { event: 'pro-activated', reference })
+      .maybeSingle();
+
+    if (existing) return;
+
+    await admin.from('notifications').insert({
+      user_id: userId,
+      kind: 'billing',
+      title: 'Selorah Pro is active',
+      body: `Your payment was verified. Pro is active until ${expiresAt.toLocaleDateString('en-NG', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })}.`,
+      href: '/dashboard/billing',
+      metadata: { event: 'pro-activated', reference },
+    });
+  } catch {
+    // The entitlement already succeeded. A notification is best effort.
   }
 }
 

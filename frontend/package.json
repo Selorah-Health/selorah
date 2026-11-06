@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender-legal.mjs",
+    "build": "vite build && node scripts/prerender-legal.mjs && node scripts/stamp-service-worker.mjs",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx"
   },

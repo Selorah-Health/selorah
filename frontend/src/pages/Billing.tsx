@@ -19,6 +19,7 @@ import {
   PRO_PLAN_LABEL,
   readPayments,
   readProState,
+  reconcileProPayments,
   refreshProFromProfile,
   verifyProReference,
   type PaymentRecord,
@@ -143,26 +144,43 @@ export default function Billing() {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      const candidate =
-        (rows || []).find((row) => row.status === 'paid' || row.status === 'pending') ||
-        (rows || [])[0];
+      const references = Array.from(
+        new Set(
+          (rows || [])
+            .map((row) => String(row.reference || ''))
+            .filter(Boolean)
+        )
+      );
 
-      if (!candidate?.reference) {
-        setRestoreMessage(
-          'No payment was found on this account. If you paid with a different email, verify the Paystack reference on the upgrade page.'
-        );
-        return;
+      for (const reference of references) {
+        try {
+          const result = await verifyProReference(reference, { supabase });
+          if (result.verified) {
+            setPro(result.state);
+            setRestoreMessage('Payment verified. Selorah Pro is active.');
+            void loadDbPayments();
+            return;
+          }
+          if (result.pendingMessage) {
+            setRestoreMessage(result.pendingMessage);
+            return;
+          }
+        } catch {
+          // An abandoned reference should not stop the next one from being checked.
+        }
       }
 
-      const result = await verifyProReference(String(candidate.reference), { supabase });
-      if (result.verified) {
-        setPro(result.state);
+      const recovered = await reconcileProPayments({ supabase });
+      if (recovered.verified) {
+        setPro(recovered.state);
         setRestoreMessage('Payment verified. Selorah Pro is active.');
         void loadDbPayments();
-      } else if (result.pendingMessage) {
-        setRestoreMessage(result.pendingMessage);
+      } else if (recovered.pendingMessage) {
+        setRestoreMessage(recovered.pendingMessage);
       } else {
-        setRestoreMessage('The latest payment is not confirmed yet. Try again in a moment.');
+        setRestoreMessage(
+          'No successful payment was found for this email. If you paid with a different email, verify the Paystack reference on the upgrade page.'
+        );
       }
     } catch (error) {
       setRestoreMessage(

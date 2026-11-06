@@ -52,11 +52,19 @@ export function pointsToNaira(points: number) {
  * current rate is the source of truth, so never show less than points x 20.
  * A higher stored value is kept because some studies may add a bonus.
  */
-export function normalizeSurveyReward(row: {
-  points_awarded?: number | string | null;
-  reward_naira?: number | string | null;
-}) {
-  const points = Number(row.points_awarded || 0);
+export function normalizeSurveyReward(
+  row: {
+    points_awarded?: number | string | null;
+    reward_naira?: number | string | null;
+  },
+  surveyPoints?: number | string | null
+) {
+  // The survey card shows the current question count as points. Older
+  // responses can hold a lower snapshot, so use whichever value is larger.
+  const points = Math.max(
+    Number(row.points_awarded || 0),
+    Number(surveyPoints || 0)
+  );
   const stored = Number(row.reward_naira || 0);
   return Math.max(stored, points * NAIRA_PER_POINT);
 }

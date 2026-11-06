@@ -287,6 +287,7 @@ type VerifyPayload = {
   verified?: boolean;
   pending?: boolean;
   message?: string;
+  reference?: string;
   plan?: string;
   months?: number;
   amount?: number;
@@ -463,4 +464,70 @@ export async function verifyProReference(
   }
 
   return { state: readProState(), verified: false, pendingMessage };
+}
+
+/**
+ * Recover a paid upgrade when the checkout callback never returned a
+ * reference. The server searches recent Paystack charges for the signed-in
+ * email and applies the newest successful plan payment.
+ */
+export async function reconcileProPayments(options?: {
+  supabase?: SupabaseClient;
+}): Promise<ProActivation> {
+  const supabase = options?.supabase || createClient();
+
+  let payload: VerifyPayload | null = null;
+  try {
+    const { data, error } = await withTimeout(
+      supabase.functions.invoke('paystack-verify', { body: { reconcile: true } }),
+      VERIFY_TIMEOUT_MS,
+      'Payment lookup timed out.'
+    );
+    if (error) throw error;
+    payload = data as VerifyPayload | null;
+  } catch (error) {
+    if (isVerificationRejection(error)) {
+      throw error instanceof Error
+        ? error
+        : new Error('Payment could not be matched to this account.');
+    }
+    throw new Error(
+      'Could not reach the payment verifier. Check your connection and try again.'
+    );
+  }
+
+  if (payload?.verified === false && payload.pending !== true) {
+    throw new Error(
+      payload.message || 'No successful payment was found for this account.'
+    );
+  }
+
+  const serverState = await refreshProFromProfile(supabase, { clearInactive: false });
+  if (serverState?.active) {
+    if (payload?.reference) clearPendingPayment(payload.reference);
+    return { state: serverState, verified: true };
+  }
+
+  if (payload?.verified === true) {
+    const reference = payload.reference || readPendingPayment()?.reference;
+    const state: ProState = {
+      active: true,
+      reference,
+      activatedAt: new Date().toISOString(),
+      expiresAt: payload.expiresAt,
+      plan: payload.plan || PRO_PLAN_LABEL,
+      amountKobo: payload.amount,
+    };
+    cacheProState(state);
+    if (reference) clearPendingPayment(reference);
+    return { state, verified: true };
+  }
+
+  return {
+    state: readProState(),
+    verified: false,
+    pendingMessage: payload?.pending
+      ? payload.message || 'Payment is still being confirmed. Check again in a moment.'
+      : undefined,
+  };
 }

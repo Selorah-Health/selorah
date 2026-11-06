@@ -109,8 +109,8 @@ remote. Run `supabase migration list --remote` first if the push reports a
 history mismatch.
 
 The manual GitHub workflow does the same thing in production after an approval
-on the `production` environment. It can also deploy `send-email` and
-`verify-nin`.
+on the `production` environment. It can also deploy `send-email`,
+`verify-nin`, `paystack-verify`, and `send-push`.
 
 Add these GitHub repository secrets before using the workflow:
 
@@ -123,6 +123,7 @@ Set Edge Function secrets with the Supabase CLI, not in the repository:
 ```sh
 supabase secrets set RESEND_API_KEY=... EMAIL_FROM="Selorah Health <hello@selorah.app>" EMAIL_REPLY_TO=support@selorah.app EMAIL_CRON_SECRET=... --project-ref dbpyyhrbekamyejizson
 supabase secrets set DOJAH_APP_ID=... DOJAH_API_KEY=... DOJAH_BASE_URL=https://sandbox.dojah.io --project-ref dbpyyhrbekamyejizson
+supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:support@selorah.app --project-ref dbpyyhrbekamyejizson
 ```
 
 Rotate a secret immediately if it appears in a screenshot, log, or chat.

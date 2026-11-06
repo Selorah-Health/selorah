@@ -16,6 +16,8 @@ import SEOTitle from '../components/SEOTitle';
 import ThemeToggle from '../components/ThemeToggle';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import { createClient } from '../lib/supabase/client';
+import { recordLogin } from '../lib/notifications';
+import { getDeviceLabel } from '../lib/qr';
 import {
   homeForRole,
   isValidNin,
@@ -189,6 +191,12 @@ export default function Login() {
         org_id: (profileData as { org_id?: string })?.org_id || formData.orgId.trim() || undefined,
         is_pro: profileData?.is_pro || false,
       });
+
+      try {
+        await recordLogin(supabase, getDeviceLabel());
+      } catch {
+        // A login alert is helpful, but it must never block sign in.
+      }
 
       if (fromPath) {
         const access = resolvePortalAccess(role, fromPath);

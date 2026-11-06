@@ -76,6 +76,12 @@ Notes:
 - `EMAIL_REPLY_TO` sends replies to the monitored Gmail inbox.
 - Keep `EMAIL_CRON_SECRET` private. It protects the queue worker.
 
+If you also use Resend from a Vercel function, store the key in Vercel as a
+plain environment variable named `RESEND_API_KEY` with the raw value that
+starts with `re_`. Do not add a `Bearer ` prefix, do not wrap it in quotes,
+and do not name it `VITE_RESEND_API_KEY`. The Selorah email queue itself uses
+the Supabase Edge Function secret above, not Vercel.
+
 ## 4. Deploy the email function
 
 ```bash
