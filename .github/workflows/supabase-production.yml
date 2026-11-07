@@ -44,18 +44,26 @@ jobs:
       - name: Push migrations
         run: supabase db push --remote --include-all --yes
 
-      - name: Deploy product email function
+      - name: Deploy web push function
         if: ${{ inputs.deploy_functions }}
-        run: supabase functions deploy send-email --no-verify-jwt --project-ref "$SUPABASE_PROJECT_ID" --yes
-
-      - name: Deploy NIN verification function
-        if: ${{ inputs.deploy_functions }}
-        run: supabase functions deploy verify-nin --project-ref "$SUPABASE_PROJECT_ID" --yes
+        run: supabase functions deploy send-push --no-verify-jwt --use-api --remote="$SUPABASE_PROJECT_ID" --yes
 
       - name: Deploy Paystack verification function
         if: ${{ inputs.deploy_functions }}
-        run: supabase functions deploy paystack-verify --no-verify-jwt --project-ref "$SUPABASE_PROJECT_ID" --yes
+        run: supabase functions deploy paystack-verify --no-verify-jwt --use-api --remote="$SUPABASE_PROJECT_ID" --yes
 
-      - name: Deploy web push function
+      - name: Deploy NIN verification function
         if: ${{ inputs.deploy_functions }}
-        run: supabase functions deploy send-push --no-verify-jwt --project-ref "$SUPABASE_PROJECT_ID" --yes
+        run: supabase functions deploy verify-nin --use-api --remote="$SUPABASE_PROJECT_ID" --yes
+
+      - name: Deploy product email function
+        id: deploy_email
+        if: ${{ inputs.deploy_functions }}
+        continue-on-error: true
+        run: supabase functions deploy send-email --no-verify-jwt --use-api --remote="$SUPABASE_PROJECT_ID" --yes
+
+      - name: Report product email deploy
+        if: ${{ inputs.deploy_functions && steps.deploy_email.outcome == 'failure' }}
+        run: |
+          echo "::warning::send-email did not deploy. The other functions were deployed. Check the send-email step log."
+
