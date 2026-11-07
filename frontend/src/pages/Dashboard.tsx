@@ -30,6 +30,7 @@ import { hydrateAppearance, startAppearanceSync } from '../lib/preferences';
 import { syncPushSubscription } from '../lib/push';
 import type { NotificationRow } from '../lib/notifications';
 import { prewarmOcr } from '../lib/ocr';
+import { isOffline, readSnapshot, writeSnapshot } from '../lib/offlineSnapshot';
 
 // Tab Components
 import Home from '../components/dashboard/Home';
@@ -95,91 +96,110 @@ export default function Dashboard() {
   const supabase = createClient();
 
   const loadSummary = useCallback(async () => {
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-    if (!authUser) return;
+    const cached = readSnapshot<DashboardSummary>('dashboard_summary');
+    if (cached) setSummary(cached);
 
-    const next: DashboardSummary = { ...EMPTY_SUMMARY };
+    if (isOffline()) return;
 
     try {
-      const { data: links } = await supabase
-        .from('shared_links')
-        .select('id, created_at, expires_at, is_active')
-        .eq('user_id', authUser.id)
-        .eq('is_active', true);
-
-      const now = Date.now();
-      next.activeGrants = (links || []).filter(
-        (link: { expires_at?: string | null }) =>
-          !link.expires_at || new Date(link.expires_at).getTime() > now
-      ).length;
-    } catch {
-      // Shared links are optional on older projects.
-    }
-
-    try {
-      const { data: logs } = await supabase
-        .from('access_logs')
-        .select('*')
-        .eq('user_id', authUser.id)
-        .order('accessed_at', { ascending: false })
-        .limit(5);
-
-      next.recentAccess = (logs || []).map((log: Record<string, any>) => ({
-        id: String(log.id),
-        title: log.organization_name || log.provider_name || 'Verified provider',
-        action: log.action || 'Viewed your medical record',
-        date: log.accessed_at
-          ? new Date(log.accessed_at).toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-            })
-          : '',
-        color: log.color || 'bg-primary',
-      }));
-    } catch {
-      // Access logs are optional on older projects.
-    }
-
-    try {
-      const { data: notifications } = await supabase
-        .from('notifications')
-        .select('id, is_read')
-        .eq('user_id', authUser.id);
-
-      next.unreadNotifications = (notifications || []).filter(
-        (item: { is_read?: boolean }) => !item.is_read
-      ).length;
-    } catch {
-      // Notifications are optional on older projects.
-    }
-
-    try {
-      const { data: profile } = await supabase
-        .from('patient_profiles')
-        .select('id')
-        .eq('user_id', authUser.id)
-        .maybeSingle();
-
-      if (profile?.id) {
-        const earnings = await fetchEarnings(supabase);
-        next.earningsAvailable = earnings.available;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const authUser = session?.user;
+      if (!authUser) {
+        if (cached) setSummary(cached);
+        return;
       }
-    } catch {
-      // Earnings are optional until the patient has a profile.
-    }
 
-    setSummary(next);
+      const next: DashboardSummary = { ...(cached || EMPTY_SUMMARY) };
+
+      try {
+        const { data: links } = await supabase
+          .from('shared_links')
+          .select('id, created_at, expires_at, is_active')
+          .eq('user_id', authUser.id)
+          .eq('is_active', true);
+
+        const now = Date.now();
+        next.activeGrants = (links || []).filter(
+          (link: { expires_at?: string | null }) =>
+            !link.expires_at || new Date(link.expires_at).getTime() > now
+        ).length;
+      } catch {
+        // Shared links are optional on older projects.
+      }
+
+      try {
+        const { data: logs } = await supabase
+          .from('access_logs')
+          .select('*')
+          .eq('user_id', authUser.id)
+          .order('accessed_at', { ascending: false })
+          .limit(5);
+
+        next.recentAccess = (logs || []).map((log: Record<string, any>) => ({
+          id: String(log.id),
+          title: log.organization_name || log.provider_name || 'Verified provider',
+          action: log.action || 'Viewed your medical record',
+          date: log.accessed_at
+            ? new Date(log.accessed_at).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+              })
+            : '',
+          color: log.color || 'bg-primary',
+        }));
+      } catch {
+        // Access logs are optional on older projects.
+      }
+
+      try {
+        const { data: notifications } = await supabase
+          .from('notifications')
+          .select('id, is_read')
+          .eq('user_id', authUser.id);
+
+        next.unreadNotifications = (notifications || []).filter(
+          (item: { is_read?: boolean }) => !item.is_read
+        ).length;
+      } catch {
+        // Notifications are optional on older projects.
+      }
+
+      try {
+        const { data: profile } = await supabase
+          .from('patient_profiles')
+          .select('id')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
+
+        if (profile?.id) {
+          const earnings = await fetchEarnings(supabase);
+          next.earningsAvailable = earnings.available;
+        }
+      } catch {
+        // Earnings are optional until the patient has a profile.
+      }
+
+      setSummary(next);
+      writeSnapshot('dashboard_summary', next);
+    } catch {
+      if (cached) setSummary(cached);
+    }
   }, [supabase]);
 
   const loadRecords = useCallback(async () => {
+    const cached = readSnapshot<MedicalRecord[]>('medical_records');
+    if (cached) setRecords(cached);
+
+    if (isOffline()) return;
+
     try {
       const rows = await fetchMedicalRecords(supabase);
       setRecords(rows);
     } catch (error) {
       console.error('Failed to load records:', error);
-      setRecords([]);
+      if (!cached) setRecords([]);
     }
   }, [supabase]);
 
@@ -191,6 +211,12 @@ export default function Dashboard() {
     let cancelled = false;
 
     const bootstrap = async () => {
+      // Never leave the dashboard on a skeleton because a mobile network is
+      // slow to answer. Cached values are already painted above.
+      const loadingTimer = window.setTimeout(() => {
+        if (!cancelled) setLoading(false);
+      }, 6000);
+
       const local = readLocalSession();
       if (local) {
         setUser((prev: any) => prev || {
@@ -207,23 +233,40 @@ export default function Dashboard() {
       const proState = readProState();
       if (proState.active) setIsPro(true);
 
+      // Paint the last saved dashboard immediately. The network refresh below
+      // replaces it when fresh data arrives, so a weak connection never leaves
+      // the patient on a loading skeleton.
+      const cachedRecords = readSnapshot<MedicalRecord[]>('medical_records');
+      const cachedSummary = readSnapshot<DashboardSummary>('dashboard_summary');
+      if (cachedRecords) setRecords(cachedRecords);
+      if (cachedSummary) setSummary(cachedSummary);
+      if (isOffline() || cachedRecords || cachedSummary) setLoading(false);
+
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        if (!session?.user) return;
-
-        const authUser = session.user;
+        const authUser = session?.user;
+        if (!authUser) {
+          // A cached local session may still be usable when Supabase cannot
+          // refresh its token offline. Show the last saved dashboard values.
+          await Promise.all([loadRecords(), loadSummary()]);
+          return;
+        }
         const metaAvatar = authUser.user_metadata?.avatar_url || '';
         let avatarUrl = metaAvatar;
 
-        if (!avatarUrl) {
-          const { data: profile } = await supabase
-            .from('patient_profiles')
-            .select('avatar_url')
-            .eq('user_id', authUser.id)
-            .maybeSingle();
-          avatarUrl = profile?.avatar_url || '';
+        if (!avatarUrl && !isOffline()) {
+          try {
+            const { data: profile } = await supabase
+              .from('patient_profiles')
+              .select('avatar_url')
+              .eq('user_id', authUser.id)
+              .maybeSingle();
+            avatarUrl = profile?.avatar_url || '';
+          } catch {
+            // The cached avatar or initials are enough while offline.
+          }
         }
 
         setUser({
@@ -259,12 +302,13 @@ export default function Dashboard() {
           avatar_url: avatarUrl,
         });
 
-        void syncPushSubscription(supabase);
+        if (!isOffline()) void syncPushSubscription(supabase);
 
         await Promise.all([loadRecords(), loadSummary()]);
       } catch (error) {
         console.error('Dashboard bootstrap failed:', error);
       } finally {
+        window.clearTimeout(loadingTimer);
         if (!cancelled) setLoading(false);
       }
     };
@@ -357,17 +401,18 @@ export default function Dashboard() {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let cancelled = false;
 
-    void supabase.auth.getUser().then(({ data }) => {
-      if (cancelled || !data.user) return;
+    void supabase.auth.getSession().then(({ data }) => {
+      const authUser = data.session?.user;
+      if (cancelled || !authUser) return;
       channel = supabase
-        .channel(`dashboard-notifications:${data.user.id}`)
+        .channel(`dashboard-notifications:${authUser.id}`)
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
             table: 'notifications',
-            filter: `user_id=eq.${data.user.id}`,
+            filter: `user_id=eq.${authUser.id}`,
           },
           (payload) => {
             void loadSummary();
@@ -877,7 +922,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-gray-100 bg-white/95 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-6px_24px_rgba(0,0,0,0.04)] backdrop-blur-lg md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-1 border-t border-gray-100 bg-white/95 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-6px_24px_rgba(0,0,0,0.04)] backdrop-blur-lg md:hidden">
           {[
             { name: 'Home', icon: HomeIcon, path: '/dashboard' },
             { name: 'Records', icon: DocumentDuplicateIcon, path: '/dashboard/records' },
@@ -887,13 +932,15 @@ export default function Dashboard() {
               to={item.path}
               end={item.path === '/dashboard'}
               className={({ isActive }) =>
-                `flex min-w-[54px] flex-col items-center gap-1 rounded-xl py-1.5 transition-all ${
+                `flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-xl py-1.5 transition-all ${
                   isActive ? 'text-primary' : 'text-gray-400'
                 }`
               }
             >
               <item.icon className="h-5 w-5" />
-              <span className="text-[9px] font-bold">{item.name}</span>
+              <span className="max-w-full truncate text-center text-[9px] font-bold">
+                {item.name}
+              </span>
             </NavLink>
           ))}
 
@@ -901,7 +948,7 @@ export default function Dashboard() {
             type="button"
             onClick={() => setShowAddModal(true)}
             aria-label="Add a record"
-            className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/35 transition-transform active:scale-95"
+            className="-mt-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/35 transition-transform active:scale-95"
           >
             <PlusIcon className="h-6 w-6" />
           </button>
@@ -914,13 +961,15 @@ export default function Dashboard() {
               key={item.name}
               to={item.path}
               className={({ isActive }) =>
-                `flex min-w-[54px] flex-col items-center gap-1 rounded-xl py-1.5 transition-all ${
+                `flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-xl py-1.5 transition-all ${
                   isActive ? 'text-primary' : 'text-gray-400'
                 }`
               }
             >
               <item.icon className="h-5 w-5" />
-              <span className="text-[9px] font-bold">{item.name}</span>
+              <span className="max-w-full truncate text-center text-[9px] font-bold">
+                {item.name}
+              </span>
             </NavLink>
           ))}
         </nav>
@@ -969,15 +1018,15 @@ export default function Dashboard() {
                     end={item.path === '/dashboard'}
                     onClick={() => setIsSidebarOpen(false)}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
+                      `flex min-w-0 items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
                         isActive
                           ? 'bg-white/10 font-bold text-white'
                           : 'text-white/65 hover:bg-white/5'
                       }`
                     }
                   >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
+                    <item.icon className="h-5 w-5 shrink-0" />
+                    <span className="truncate">{item.name}</span>
                   </NavLink>
                 ))}
               </div>
@@ -996,15 +1045,15 @@ export default function Dashboard() {
                     to={item.path}
                     onClick={() => setIsSidebarOpen(false)}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
+                      `flex min-w-0 items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
                         isActive
                           ? 'bg-white/10 font-bold text-white'
                           : 'text-white/65 hover:bg-white/5'
                       }`
                     }
                   >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
+                    <item.icon className="h-5 w-5 shrink-0" />
+                    <span className="truncate">{item.name}</span>
                   </NavLink>
                 ))}
               </div>

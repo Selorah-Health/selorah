@@ -29,6 +29,7 @@ import {
 } from '../../lib/earnings';
 import { useSync } from '../../contexts/SyncContext';
 import { getGreeting } from '../../lib/greetings';
+import { readSnapshot } from '../../lib/offlineSnapshot';
 
 interface HomeProps {
   user: any;
@@ -60,7 +61,9 @@ export default function Home({
   const navigate = useNavigate();
   const supabase = createClient();
   const { online, pending } = useSync();
-  const [earnings, setEarnings] = useState<EarningsSummary>(EMPTY_EARNINGS);
+  const [earnings, setEarnings] = useState<EarningsSummary>(
+    () => readSnapshot<EarningsSummary>('earnings') || EMPTY_EARNINGS
+  );
   const [gender, setGender] = useState('');
   const healthScore = Math.min(100, 40 + records.length * 5);
 

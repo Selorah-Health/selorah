@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
 import { readLocalSession } from '../lib/auth/session';
+import { isOffline } from '../lib/offlineSnapshot';
 import { useToast } from '../contexts/ToastContext';
 
 const BUCKET = 'emergency-attachments';
@@ -295,13 +296,15 @@ export default function Emergency() {
 
     const init = async () => {
       let activeUserId = readLocalSession()?.id || 'local';
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user?.id) activeUserId = user.id;
-      } catch {
-        // Offline sessions still use the local queue.
+      if (!isOffline()) {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session?.user?.id) activeUserId = session.user.id;
+        } catch {
+          // Offline sessions still use the local queue.
+        }
       }
       if (cancelled) return;
 

@@ -94,14 +94,18 @@
             if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
           }, 400);
         }
-        if (document.readyState === 'complete') {
-          window.setTimeout(hideSplash, 250);
-        } else {
-          window.addEventListener('load', function () {
-            window.setTimeout(hideSplash, 250);
-          });
-        }
-        window.setTimeout(hideSplash, 4000);
+        // The app removes the splash after React mounts. If a cached chunk is
+        // missing, keep a calm message visible instead of showing a blank page.
+        window.__selorahHideSplash = hideSplash;
+        window.setTimeout(function () {
+          if (!splash || splash.classList.contains('is-hiding')) return;
+          splash.innerHTML =
+            '<div style="text-align:center;font-family:Sora,system-ui,sans-serif;padding:24px">' +
+            '<img src="/logo.png" alt="" style="width:96px;height:96px;object-fit:contain;margin:0 auto 16px" />' +
+            '<p style="margin:0;color:#101217;font-size:15px;font-weight:700">Still opening Selorah</p>' +
+            '<p style="margin:6px 0 0;color:#6B7280;font-size:12px;line-height:1.6;max-width:260px">Check your connection. Your last saved pages will open once the app finishes loading.</p>' +
+            '</div>';
+        }, 6000);
       })();
     </script>
     <div id="google_translate_element" style="display:none"></div>

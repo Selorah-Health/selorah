@@ -137,33 +137,35 @@ export default function PortalSidebar({
     </aside>
 
       <nav className="portal-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden">
-        <div
-          className="grid items-end px-1 pt-2"
-          style={{ gridTemplateColumns: `repeat(${Math.min(menuItems.length, 4) + 2}, minmax(0, 1fr))` }}
-        >
+        <div className="flex items-stretch gap-0.5 px-1 pt-2">
           {menuItems.slice(0, 4).map((item) => (
             <NavLink
               key={item.name}
               to={item.path}
               end={item.path === `/${role}`}
+              title={item.name}
               className={({ isActive }) =>
-                `flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 transition-all ${
+                `flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1.5 transition-all ${
                   isActive ? 'text-primary' : 'text-gray-400'
                 }`
               }
             >
-              <item.icon className="h-6 w-6" />
-              <span className="text-[10px] font-bold">{item.name}</span>
+              <item.icon className="h-6 w-6 shrink-0" />
+              <span className="max-w-full truncate text-center text-[10px] font-bold">
+                {item.name}
+              </span>
             </NavLink>
           ))}
-          <ThemeToggle className="mx-auto h-10 w-10" />
+          <div className="flex min-w-0 flex-1 basis-0 items-center justify-center">
+            <ThemeToggle className="h-10 w-10 shrink-0" />
+          </div>
           <button
             type="button"
             onClick={handleLogout}
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-gray-400 transition-all"
+            className="flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1.5 text-gray-400 transition-all"
           >
-            <ArrowRightOnRectangleIcon className="h-6 w-6" />
-            <span className="text-[10px] font-bold">Logout</span>
+            <ArrowRightOnRectangleIcon className="h-6 w-6 shrink-0" />
+            <span className="max-w-full truncate text-center text-[10px] font-bold">Logout</span>
           </button>
         </div>
       </nav>

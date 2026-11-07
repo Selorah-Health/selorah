@@ -20,8 +20,9 @@ export async function fetchNotifications(
   limit = FALLBACK_LIMIT
 ): Promise<NotificationRow[]> {
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) return [];
 
   const { data, error } = await supabase
@@ -37,8 +38,9 @@ export async function fetchNotifications(
 
 export async function markAllNotificationsRead(supabase: SupabaseClient) {
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) return;
 
   const { error } = await supabase
@@ -61,8 +63,9 @@ export async function markNotificationRead(supabase: SupabaseClient, id: string)
 
 export async function countUnreadNotifications(supabase: SupabaseClient) {
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) return 0;
 
   const { count, error } = await supabase

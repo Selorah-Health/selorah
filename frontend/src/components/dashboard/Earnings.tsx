@@ -21,6 +21,7 @@ import {
   type EarningsSummary,
 } from '../../lib/earnings';
 import { useToast } from '../../contexts/ToastContext';
+import { readSnapshot } from '../../lib/offlineSnapshot';
 
 const BANKS = [
   { code: '044', name: 'Access Bank' },
@@ -58,8 +59,12 @@ function statusTone(status: string) {
 export default function Earnings() {
   const supabase = createClient();
   const { success, error: toastError, info } = useToast();
-  const [data, setData] = useState<EarningsSummary>(EMPTY_EARNINGS);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<EarningsSummary>(
+    () => readSnapshot<EarningsSummary>('earnings') || EMPTY_EARNINGS
+  );
+  const [loading, setLoading] = useState(
+    () => !readSnapshot<EarningsSummary>('earnings')
+  );
   const [refreshing, setRefreshing] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);

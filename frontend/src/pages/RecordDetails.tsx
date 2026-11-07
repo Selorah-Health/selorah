@@ -17,6 +17,7 @@ import {
 import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
 import { FILE_CATEGORY_TO_TYPE, formatRecordDate, RECORD_CATEGORIES } from '../lib/records';
+import { confirmDialog } from '../lib/dialogs';
 
 type RecordRow = {
   id: string;
@@ -242,9 +243,13 @@ export default function RecordDetails() {
 
   const handleDelete = async () => {
     if (!record) return;
-    const confirmed = window.confirm(
-      'Permanently delete this record? This cannot be undone.'
-    );
+    const confirmed = await confirmDialog({
+      title: 'Delete this record?',
+      message: 'This permanently removes the record and cannot be undone.',
+      confirmLabel: 'Delete record',
+      tone: 'danger',
+      icon: 'warning',
+    });
     if (!confirmed) return;
 
     setDeleting(true);

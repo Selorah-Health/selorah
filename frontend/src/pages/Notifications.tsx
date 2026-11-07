@@ -14,6 +14,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
 import { readProState } from '../lib/pro';
+import { readLocalSession } from '../lib/auth/session';
+import { isOffline, readSnapshot, writeSnapshot } from '../lib/offlineSnapshot';
 import { useToast } from '../contexts/ToastContext';
 import {
   fetchNotifications,
@@ -81,35 +83,48 @@ export default function Notifications() {
     async (silent = false) => {
       if (!silent) setLoading(true);
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const cached = readSnapshot<NotificationRow[]>('notifications');
+      const local = readLocalSession();
 
-      if (!user) {
-        setNotifications([]);
-        setUserId(null);
+      if (isOffline()) {
+        if (cached) setNotifications(cached);
+        setUserId(local?.id || null);
         setLoading(false);
         return;
       }
 
-      setUserId(user.id);
-
       try {
-        setNotifications(await fetchNotifications(supabase));
-      } catch (error) {
-        // Older projects may not have the notifications table yet. Fall back
-        // to real access-log entries so the page still shows genuine activity.
-        console.warn('Notifications table unavailable:', error);
-        try {
-          const { data } = await supabase
-            .from('access_logs')
-            .select('id, action, hospital_name, accessed_at')
-            .eq('user_id', user.id)
-            .order('accessed_at', { ascending: false })
-            .limit(30);
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const user = session?.user;
 
-          setNotifications(
-            (data || []).map(
+        if (!user) {
+          if (cached) setNotifications(cached);
+          setUserId(local?.id || null);
+          setLoading(false);
+          return;
+        }
+
+        setUserId(user.id);
+
+        try {
+          const next = await fetchNotifications(supabase);
+          setNotifications(next);
+          writeSnapshot('notifications', next);
+        } catch (error) {
+          // Older projects may not have the notifications table yet. Fall back
+          // to real access-log entries so the page still shows genuine activity.
+          console.warn('Notifications table unavailable:', error);
+          try {
+            const { data } = await supabase
+              .from('access_logs')
+              .select('id, action, hospital_name, accessed_at')
+              .eq('user_id', user.id)
+              .order('accessed_at', { ascending: false })
+              .limit(30);
+
+            const next = (data || []).map(
               (row: {
                 id?: string;
                 hospital_name?: string | null;
@@ -124,11 +139,16 @@ export default function Notifications() {
                 is_read: true,
                 created_at: row.accessed_at || new Date().toISOString(),
               })
-            )
-          );
-        } catch {
-          setNotifications([]);
+            );
+
+            setNotifications(next);
+            writeSnapshot('notifications', next);
+          } catch {
+            if (cached) setNotifications(cached);
+          }
         }
+      } catch {
+        if (cached) setNotifications(cached);
       } finally {
         setLoading(false);
       }
@@ -202,7 +222,11 @@ export default function Notifications() {
 
     try {
       await markAllNotificationsRead(supabase);
-      setNotifications((previous) => previous.map((item) => ({ ...item, is_read: true })));
+      setNotifications((previous) => {
+        const next = previous.map((item) => ({ ...item, is_read: true }));
+        writeSnapshot('notifications', next);
+        return next;
+      });
       success('You are all caught up.');
     } catch (error) {
       toastError(
@@ -215,9 +239,13 @@ export default function Notifications() {
     if (!item.is_read) {
       try {
         await markNotificationRead(supabase, item.id);
-        setNotifications((previous) =>
-          previous.map((row) => (row.id === item.id ? { ...row, is_read: true } : row))
-        );
+        setNotifications((previous) => {
+          const next = previous.map((row) =>
+            row.id === item.id ? { ...row, is_read: true } : row
+          );
+          writeSnapshot('notifications', next);
+          return next;
+        });
       } catch {
         // A failed read receipt should not block navigation.
       }

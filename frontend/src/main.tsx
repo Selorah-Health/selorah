@@ -51,3 +51,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+const splashWindow = window as Window & { __selorahHideSplash?: () => void };
+window.setTimeout(() => splashWindow.__selorahHideSplash?.(), 300);

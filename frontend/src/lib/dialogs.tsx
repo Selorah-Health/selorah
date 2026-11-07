@@ -28,9 +28,10 @@ export function confirmDialog(options: ConfirmOptions): Promise<boolean> {
       handler({ options, resolve });
       return;
     }
-    // The host is mounted by App. This fallback only runs outside the app shell.
-    const text = options.message ? `${options.title}\n\n${options.message}` : options.title;
-    resolve(window.confirm(text));
+    // The host is mounted by App. If it is missing, fail closed instead of
+    // falling back to the browser's native confirm dialog.
+    console.warn('Confirmation dialog host is not mounted.');
+    resolve(false);
   });
 }
 

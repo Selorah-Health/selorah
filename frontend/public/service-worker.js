@@ -6,6 +6,7 @@ const VERSION = `selorah-${BUILD_STAMP}`;
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 const PREVIOUS_CACHE_PREFIX = 'selorah-keep-';
+const PRECACHE_MANIFEST = '/precache-manifest.json';
 const NETWORK_TIMEOUT_MS = 4500;
 
 const LEGAL_PATHS = new Set(['/privacy', '/terms', '/cookie-policy', '/dpa']);
@@ -60,6 +61,15 @@ function fetchWithTimeout(request, ms = NETWORK_TIMEOUT_MS) {
   });
 }
 
+function fetchAssetWithTimeout(url, ms = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+
+  return fetch(url, { cache: 'reload', signal: controller.signal }).finally(() => {
+    clearTimeout(timer);
+  });
+}
+
 function isCacheableAsset(url) {
   if (url.origin !== self.location.origin) return false;
   if (
@@ -101,13 +111,36 @@ async function cacheResponse(cache, request, response) {
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(SHELL_CACHE);
+      const shellCache = await caches.open(SHELL_CACHE);
+      const assetCache = await caches.open(ASSET_CACHE);
+
+      // The build writes every hashed JavaScript and CSS file here. Without
+      // this list a lazy route chunk that was never opened online would fail
+      // offline, leaving the app stuck on the splash screen.
+      let buildAssets = [];
+      try {
+        const manifest = await fetchAssetWithTimeout(PRECACHE_MANIFEST);
+        if (manifest.ok) {
+          const parsed = await manifest.json();
+          if (Array.isArray(parsed)) {
+            buildAssets = parsed.filter((asset) => typeof asset === 'string');
+          }
+          await shellCache.put(PRECACHE_MANIFEST, manifest.clone());
+        }
+      } catch {
+        // Fall back to the shell files below. The next online visit fills gaps.
+      }
+
+      const assets = Array.from(new Set([...SHELL_ASSETS, ...buildAssets]));
+
       // Cache assets individually so one 404 never blocks the whole install.
       await Promise.all(
-        SHELL_ASSETS.map(async (asset) => {
+        assets.map(async (asset) => {
           try {
-            const response = await fetch(asset, { cache: 'reload' });
-            if (response.ok) await cache.put(asset, response);
+            const response = await fetchAssetWithTimeout(asset);
+            if (!response.ok) return;
+            const target = asset.startsWith('/assets/') ? assetCache : shellCache;
+            await target.put(asset, response);
           } catch {
             // The next online visit will fill the gap.
           }

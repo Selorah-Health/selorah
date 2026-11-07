@@ -27,6 +27,7 @@ import {
 import { createClient } from '../../lib/supabase/client';
 import { isValidNin, readLocalSession, writeLocalSession } from '../../lib/auth/session';
 import { readProState, type ProState } from '../../lib/pro';
+import { isOffline, readSnapshot, writeSnapshot } from '../../lib/offlineSnapshot';
 import { markReleaseSeen, readSeenRelease } from '../../lib/releases';
 import { openPrivacyChoices } from '../../lib/privacy';
 import {
@@ -52,6 +53,23 @@ type EmergencyContact = {
   name: string;
   relationship: string;
   phone: string;
+};
+
+type ProfileSnapshot = {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: string;
+  height: string;
+  weight: string;
+  bloodGroup: string;
+  genotype: string;
+  allergies: string;
+  medicalConditions: string;
+  emergencyContacts: EmergencyContact[];
+  phone: string;
+  nin: string;
+  avatarUrl: string;
 };
 
 type AvatarGender = 'female' | 'male' | 'neutral';
@@ -162,48 +180,134 @@ export default function Profile({ user, avatarGradient, isPro: isProProp }: Prof
 
   const loadProfile = useCallback(async () => {
     const local = readLocalSession();
+    const cached = readSnapshot<ProfileSnapshot>('profile');
+
+    if (cached) {
+      setFirstName(cached.firstName || local?.first_name || '');
+      setLastName(cached.lastName || local?.last_name || '');
+      setDateOfBirth(cached.dateOfBirth || '');
+      setGender(cached.gender || '');
+      setHeight(cached.height || '');
+      setWeight(cached.weight || '');
+      setBloodGroup(cached.bloodGroup || '');
+      setGenotype(cached.genotype || '');
+      setAllergies(cached.allergies || '');
+      setMedicalConditions(cached.medicalConditions || '');
+      setEmergencyContacts(cached.emergencyContacts || []);
+      if (cached.phone) setPhone(cached.phone);
+      if (cached.nin) setNin(cached.nin);
+      if (cached.avatarUrl) setAvatarUrl(cached.avatarUrl);
+    }
+
     if (local?.nin) setNin(local.nin);
     if (local?.phone) setPhone(local.phone);
     if (local?.avatar_url) setAvatarUrl(local.avatar_url);
 
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-    if (!authUser) return;
+    if (isOffline()) return;
 
-    if (authUser.user_metadata?.avatar_url) setAvatarUrl(authUser.user_metadata.avatar_url);
-    const metaFirst = String(authUser.user_metadata?.first_name || '');
-    const metaLast = String(authUser.user_metadata?.last_name || '');
-    if (metaFirst) setFirstName(metaFirst);
-    if (metaLast) setLastName(metaLast);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const authUser = session?.user;
+      if (!authUser) return;
 
-    const { data } = await supabase
-      .from('patient_profiles')
-      .select(
-        'full_name, date_of_birth, gender, height, weight, blood_group, genotype, allergies, emergency_medical_info, emergency_contacts, phone, nin, avatar_url'
-      )
-      .eq('user_id', authUser.id)
-      .maybeSingle();
+      if (authUser.user_metadata?.avatar_url) setAvatarUrl(authUser.user_metadata.avatar_url);
+      const metaFirst = String(authUser.user_metadata?.first_name || '');
+      const metaLast = String(authUser.user_metadata?.last_name || '');
+      if (metaFirst) setFirstName(metaFirst);
+      if (metaLast) setLastName(metaLast);
 
-    if (data?.full_name) {
-      const parts = String(data.full_name).trim().split(/\s+/);
-      setFirstName((current) => current || parts[0] || '');
-      setLastName((current) => current || parts.slice(1).join(' '));
-    }
-    if (data?.date_of_birth) setDateOfBirth(String(data.date_of_birth).slice(0, 10));
-    if (data?.gender) setGender(data.gender);
-    if (data?.height) setHeight(String(data.height));
-    if (data?.weight) setWeight(String(data.weight));
-    if (data?.blood_group) setBloodGroup(data.blood_group);
-    if (data?.genotype) setGenotype(data.genotype);
-    if (Array.isArray(data?.allergies)) setAllergies(data.allergies.join(', '));
-    if (data?.emergency_medical_info) setMedicalConditions(data.emergency_medical_info);
-    if (data?.emergency_contacts) setEmergencyContacts(normalizeContacts(data.emergency_contacts));
-    if (data?.phone) setPhone(data.phone);
-    if (data?.nin) setNin(data.nin);
-    if (data?.avatar_url) {
-      setAvatarUrl(data.avatar_url);
-      writeLocalSession({ avatar_url: data.avatar_url });
+      const { data } = await supabase
+        .from('patient_profiles')
+        .select(
+          'full_name, date_of_birth, gender, height, weight, blood_group, genotype, allergies, emergency_medical_info, emergency_contacts, phone, nin, avatar_url'
+        )
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+
+      const snapshot: ProfileSnapshot = {
+        firstName: metaFirst || local?.first_name || '',
+        lastName: metaLast || local?.last_name || '',
+        dateOfBirth: '',
+        gender: '',
+        height: '',
+        weight: '',
+        bloodGroup: '',
+        genotype: '',
+        allergies: '',
+        medicalConditions: '',
+        emergencyContacts: [],
+        phone: local?.phone || '',
+        nin: local?.nin || '',
+        avatarUrl: authUser.user_metadata?.avatar_url || local?.avatar_url || '',
+      };
+
+      if (data?.full_name) {
+        const parts = String(data.full_name).trim().split(/\s+/);
+        const first = metaFirst || parts[0] || '';
+        const last = metaLast || parts.slice(1).join(' ');
+        setFirstName((current) => current || first);
+        setLastName((current) => current || last);
+        snapshot.firstName = first;
+        snapshot.lastName = last;
+      }
+      if (data?.date_of_birth) {
+        const value = String(data.date_of_birth).slice(0, 10);
+        setDateOfBirth(value);
+        snapshot.dateOfBirth = value;
+      }
+      if (data?.gender) {
+        setGender(data.gender);
+        snapshot.gender = data.gender;
+      }
+      if (data?.height) {
+        setHeight(String(data.height));
+        snapshot.height = String(data.height);
+      }
+      if (data?.weight) {
+        setWeight(String(data.weight));
+        snapshot.weight = String(data.weight);
+      }
+      if (data?.blood_group) {
+        setBloodGroup(data.blood_group);
+        snapshot.bloodGroup = data.blood_group;
+      }
+      if (data?.genotype) {
+        setGenotype(data.genotype);
+        snapshot.genotype = data.genotype;
+      }
+      if (Array.isArray(data?.allergies)) {
+        const value = data.allergies.join(', ');
+        setAllergies(value);
+        snapshot.allergies = value;
+      }
+      if (data?.emergency_medical_info) {
+        setMedicalConditions(data.emergency_medical_info);
+        snapshot.medicalConditions = data.emergency_medical_info;
+      }
+      if (data?.emergency_contacts) {
+        const contacts = normalizeContacts(data.emergency_contacts);
+        setEmergencyContacts(contacts);
+        snapshot.emergencyContacts = contacts;
+      }
+      if (data?.phone) {
+        setPhone(data.phone);
+        snapshot.phone = data.phone;
+      }
+      if (data?.nin) {
+        setNin(data.nin);
+        snapshot.nin = data.nin;
+      }
+      if (data?.avatar_url) {
+        setAvatarUrl(data.avatar_url);
+        snapshot.avatarUrl = data.avatar_url;
+        writeLocalSession({ avatar_url: data.avatar_url });
+      }
+
+      writeSnapshot('profile', snapshot);
+    } catch {
+      // Keep the cached profile visible when the network is unavailable.
     }
   }, [supabase]);
 

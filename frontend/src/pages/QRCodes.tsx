@@ -16,8 +16,10 @@ import { createClient } from '../lib/supabase/client';
 import { useToast } from '../contexts/ToastContext';
 import { useSync } from '../contexts/SyncContext';
 import { ensurePermanentToken, readCachedPermanentToken, sharedUrl } from '../lib/qr';
+import { readLocalSession } from '../lib/auth/session';
 import { confirmDialog } from '../lib/dialogs';
 import { enqueueAction } from '../lib/offline/queue';
+import { isOffline, readSnapshot, writeSnapshot } from '../lib/offlineSnapshot';
 
 type TempLink = {
   id: string;
@@ -60,19 +62,42 @@ export default function QRCodes() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
+  const saveLinks = useCallback((next: TempLink[]) => {
+    setLinks(next);
+    writeSnapshot('qr_links', next);
+  }, []);
+
+  const updateLinks = useCallback((updater: (current: TempLink[]) => TempLink[]) => {
+    setLinks((current) => {
+      const next = updater(current);
+      writeSnapshot('qr_links', next);
+      return next;
+    });
+  }, []);
+
   const load = useCallback(async () => {
+    const cachedToken = readCachedPermanentToken();
+    const cachedLinks = readSnapshot<TempLink[]>('qr_links');
+    if (cachedToken) setPermanentToken(cachedToken);
+    if (cachedLinks) setLinks(cachedLinks);
+
+    if (isOffline()) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const profile = await ensurePermanentToken(supabase);
       if (profile?.permanent_qr_token) setPermanentToken(profile.permanent_qr_token);
     } catch {
-      const cached = readCachedPermanentToken();
-      if (cached) setPermanentToken(cached);
+      if (cachedToken) setPermanentToken(cachedToken);
     }
 
     try {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return;
 
       const { data } = await supabase
@@ -84,17 +109,17 @@ export default function QRCodes() {
         .limit(20);
 
       const now = Date.now();
-      setLinks(
+      saveLinks(
         ((data || []) as TempLink[]).filter(
           (link) => !link.expires_at || new Date(link.expires_at).getTime() > now
         )
       );
     } catch {
-      // Offline: the permanent code is still available from cache.
+      // Offline: the permanent code and temporary links stay available from cache.
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, saveLinks]);
 
   useEffect(() => {
     void load();
@@ -127,10 +152,16 @@ export default function QRCodes() {
 
     setBusy(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Sign in again to create a code.');
+      let userId = readLocalSession()?.id || '';
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user?.id) userId = session.user.id;
+      } catch {
+        // Offline: the cached local session is enough to queue the code.
+      }
+      if (!userId) throw new Error('Sign in again to create a code.');
 
       const token =
         typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -142,7 +173,7 @@ export default function QRCodes() {
           .from('shared_links')
           .insert({
             token,
-            user_id: user.id,
+            user_id: userId,
             expires_at: expiresAt,
             is_active: true,
             label: 'Temporary access code',
@@ -151,7 +182,7 @@ export default function QRCodes() {
           .single();
 
         if (error) throw error;
-        setLinks((current) => [data as TempLink, ...current]);
+        updateLinks((current) => [data as TempLink, ...current]);
         setActiveToken(data.token);
         setLocalOnly(false);
         toastSuccess('Temporary QR code created.');
@@ -160,12 +191,12 @@ export default function QRCodes() {
           type: 'link.create',
           payload: {
             token,
-            userId: user.id,
+            userId,
             expiresAt,
             recordId: null,
           },
         });
-        setLinks((current) => [
+        updateLinks((current) => [
           {
             id: `local-${token}`,
             token,
@@ -202,7 +233,7 @@ export default function QRCodes() {
 
     try {
       if (link.id.startsWith('local-')) {
-        setLinks((current) => current.filter((item) => item.id !== link.id));
+        updateLinks((current) => current.filter((item) => item.id !== link.id));
         if (activeToken === link.token) {
           setActiveToken(null);
           setActiveExpiry(null);
@@ -213,7 +244,7 @@ export default function QRCodes() {
 
       if (!online) {
         await enqueueAction({ type: 'link.revoke', payload: { token: link.token } });
-        setLinks((current) => current.filter((item) => item.id !== link.id));
+        updateLinks((current) => current.filter((item) => item.id !== link.id));
         toastSuccess('Revocation saved. It syncs when you reconnect.');
         return;
       }
@@ -224,7 +255,7 @@ export default function QRCodes() {
         .eq('token', link.token);
 
       if (error) throw error;
-      setLinks((current) => current.filter((item) => item.id !== link.id));
+      updateLinks((current) => current.filter((item) => item.id !== link.id));
       if (activeToken === link.token) {
         setActiveToken(null);
         setActiveExpiry(null);
