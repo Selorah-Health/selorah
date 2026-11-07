@@ -29,6 +29,12 @@ try {
 
   await writeFile(manifestUrl, JSON.stringify(buildAssets));
 
+  // Bake the list into the worker too. This avoids a network round trip during
+  // install and works even when an older worker is still controlling the page.
+  source = source.replace(
+    '/* __SELORAH_BUILD_ASSETS__ */ []',
+    JSON.stringify(buildAssets)
+  );
   source = source.replaceAll('__SELORAH_BUILD_STAMP__', stamp);
   await writeFile(serviceWorkerUrl, source);
   console.log(`Stamped service worker with ${stamp} and ${buildAssets.length} build assets.`);

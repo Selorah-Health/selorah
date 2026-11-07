@@ -7,6 +7,9 @@ const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 const PREVIOUS_CACHE_PREFIX = 'selorah-keep-';
 const PRECACHE_MANIFEST = '/precache-manifest.json';
+// The build replaces this comment with the hashed asset list. Keeping an
+// empty fallback means a dev or unstamped worker still installs the shell.
+const BUILD_ASSETS = /* __SELORAH_BUILD_ASSETS__ */ [];
 const NETWORK_TIMEOUT_MS = 4500;
 
 const LEGAL_PATHS = new Set(['/privacy', '/terms', '/cookie-policy', '/dpa']);
@@ -61,7 +64,7 @@ function fetchWithTimeout(request, ms = NETWORK_TIMEOUT_MS) {
   });
 }
 
-function fetchAssetWithTimeout(url, ms = 8000) {
+function fetchAssetWithTimeout(url, ms = 5000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
 
@@ -114,38 +117,68 @@ self.addEventListener('install', (event) => {
       const shellCache = await caches.open(SHELL_CACHE);
       const assetCache = await caches.open(ASSET_CACHE);
 
-      // The build writes every hashed JavaScript and CSS file here. Without
+      // The build injects every hashed JavaScript and CSS file here. Without
       // this list a lazy route chunk that was never opened online would fail
-      // offline, leaving the app stuck on the splash screen.
-      let buildAssets = [];
-      try {
-        const manifest = await fetchAssetWithTimeout(PRECACHE_MANIFEST);
-        if (manifest.ok) {
-          const parsed = await manifest.json();
-          if (Array.isArray(parsed)) {
-            buildAssets = parsed.filter((asset) => typeof asset === 'string');
+      // offline, leaving the app stuck on the splash screen. The manifest
+      // fetch remains as a fallback for unstamped workers.
+      let buildAssets = Array.isArray(BUILD_ASSETS)
+        ? BUILD_ASSETS.filter((asset) => typeof asset === 'string')
+        : [];
+
+      if (buildAssets.length === 0) {
+        try {
+          const manifest = await fetchAssetWithTimeout(PRECACHE_MANIFEST);
+          if (manifest.ok) {
+            const parsed = await manifest.json();
+            if (Array.isArray(parsed)) {
+              buildAssets = parsed.filter((asset) => typeof asset === 'string');
+            }
+            await shellCache.put(PRECACHE_MANIFEST, manifest.clone());
           }
-          await shellCache.put(PRECACHE_MANIFEST, manifest.clone());
+        } catch {
+          // Fall back to the shell files below. The next online visit fills gaps.
         }
-      } catch {
-        // Fall back to the shell files below. The next online visit fills gaps.
       }
 
       const assets = Array.from(new Set([...SHELL_ASSETS, ...buildAssets]));
 
+      const cacheAsset = async (asset) => {
+        try {
+          const response = await fetchAssetWithTimeout(asset);
+          if (!response.ok) return false;
+          const target = asset.startsWith('/assets/') ? assetCache : shellCache;
+          await target.put(asset, response);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
       // Cache assets individually so one 404 never blocks the whole install.
+      const failed = [];
       await Promise.all(
         assets.map(async (asset) => {
-          try {
-            const response = await fetchAssetWithTimeout(asset);
-            if (!response.ok) return;
-            const target = asset.startsWith('/assets/') ? assetCache : shellCache;
-            await target.put(asset, response);
-          } catch {
-            // The next online visit will fill the gap.
-          }
+          const cached = await cacheAsset(asset);
+          if (!cached) failed.push(asset);
         })
       );
+
+      // A flaky mobile connection can drop a few requests. Retry those with a
+      // short pause before the worker activates so offline pages are not left
+      // with gaps.
+      let retry = failed;
+      for (const delay of [600, 1500]) {
+        if (retry.length === 0) break;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        const stillFailed = [];
+        await Promise.all(
+          retry.map(async (asset) => {
+            const cached = await cacheAsset(asset);
+            if (!cached) stillFailed.push(asset);
+          })
+        );
+        retry = stillFailed;
+      }
 
       // A new build should take over immediately. The page listens for the
       // controller change and reloads once, without asking the patient.
