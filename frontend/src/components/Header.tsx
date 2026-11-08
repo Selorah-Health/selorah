@@ -432,7 +432,7 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
             <p className="mb-3 mt-7 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
               Portals
             </p>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {PORTALS.map((portal) => {
                 const Icon = portal.icon;
                 return (
@@ -440,7 +440,7 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
                     key={portal.id}
                     to={portal.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex min-h-[60px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors hover:border-primary/40 hover:bg-primary/10"
+                    className="flex min-w-0 min-h-[60px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors hover:border-primary/40 hover:bg-primary/10"
                   >
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
                       <Icon className="h-5 w-5" />
@@ -459,7 +459,7 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
               })}
             </div>
 
-            <div className="mt-7 grid gap-2.5">
+            <div className="mt-7 grid grid-cols-1 gap-2.5">
               {!isLoggedIn && (
                 <Link
                   to="/login"
