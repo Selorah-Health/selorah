@@ -11,8 +11,12 @@
 // The database trigger on public.notifications calls this function with the
 // x-push-secret header. That secret lives in public.push_dispatch_config and is
 // never exposed to the browser.
+//
+// The Edge Runtime is Deno based, so this uses the Deno-native @negrel/webpush
+// library instead of the Node web-push package. The Node package depends on
+// Node-only modules and does not bundle reliably with the Supabase deployer.
 
-import webpush from 'npm:web-push@3.6.7';
+import * as webpush from 'jsr:@negrel/webpush@^0.5.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const CORS_HEADERS = {
@@ -36,6 +40,74 @@ type NotificationRow = {
   href: string | null;
   kind: string;
 };
+
+type VapidJwk = {
+  kty: 'EC';
+  crv: 'P-256';
+  alg: 'ES256';
+  x: string;
+  y: string;
+  d?: string;
+  key_ops: string[];
+  ext: boolean;
+};
+
+function base64urlToBytes(value: string) {
+  const padding = '='.repeat((4 - (value.length % 4)) % 4);
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/') + padding;
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
+}
+
+function bytesToBase64url(bytes: Uint8Array) {
+  let binary = '';
+  for (let index = 0; index < bytes.length; index += 1) {
+    binary += String.fromCharCode(bytes[index]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64ToBase64url(value: string) {
+  return value.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function vapidKeysToJwk(publicKeyBase64url: string, privateKeyBase64url: string) {
+  const publicKey = base64urlToBytes(publicKeyBase64url);
+  if (publicKey.byteLength !== 65) {
+    throw new Error('VAPID public key must be an uncompressed P-256 key.');
+  }
+
+  const x = publicKey.slice(1, 33);
+  const y = publicKey.slice(33, 65);
+  const privateKey = base64urlToBytes(privateKeyBase64url);
+
+  const publicKeyJwk: VapidJwk = {
+    kty: 'EC',
+    crv: 'P-256',
+    alg: 'ES256',
+    x: bytesToBase64url(x),
+    y: bytesToBase64url(y),
+    key_ops: ['verify'],
+    ext: true,
+  };
+
+  const privateKeyJwk: VapidJwk = {
+    kty: 'EC',
+    crv: 'P-256',
+    alg: 'ES256',
+    x: bytesToBase64url(x),
+    y: bytesToBase64url(y),
+    d: bytesToBase64url(privateKey),
+    key_ops: ['sign'],
+    ext: true,
+  };
+
+  return { publicKey: publicKeyJwk, privateKey: privateKeyJwk };
+}
 
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
@@ -82,7 +154,28 @@ Deno.serve(async (request) => {
     });
   }
 
-  webpush.setVapidDetails(subject, publicKey, privateKey);
+  let appServer: webpush.ApplicationServer;
+  try {
+    const exportedKeys = vapidKeysToJwk(publicKey, privateKey);
+    const vapidKeys = await webpush.importVapidKeys(exportedKeys, {
+      extractable: false,
+    });
+    appServer = await webpush.ApplicationServer.new({
+      contactInformation: subject,
+      vapidKeys,
+    });
+  } catch (error) {
+    return json(
+      {
+        configured: false,
+        sent: 0,
+        message: `VAPID setup failed: ${
+          error instanceof Error ? error.message : 'unknown error'
+        }`,
+      },
+      500
+    );
+  }
 
   let payload: { notification_id?: string } = {};
   try {
@@ -136,21 +229,24 @@ Deno.serve(async (request) => {
   await Promise.all(
     (subscriptions as PushSubscriptionRow[]).map(async (subscription) => {
       try {
-        await webpush.sendNotification(
-          {
-            endpoint: subscription.endpoint,
-            keys: {
-              p256dh: subscription.p256dh,
-              auth: subscription.auth,
-            },
+        const subscriber = appServer.subscribe({
+          endpoint: subscription.endpoint,
+          keys: {
+            p256dh: base64ToBase64url(subscription.p256dh),
+            auth: base64ToBase64url(subscription.auth),
           },
-          message,
-          { TTL: 60 * 60 * 24, urgency: 'high' }
-        );
+        });
+
+        await subscriber.pushTextMessage(message, {
+          ttl: 60 * 60 * 24,
+          urgency: webpush.Urgency.High,
+        });
         sent += 1;
       } catch (error) {
         failed += 1;
-        const statusCode = (error as { statusCode?: number } | null)?.statusCode;
+        const statusCode =
+          (error as { statusCode?: number } | null)?.statusCode ??
+          (error as { response?: { status?: number } } | null)?.response?.status;
         if (statusCode === 404 || statusCode === 410) {
           await admin.from('push_subscriptions').delete().eq('id', subscription.id);
           removed += 1;
