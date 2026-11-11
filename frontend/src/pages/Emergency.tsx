@@ -511,6 +511,10 @@ export default function Emergency() {
   const [draftReady, setDraftReady] = useState(false);
   const [lastKnownLocation, setLastKnownLocation] = useState<LastKnownLocation | null>(null);
   const [placeBusy, setPlaceBusy] = useState(false);
+  const canRecordInApp =
+    typeof navigator !== 'undefined' &&
+    Boolean(navigator.mediaDevices?.getUserMedia) &&
+    typeof MediaRecorder !== 'undefined';
   const microphonePermission = usePermissionState('microphone');
   const locationPermission = usePermissionState('geolocation');
   const hospitalLookup = useAsyncAction(findHospitals, {
@@ -531,6 +535,7 @@ export default function Emergency() {
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const locationLabelRef = useRef<HTMLInputElement | null>(null);
+  const nativeRecorderRef = useRef<HTMLInputElement | null>(null);
   const draftKey = draftKeyFor(userId);
 
   const syncPending = useCallback(
@@ -891,18 +896,20 @@ export default function Emergency() {
   };
 
   const startRecording = async () => {
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      const openInBrowser = await confirmDialog({
-        title: 'Voice recording is not available here',
-        message:
-          'This browser cannot record audio inside the installed app. Open Selorah in Safari or Chrome, or upload an audio file instead.',
-        confirmLabel: 'Upload audio instead',
-        cancelLabel: 'Close',
+    const canUseMicrophone = Boolean(navigator.mediaDevices?.getUserMedia);
+
+    if (!canUseMicrophone) {
+      const usePhoneRecorder = await confirmDialog({
+        title: 'Microphone is not available in this app',
+        message: window.isSecureContext
+          ? 'This installed app cannot ask for microphone access. Record with your phone app, or open Selorah in Safari or Chrome. You can also upload an audio file.'
+          : 'Selorah needs a secure HTTPS connection to use the microphone. Open the live site in your browser, or record with your phone app.',
+        confirmLabel: 'Use phone recorder',
+        cancelLabel: 'Upload audio file',
         icon: 'info',
       });
-      if (openInBrowser) {
-        document.getElementById('voice-upload')?.click();
-      }
+      if (usePhoneRecorder) nativeRecorderRef.current?.click();
+      else document.getElementById('voice-upload')?.click();
       return;
     }
 
@@ -924,7 +931,7 @@ export default function Emergency() {
     } catch (error) {
       if (isPermissionDeniedError(error)) {
         if (permissionPrompted) {
-          toastError('Microphone is still blocked. Upload an audio file instead.');
+          toastError('Microphone is still blocked. Use your phone recorder or upload an audio file.');
           return;
         }
 
@@ -936,25 +943,43 @@ export default function Emergency() {
           try {
             stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           } catch {
-            toastError('Microphone is still blocked. Upload an audio file instead.');
+            toastError(
+              'Microphone is still blocked. Use your phone recorder or upload an audio file.'
+            );
             return;
           }
         } else {
           return;
         }
       } else if (error instanceof DOMException && error.name === 'NotFoundError') {
-        toastError('No microphone was found. Upload an audio file instead.');
+        toastError('No microphone was found. Use your phone recorder or upload an audio file.');
         return;
       } else if (error instanceof DOMException && error.name === 'NotReadableError') {
         toastError('Another app is using the microphone. Close it and try again.');
         return;
       } else {
-        toastError('Microphone access was blocked. Upload an audio file instead.');
+        toastError('Microphone access was blocked. Use your phone recorder or upload an audio file.');
         return;
       }
     }
 
     if (!stream) return;
+
+    if (typeof MediaRecorder === 'undefined') {
+      stream.getTracks().forEach((track) => track.stop());
+      const usePhoneRecorder = await confirmDialog({
+        title: 'Microphone access granted',
+        message:
+          'This browser cannot record audio inside the app. Record with your phone app, then choose the file here. You can also upload an existing audio file.',
+        confirmLabel: 'Use phone recorder',
+        cancelLabel: 'Upload audio file',
+        icon: 'info',
+      });
+      if (usePhoneRecorder) nativeRecorderRef.current?.click();
+      else document.getElementById('voice-upload')?.click();
+      return;
+    }
+
     const activeStream = stream;
 
     try {
@@ -1556,6 +1581,24 @@ export default function Emergency() {
                     onChange={(event) => selectVoice(event.target.files?.[0])}
                   />
                 </label>
+                {!canRecordInApp && (
+                  <button
+                    type="button"
+                    onClick={() => nativeRecorderRef.current?.click()}
+                    className="inline-flex min-h-[36px] items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-200 text-[10px] font-bold text-gray-400 transition-colors hover:border-primary/40 hover:text-primary"
+                  >
+                    <MicrophoneIcon className="h-3.5 w-3.5" />
+                    Use phone recorder
+                  </button>
+                )}
+                <input
+                  ref={nativeRecorderRef}
+                  type="file"
+                  accept="audio/*"
+                  capture
+                  className="sr-only"
+                  onChange={(event) => selectVoice(event.target.files?.[0])}
+                />
               </div>
             )}
 
