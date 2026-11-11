@@ -50,6 +50,7 @@ export default function Security() {
   const [disableCode, setDisableCode] = useState('');
   const [disableError, setDisableError] = useState<string | null>(null);
   const [disabling, setDisabling] = useState(false);
+  const [signingOutOthers, setSigningOutOthers] = useState(false);
 
   const loadFactors = useCallback(async () => {
     setLoadingFactors(true);
@@ -68,6 +69,7 @@ export default function Security() {
   }, [supabase]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadFactors();
   }, [loadFactors]);
 
@@ -284,6 +286,46 @@ export default function Security() {
     }
   };
 
+  const signOutOtherDevices = async () => {
+    const confirmed = await confirmDialog({
+      title: 'Log out of other devices?',
+      message:
+        'Every other phone, tablet, or browser signed in to this account will be signed out. This device stays signed in. You can sign in again on those devices with your password.',
+      confirmLabel: 'Log out other devices',
+      cancelLabel: 'Keep them signed in',
+      tone: 'danger',
+      icon: 'shield',
+    });
+    if (!confirmed) return;
+
+    setSigningOutOthers(true);
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'others' });
+      if (error) throw error;
+
+      toastSuccess('Other devices have been signed out.', 'Sessions closed');
+
+      try {
+        await createSelfNotification(supabase, {
+          kind: 'security',
+          title: 'Other devices signed out',
+          body: 'You signed out of all other devices. If this was not you, change your password immediately.',
+          href: '/dashboard/security',
+          metadata: { event: 'sessions-revoked' },
+        });
+      } catch {
+        // The sign-out already succeeded.
+      }
+    } catch (error) {
+      toastError(
+        error instanceof Error ? error.message : 'Could not log out other devices.',
+        'Could not log out other devices'
+      );
+    } finally {
+      setSigningOutOthers(false);
+    }
+  };
+
   return (
     <div className="space-y-8 font-sora">
       <button
@@ -305,7 +347,7 @@ export default function Security() {
                 Security Settings
               </h2>
               <p className="text-gray-400 font-medium text-sm">
-                Manage your account protection and authentication methods.
+                Manage your account protection, sessions, and authentication methods.
               </p>
             </div>
           </div>
@@ -427,6 +469,42 @@ export default function Security() {
                   Set up 2FA
                 </button>
               )}
+            </div>
+          </section>
+
+          <section className="pt-12 border-t border-gray-50">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <DevicePhoneMobileIcon className="w-5 h-5 text-gray-400 shrink-0" />
+                <div>
+                  <h3 className="text-sm font-black text-[#101217] uppercase tracking-widest">
+                    Devices and sessions
+                  </h3>
+                  <p className="text-xs text-gray-400 font-medium mt-1">
+                    Log out of every other phone, tablet, or browser signed in to this account.
+                    This device stays signed in.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void signOutOtherDevices()}
+                disabled={signingOutOthers}
+                data-state={signingOutOthers ? 'working' : 'idle'}
+                className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+              >
+                {signingOutOthers ? (
+                  <>
+                    <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                    Logging out...
+                  </>
+                ) : (
+                  <>
+                    <DevicePhoneMobileIcon className="h-4 w-4" />
+                    Log out other devices
+                  </>
+                )}
+              </button>
             </div>
           </section>
         </div>
