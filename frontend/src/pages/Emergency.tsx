@@ -103,6 +103,14 @@ const AUDIO_MIME_CANDIDATES = [
   'audio/ogg;codecs=opus',
 ];
 
+const AUDIO_CONSTRAINTS: MediaStreamConstraints = {
+  audio: {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+  },
+};
+
 function preferredAudioMimeType() {
   if (typeof MediaRecorder === 'undefined') return '';
   if (typeof MediaRecorder.isTypeSupported !== 'function') return '';
@@ -528,6 +536,8 @@ export default function Emergency() {
   const [voicePreview, setVoicePreview] = useState('');
   const [recording, setRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
+  const [micLevel, setMicLevel] = useState(0);
+  const [micWarning, setMicWarning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SavedReport | null>(null);
 
@@ -536,6 +546,9 @@ export default function Emergency() {
   const chunksRef = useRef<Blob[]>([]);
   const locationLabelRef = useRef<HTMLInputElement | null>(null);
   const nativeRecorderRef = useRef<HTMLInputElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const levelFrameRef = useRef<number | null>(null);
+  const quietSinceRef = useRef<number | null>(null);
   const draftKey = draftKeyFor(userId);
 
   const syncPending = useCallback(
@@ -685,6 +698,8 @@ export default function Emergency() {
     return () => {
       recorderRef.current?.stop();
       streamRef.current?.getTracks().forEach((track) => track.stop());
+      if (levelFrameRef.current !== null) cancelAnimationFrame(levelFrameRef.current);
+      void audioContextRef.current?.close();
     };
   }, []);
 
@@ -895,6 +910,70 @@ export default function Emergency() {
     setVoicePreview(URL.createObjectURL(file));
   };
 
+  const stopLevelMeter = () => {
+    if (levelFrameRef.current !== null) {
+      cancelAnimationFrame(levelFrameRef.current);
+      levelFrameRef.current = null;
+    }
+    quietSinceRef.current = null;
+    void audioContextRef.current?.close();
+    audioContextRef.current = null;
+    setMicLevel(0);
+    setMicWarning(false);
+  };
+
+  const startLevelMeter = (stream: MediaStream) => {
+    if (typeof window === 'undefined') return;
+
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) return;
+
+    stopLevelMeter();
+
+    const context = new AudioContextCtor();
+    void context.resume().catch(() => undefined);
+
+    const source = context.createMediaStreamSource(stream);
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 512;
+    source.connect(analyser);
+    const data = new Uint8Array(analyser.fftSize);
+    audioContextRef.current = context;
+    quietSinceRef.current = null;
+    setMicWarning(false);
+
+    let lastLevelUpdate = 0;
+    const tick = (now: number) => {
+      if (now - lastLevelUpdate >= 80) {
+        lastLevelUpdate = now;
+        analyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let index = 0; index < data.length; index += 1) {
+          const value = (data[index] - 128) / 128;
+          sum += value * value;
+        }
+
+        const rms = Math.sqrt(sum / data.length);
+        const level = Math.min(1, rms * 5);
+        setMicLevel(level);
+
+        if (level < 0.015) {
+          if (quietSinceRef.current === null) quietSinceRef.current = Date.now();
+          else if (Date.now() - quietSinceRef.current > 2500) setMicWarning(true);
+        } else {
+          quietSinceRef.current = null;
+          setMicWarning(false);
+        }
+      }
+
+      levelFrameRef.current = requestAnimationFrame(tick);
+    };
+
+    levelFrameRef.current = requestAnimationFrame(tick);
+  };
+
   const startRecording = async () => {
     const canUseMicrophone = Boolean(navigator.mediaDevices?.getUserMedia);
 
@@ -927,7 +1006,7 @@ export default function Emergency() {
     let stream: MediaStream | null = null;
 
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia(AUDIO_CONSTRAINTS);
     } catch (error) {
       if (isPermissionDeniedError(error)) {
         if (permissionPrompted) {
@@ -941,7 +1020,7 @@ export default function Emergency() {
         const retry = await showPermissionHelp('microphone');
         if (retry) {
           try {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream = await navigator.mediaDevices.getUserMedia(AUDIO_CONSTRAINTS);
           } catch {
             toastError(
               'Microphone is still blocked. Use your phone recorder or upload an audio file.'
@@ -981,6 +1060,7 @@ export default function Emergency() {
     }
 
     const activeStream = stream;
+    startLevelMeter(activeStream);
 
     try {
       streamRef.current = activeStream;
@@ -999,6 +1079,7 @@ export default function Emergency() {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
+        stopLevelMeter();
         const type =
           chunksRef.current[0]?.type || recorder.mimeType || preferredMime || 'audio/webm';
         const blob = new Blob(chunksRef.current, { type });
@@ -1020,6 +1101,7 @@ export default function Emergency() {
       setRecordSeconds(0);
       setRecording(true);
     } catch {
+      stopLevelMeter();
       activeStream.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
       toastError('The microphone could not start. Upload an audio file instead.');
@@ -1528,7 +1610,7 @@ export default function Emergency() {
               <div className="mt-3">
                 <audio
                   controls
-                  preload="metadata"
+                  preload="auto"
                   src={voicePreview}
                   className="w-full"
                   onError={() =>
@@ -1537,6 +1619,16 @@ export default function Emergency() {
                     )
                   }
                 />
+                {voiceBlob && (
+                  <a
+                    href={voicePreview}
+                    download={`selorah-voice.${extensionFor(voiceBlob, 'webm')}`}
+                    className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-primary hover:underline"
+                  >
+                    <ArrowPathIcon className="h-3.5 w-3.5" />
+                    Download voice note
+                  </a>
+                )}
                 <button
                   type="button"
                   onClick={removeVoice}
@@ -1570,6 +1662,33 @@ export default function Emergency() {
                     </>
                   )}
                 </button>
+                {recording && (
+                  <div className="rounded-xl bg-[#F8F9FE] p-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white">
+                        <div
+                          className={`h-full rounded-full transition-[width] duration-100 ${
+                            micWarning ? 'bg-amber-400' : 'bg-primary'
+                          }`}
+                          style={{ width: `${Math.max(4, Math.round(micLevel * 100))}%` }}
+                        />
+                      </div>
+                      <span
+                        className={`text-[10px] font-bold ${
+                          micWarning ? 'text-amber-600' : 'text-gray-400'
+                        }`}
+                      >
+                        {micWarning ? 'No sound' : 'Listening'}
+                      </span>
+                    </div>
+                    {micWarning && (
+                      <p className="mt-1 text-[10px] font-semibold leading-relaxed text-amber-600">
+                        No sound detected. Check that your microphone is not muted or choose the
+                        right input in your system settings.
+                      </p>
+                    )}
+                  </div>
+                )}
                 <label className="inline-flex min-h-[36px] cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-200 text-[10px] font-bold text-gray-400 transition-colors hover:border-primary/40 hover:text-primary">
                   <ArrowPathIcon className="h-3.5 w-3.5" />
                   Or upload an audio file
