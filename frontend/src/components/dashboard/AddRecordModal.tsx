@@ -375,6 +375,19 @@ export default function AddRecordModal({
       return;
     }
 
+    let permissionPrompted = false;
+
+    if (cameraPermission === 'denied') {
+      // The browser will not show its own prompt after a block, so show the
+      // settings path before calling getUserMedia.
+      const retry = await showPermissionHelp('camera');
+      if (!retry) {
+        cameraRef.current?.click();
+        return;
+      }
+      permissionPrompted = true;
+    }
+
     setCameraBusy(true);
 
     try {
@@ -388,6 +401,14 @@ export default function AddRecordModal({
       setCameraBusy(false);
 
       if (isPermissionDeniedError(error)) {
+        if (permissionPrompted) {
+          setCameraError(
+            'Camera access is still blocked. Allow camera access in settings, or use your phone camera instead.'
+          );
+          cameraRef.current?.click();
+          return;
+        }
+
         const retry = await showPermissionHelp('camera');
         if (retry) {
           try {

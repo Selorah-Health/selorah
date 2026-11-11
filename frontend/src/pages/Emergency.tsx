@@ -18,6 +18,7 @@ import { readLocalSession } from '../lib/auth/session';
 import { isOffline } from '../lib/offlineSnapshot';
 import { useToast } from '../contexts/ToastContext';
 import { useAsyncAction } from '../lib/asyncState';
+import { confirmDialog } from '../lib/dialogs';
 import {
   isPermissionDeniedError,
   showPermissionHelp,
@@ -237,7 +238,77 @@ function writeDraft(key: string, draft: EmergencyDraft | null) {
   }
 }
 
-function getCurrentCoordinates(): Promise<Coordinates> {
+const LAST_LOCATION_KEY = 'selorah_last_location';
+const LAST_LOCATION_TTL_MS = 24 * 60 * 60 * 1000;
+
+type LastKnownLocation = {
+  lat: number;
+  lon: number;
+  label: string;
+  savedAt: number;
+};
+
+function readLastLocation(): LastKnownLocation | null {
+  try {
+    const raw = window.localStorage.getItem(LAST_LOCATION_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<LastKnownLocation> | null;
+    if (
+      !parsed ||
+      !Number.isFinite(parsed.lat) ||
+      !Number.isFinite(parsed.lon) ||
+      typeof parsed.savedAt !== 'number'
+    ) {
+      return null;
+    }
+
+    if (Date.now() - parsed.savedAt > LAST_LOCATION_TTL_MS) {
+      window.localStorage.removeItem(LAST_LOCATION_KEY);
+      return null;
+    }
+
+    return {
+      lat: parsed.lat as number,
+      lon: parsed.lon as number,
+      label: typeof parsed.label === 'string' ? parsed.label : 'Last known location',
+      savedAt: parsed.savedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeLastLocation(next: Coordinates, label: string) {
+  const saved: LastKnownLocation = {
+    lat: next.lat,
+    lon: next.lon,
+    label: label.trim() || 'Current location',
+    savedAt: Date.now(),
+  };
+
+  try {
+    window.localStorage.setItem(LAST_LOCATION_KEY, JSON.stringify(saved));
+  } catch {
+    // Storage can be blocked in private mode.
+  }
+
+  return saved;
+}
+
+function formatLastKnownTime(savedAt: number) {
+  const date = new Date(savedAt);
+  if (Number.isNaN(date.getTime())) return 'recently';
+
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function getPosition(options: PositionOptions): Promise<Coordinates> {
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
       (position) =>
@@ -246,9 +317,92 @@ function getCurrentCoordinates(): Promise<Coordinates> {
           lon: position.coords.longitude,
         }),
       (error) => reject(error),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+      options,
     );
   });
+}
+
+/**
+ * GPS can be slow or unavailable indoors. Try a fast network or cached fix
+ * first, then a high accuracy fix. The old single high accuracy request with
+ * maximumAge 0 was the main reason patients were asked for coordinates.
+ */
+async function getCurrentCoordinates(): Promise<Coordinates> {
+  if (!navigator.geolocation) {
+    throw new Error('Location is not available in this browser.');
+  }
+
+  const attempts: PositionOptions[] = [
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+  ];
+
+  let lastError: unknown = new Error('Could not get your location.');
+
+  for (const options of attempts) {
+    try {
+      return await getPosition(options);
+    } catch (error) {
+      lastError = error;
+      if (isPermissionDeniedError(error)) throw error;
+    }
+  }
+
+  throw lastError;
+}
+
+type GeocodedPlace = {
+  lat: number;
+  lon: number;
+  label: string;
+};
+
+/**
+ * A landmark fallback for patients who cannot remember coordinates. Nominatim
+ * is the public OpenStreetMap geocoder and is only called when the patient
+ * explicitly searches for a place.
+ */
+async function geocodePlace(query: string): Promise<GeocodedPlace> {
+  const trimmed = query.trim();
+  if (trimmed.length < 3) {
+    throw new Error('Type a street, estate, or landmark.');
+  }
+
+  const url = new URL('https://nominatim.openstreetmap.org/search');
+  url.searchParams.set('q', trimmed);
+  url.searchParams.set('format', 'jsonv2');
+  url.searchParams.set('limit', '1');
+  url.searchParams.set('addressdetails', '0');
+
+  const response = await fetch(url.toString(), {
+    headers: { Accept: 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error('Place search is unavailable. Try again or use your location.');
+  }
+
+  const data = (await response.json()) as Array<{
+    lat?: string;
+    lon?: string;
+    display_name?: string;
+  }>;
+  const first = data[0];
+  if (!first) {
+    throw new Error('No place was found. Try a nearby landmark.');
+  }
+
+  const lat = Number(first.lat);
+  const lon = Number(first.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    throw new Error('No place was found. Try a nearby landmark.');
+  }
+
+  return {
+    lat,
+    lon,
+    label: first.display_name || trimmed,
+  };
 }
 
 async function findHospitals(around: Coordinates): Promise<Hospital[]> {
@@ -355,6 +509,8 @@ export default function Emergency() {
   const [locating, setLocating] = useState(false);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [draftReady, setDraftReady] = useState(false);
+  const [lastKnownLocation, setLastKnownLocation] = useState<LastKnownLocation | null>(null);
+  const [placeBusy, setPlaceBusy] = useState(false);
   const microphonePermission = usePermissionState('microphone');
   const locationPermission = usePermissionState('geolocation');
   const hospitalLookup = useAsyncAction(findHospitals, {
@@ -374,6 +530,7 @@ export default function Emergency() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const locationLabelRef = useRef<HTMLInputElement | null>(null);
   const draftKey = draftKeyFor(userId);
 
   const syncPending = useCallback(
@@ -455,6 +612,7 @@ export default function Emergency() {
         setHospitals(draft.hospitals);
       }
 
+      setLastKnownLocation(readLastLocation());
       setDraftReady(true);
       setLoading(false);
       void syncPending(activeUserId);
@@ -542,11 +700,81 @@ export default function Emergency() {
     if (result.ok) setHospitals(result.data);
   };
 
+  const focusLocationLabel = () => {
+    locationLabelRef.current?.focus();
+    locationLabelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const rememberLocation = (next: Coordinates, label: string) => {
+    setLastKnownLocation(writeLastLocation(next, label));
+  };
+
+  const applyLastKnownLocation = async () => {
+    if (!lastKnownLocation) return;
+
+    const next = { lat: lastKnownLocation.lat, lon: lastKnownLocation.lon };
+    setLocation(next);
+    if (!locationLabel.trim()) setLocationLabel(lastKnownLocation.label);
+    await refreshHospitals(next);
+  };
+
+  const offerLocationFallback = async () => {
+    if (lastKnownLocation) {
+      const useLast = await confirmDialog({
+        title: 'Use your last known location?',
+        message: `We could not get a fresh GPS fix. Your last known location was saved ${formatLastKnownTime(
+          lastKnownLocation.savedAt,
+        )}. It may not be where you are now.`,
+        confirmLabel: 'Use last known',
+        cancelLabel: 'Type a landmark',
+        icon: 'info',
+      });
+
+      if (useLast) {
+        await applyLastKnownLocation();
+        return 'last-known' as const;
+      }
+
+      focusLocationLabel();
+      return 'landmark' as const;
+    }
+
+    const retry = await confirmDialog({
+      title: 'We could not get your location',
+      message:
+        'GPS can be slow indoors. Type a landmark such as a street, estate, or hospital name, then tap Find hospitals near this place.',
+      confirmLabel: 'Try again',
+      cancelLabel: 'Type a landmark',
+      icon: 'info',
+    });
+
+    if (retry) return 'retry' as const;
+
+    focusLocationLabel();
+    return 'landmark' as const;
+  };
+
   const shareCurrentLocation = async () => {
     if (!navigator.geolocation) {
-      setManualOpen(true);
-      toastError('Location is not available in this browser. Enter coordinates manually.');
+      focusLocationLabel();
+      toastError('Location is not available in this browser. Type a landmark instead.');
       return;
+    }
+
+    let permissionPrompted = false;
+
+    if (locationPermission === 'denied') {
+      const retry = await showPermissionHelp('geolocation', {
+        cancelLabel: lastKnownLocation ? 'Use last known' : 'Type a landmark',
+      });
+
+      if (!retry) {
+        if (lastKnownLocation) await applyLastKnownLocation();
+        else focusLocationLabel();
+        return;
+      }
+
+      permissionPrompted = true;
     }
 
     setLocating(true);
@@ -556,24 +784,38 @@ export default function Emergency() {
       next = await getCurrentCoordinates();
     } catch (error) {
       setLocating(false);
-      setManualOpen(true);
 
       if (isPermissionDeniedError(error)) {
-        const retry = await showPermissionHelp('geolocation');
+        if (permissionPrompted) {
+          toastError('Location is still blocked. Type a landmark or use your last known location.');
+          if (lastKnownLocation) await applyLastKnownLocation();
+          else focusLocationLabel();
+          return;
+        }
+
+        const retry = await showPermissionHelp('geolocation', {
+          cancelLabel: lastKnownLocation ? 'Use last known' : 'Type a landmark',
+        });
+
         if (retry) {
           setLocating(true);
           try {
             next = await getCurrentCoordinates();
           } catch {
             setLocating(false);
-            toastError('Location is still blocked. Enter coordinates manually.');
+            toastError('Location is still blocked. Type a landmark or use your last known location.');
+            if (lastKnownLocation) await applyLastKnownLocation();
+            else focusLocationLabel();
             return;
           }
         } else {
+          if (lastKnownLocation) await applyLastKnownLocation();
+          else focusLocationLabel();
           return;
         }
       } else {
-        toastError('Could not get your location. Enter coordinates manually.');
+        const choice = await offerLocationFallback();
+        if (choice === 'retry') void shareCurrentLocation();
         return;
       }
     }
@@ -585,7 +827,32 @@ export default function Emergency() {
 
     setLocation(next);
     setLocating(false);
+    rememberLocation(next, locationLabel.trim() || 'Current location');
     await refreshHospitals(next);
+  };
+
+  const findPlace = async () => {
+    const query = locationLabel.trim();
+    if (!query) {
+      focusLocationLabel();
+      toastError('Type a landmark or area first.');
+      return;
+    }
+
+    setPlaceBusy(true);
+    try {
+      const place = await geocodePlace(query);
+      const next = { lat: place.lat, lon: place.lon };
+      setLocation(next);
+      setLocationLabel(query);
+      rememberLocation(next, place.label);
+      setPlaceBusy(false);
+      await refreshHospitals(next);
+    } catch (error) {
+      setPlaceBusy(false);
+      toastError(error instanceof Error ? error.message : 'Could not find that place.');
+      focusLocationLabel();
+    }
   };
 
   const applyManualCoordinates = async () => {
@@ -597,6 +864,7 @@ export default function Emergency() {
     }
     const next = { lat, lon };
     setLocation(next);
+    rememberLocation(next, locationLabel.trim() || 'Manual coordinates');
     await refreshHospitals(next);
   };
 
@@ -624,8 +892,29 @@ export default function Emergency() {
 
   const startRecording = async () => {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      toastError('Voice recording is not supported here. Upload an audio file instead.');
+      const openInBrowser = await confirmDialog({
+        title: 'Voice recording is not available here',
+        message:
+          'This browser cannot record audio inside the installed app. Open Selorah in Safari or Chrome, or upload an audio file instead.',
+        confirmLabel: 'Upload audio instead',
+        cancelLabel: 'Close',
+        icon: 'info',
+      });
+      if (openInBrowser) {
+        document.getElementById('voice-upload')?.click();
+      }
       return;
+    }
+
+    let permissionPrompted = false;
+
+    if (microphonePermission === 'denied') {
+      // The browser will not show its own prompt after a block, so show the
+      // settings path before calling getUserMedia. This is deterministic on
+      // browsers that expose the Permissions API.
+      const retry = await showPermissionHelp('microphone');
+      if (!retry) return;
+      permissionPrompted = true;
     }
 
     let stream: MediaStream | null = null;
@@ -634,6 +923,11 @@ export default function Emergency() {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (error) {
       if (isPermissionDeniedError(error)) {
+        if (permissionPrompted) {
+          toastError('Microphone is still blocked. Upload an audio file instead.');
+          return;
+        }
+
         // The native prompt is already gone after a block. Show the exact
         // settings path, then retry from the dialog button if the patient has
         // changed the setting.
@@ -1019,6 +1313,7 @@ export default function Emergency() {
               Location or landmark
             </span>
             <input
+              ref={locationLabelRef}
               value={locationLabel}
               onChange={(event) => setLocationLabel(event.target.value)}
               placeholder="e.g. Ikeja, near Allen Avenue"
@@ -1101,6 +1396,36 @@ export default function Emergency() {
               </button>
             </div>
           )}
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void findPlace()}
+              disabled={placeBusy || !locationLabel.trim()}
+              className="inline-flex min-h-[36px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3.5 text-[10px] font-bold text-[#101217] transition-colors hover:border-primary/30 disabled:opacity-50"
+            >
+              {placeBusy ? (
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-primary" />
+              ) : (
+                <MapPinIcon className="h-3.5 w-3.5" />
+              )}
+              Find hospitals near this place
+            </button>
+            {lastKnownLocation && (
+              <button
+                type="button"
+                onClick={() => void applyLastKnownLocation()}
+                title={`Saved ${formatLastKnownTime(lastKnownLocation.savedAt)}`}
+                className="min-h-[36px] rounded-full border border-gray-200 bg-white px-3.5 text-[10px] font-bold text-[#101217] transition-colors hover:border-primary/30"
+              >
+                Use last known location
+              </button>
+            )}
+          </div>
+          <p className="mt-2 text-[10px] font-medium leading-relaxed text-gray-400">
+            No GPS? Type a street, estate, or landmark above, then search. Last known location is
+            kept for 24 hours on this device.
+          </p>
 
           {location && (
             <a
@@ -1224,6 +1549,7 @@ export default function Emergency() {
                   <ArrowPathIcon className="h-3.5 w-3.5" />
                   Or upload an audio file
                   <input
+                    id="voice-upload"
                     type="file"
                     accept="audio/*"
                     className="sr-only"
