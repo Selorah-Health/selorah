@@ -17,6 +17,12 @@ import { createClient } from '../lib/supabase/client';
 import { readLocalSession } from '../lib/auth/session';
 import { isOffline } from '../lib/offlineSnapshot';
 import { useToast } from '../contexts/ToastContext';
+import { useAsyncAction } from '../lib/asyncState';
+import {
+  isPermissionDeniedError,
+  showPermissionHelp,
+  usePermissionState,
+} from '../lib/permissions';
 
 const BUCKET = 'emergency-attachments';
 const EMERGENCY_NUMBER = '112';
@@ -39,6 +45,19 @@ type Hospital = {
   distanceKm: number;
   phone: string;
   address: string;
+};
+
+type OverpassElement = {
+  type?: string;
+  id?: number | string;
+  lat?: number;
+  lon?: number;
+  center?: { lat?: number; lon?: number };
+  tags?: Record<string, string>;
+};
+
+type OverpassResponse = {
+  elements?: OverpassElement[];
 };
 
 type SavedReport = {
@@ -127,6 +146,111 @@ function writeReports(key: string, reports: SavedReport[]) {
   }
 }
 
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+
+type EmergencyDraft = {
+  emergencyType: string;
+  description: string;
+  locationLabel: string;
+  location: Coordinates | null;
+  manualLat: string;
+  manualLon: string;
+  manualOpen: boolean;
+  hospitals: Hospital[];
+  savedAt: number;
+};
+
+function draftKeyFor(userId: string) {
+  return `selorah_emergency_draft_${userId}`;
+}
+
+/**
+ * The service worker reloads the page once after a silent update. Saving the
+ * draft here means an update, a crash, or a backgrounded PWA never loses the
+ * location the patient already shared.
+ */
+function readDraft(key: string): EmergencyDraft | null {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<EmergencyDraft> | null;
+    if (!parsed || typeof parsed.savedAt !== 'number') return null;
+
+    if (Date.now() - parsed.savedAt > DRAFT_TTL_MS) {
+      window.localStorage.removeItem(key);
+      return null;
+    }
+
+    const location = parsed.location;
+    const validLocation =
+      location &&
+      Number.isFinite(location.lat) &&
+      Number.isFinite(location.lon)
+        ? { lat: location.lat, lon: location.lon }
+        : null;
+
+    const hospitals = Array.isArray(parsed.hospitals)
+      ? parsed.hospitals.filter(
+          (hospital): hospital is Hospital =>
+            Boolean(hospital) &&
+            typeof hospital.id === 'string' &&
+            typeof hospital.name === 'string' &&
+            Number.isFinite(hospital.lat) &&
+            Number.isFinite(hospital.lon) &&
+            Number.isFinite(hospital.distanceKm),
+        )
+      : [];
+
+    const emergencyType =
+      typeof parsed.emergencyType === 'string' &&
+      TYPES.some((type) => type.id === parsed.emergencyType)
+        ? parsed.emergencyType
+        : 'medical';
+
+    return {
+      emergencyType,
+      description: typeof parsed.description === 'string' ? parsed.description : '',
+      locationLabel:
+        typeof parsed.locationLabel === 'string' ? parsed.locationLabel : '',
+      location: validLocation,
+      manualLat: typeof parsed.manualLat === 'string' ? parsed.manualLat : '',
+      manualLon: typeof parsed.manualLon === 'string' ? parsed.manualLon : '',
+      manualOpen: Boolean(parsed.manualOpen),
+      hospitals,
+      savedAt: parsed.savedAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(key: string, draft: EmergencyDraft | null) {
+  try {
+    if (!draft) {
+      window.localStorage.removeItem(key);
+      return;
+    }
+    window.localStorage.setItem(key, JSON.stringify(draft));
+  } catch {
+    // Storage can be blocked in private mode.
+  }
+}
+
+function getCurrentCoordinates(): Promise<Coordinates> {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        resolve({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        }),
+      (error) => reject(error),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  });
+}
+
 async function findHospitals(around: Coordinates): Promise<Hospital[]> {
   const query = `[out:json][timeout:25];
 (
@@ -141,7 +265,7 @@ out center tags;`;
     'https://overpass.kumi.systems/api/interpreter',
   ];
 
-  let data: any = null;
+  let data: OverpassResponse | null = null;
   for (const endpoint of endpoints) {
     try {
       const response = await fetch(endpoint, {
@@ -230,8 +354,13 @@ export default function Emergency() {
   const [manualOpen, setManualOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
-  const [hospitalError, setHospitalError] = useState('');
-  const [findingHospitals, setFindingHospitals] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const microphonePermission = usePermissionState('microphone');
+  const locationPermission = usePermissionState('geolocation');
+  const hospitalLookup = useAsyncAction(findHospitals, {
+    errorMessage: () =>
+      'Nearby hospital lookup could not reach OpenStreetMap. Call 112 now or use the map link.',
+  });
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
@@ -245,6 +374,7 @@ export default function Emergency() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const draftKey = draftKeyFor(userId);
 
   const syncPending = useCallback(
     async (activeUserId: string) => {
@@ -312,6 +442,20 @@ export default function Emergency() {
       const key = `selorah_emergency_reports_${activeUserId}`;
       setStorageKey(key);
       setReports(readReports(key));
+
+      const draft = readDraft(draftKeyFor(activeUserId));
+      if (draft) {
+        setEmergencyType(draft.emergencyType);
+        setDescription(draft.description);
+        setLocationLabel(draft.locationLabel);
+        setLocation(draft.location);
+        setManualLat(draft.manualLat);
+        setManualLon(draft.manualLon);
+        setManualOpen(draft.manualOpen);
+        setHospitals(draft.hospitals);
+      }
+
+      setDraftReady(true);
       setLoading(false);
       void syncPending(activeUserId);
     };
@@ -321,6 +465,52 @@ export default function Emergency() {
       cancelled = true;
     };
   }, [supabase, syncPending]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+
+    // Debounce so typing does not hit localStorage on every key press. The
+    // service worker reload is not instant either, so a short delay is safe.
+    const timer = window.setTimeout(() => {
+      const hasContent =
+        Boolean(description.trim()) ||
+        Boolean(locationLabel.trim()) ||
+        Boolean(location) ||
+        Boolean(manualLat.trim()) ||
+        Boolean(manualLon.trim()) ||
+        hospitals.length > 0;
+
+      if (!hasContent) {
+        writeDraft(draftKey, null);
+        return;
+      }
+
+      writeDraft(draftKey, {
+        emergencyType,
+        description,
+        locationLabel,
+        location,
+        manualLat,
+        manualLon,
+        manualOpen,
+        hospitals,
+        savedAt: Date.now(),
+      });
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    draftReady,
+    draftKey,
+    emergencyType,
+    description,
+    locationLabel,
+    location,
+    manualLat,
+    manualLon,
+    manualOpen,
+    hospitals,
+  ]);
 
   useEffect(() => {
     if (!recording) return;
@@ -348,24 +538,11 @@ export default function Emergency() {
   }, [voicePreview]);
 
   const refreshHospitals = async (next: Coordinates) => {
-    setFindingHospitals(true);
-    setHospitalError('');
-    try {
-      const list = await findHospitals(next);
-      setHospitals(list);
-      if (!list.length) {
-        setHospitalError('No hospital was found within 15 km. Call 112 now and use the map link.');
-      }
-    } catch {
-      setHospitalError(
-        'Nearby hospital lookup could not reach OpenStreetMap. Call 112 now or use the map link.',
-      );
-    } finally {
-      setFindingHospitals(false);
-    }
+    const result = await hospitalLookup.run(next);
+    if (result.ok) setHospitals(result.data);
   };
 
-  const useCurrentLocation = () => {
+  const shareCurrentLocation = async () => {
     if (!navigator.geolocation) {
       setManualOpen(true);
       toastError('Location is not available in this browser. Enter coordinates manually.');
@@ -373,27 +550,45 @@ export default function Emergency() {
     }
 
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const next = { lat: position.coords.latitude, lon: position.coords.longitude };
-        setLocation(next);
-        setLocating(false);
-        await refreshHospitals(next);
-      },
-      (error) => {
-        setLocating(false);
-        setManualOpen(true);
-        toastError(
-          error.code === 1
-            ? 'Location permission was denied. Enter coordinates manually.'
-            : 'Could not get your location. Enter coordinates manually.',
-        );
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-    );
+    let next: Coordinates | null = null;
+
+    try {
+      next = await getCurrentCoordinates();
+    } catch (error) {
+      setLocating(false);
+      setManualOpen(true);
+
+      if (isPermissionDeniedError(error)) {
+        const retry = await showPermissionHelp('geolocation');
+        if (retry) {
+          setLocating(true);
+          try {
+            next = await getCurrentCoordinates();
+          } catch {
+            setLocating(false);
+            toastError('Location is still blocked. Enter coordinates manually.');
+            return;
+          }
+        } else {
+          return;
+        }
+      } else {
+        toastError('Could not get your location. Enter coordinates manually.');
+        return;
+      }
+    }
+
+    if (!next) {
+      setLocating(false);
+      return;
+    }
+
+    setLocation(next);
+    setLocating(false);
+    await refreshHospitals(next);
   };
 
-  const useManualCoordinates = async () => {
+  const applyManualCoordinates = async () => {
     const lat = Number(manualLat);
     const lon = Number(manualLon);
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
@@ -433,17 +628,51 @@ export default function Emergency() {
       return;
     }
 
+    let stream: MediaStream | null = null;
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        // The native prompt is already gone after a block. Show the exact
+        // settings path, then retry from the dialog button if the patient has
+        // changed the setting.
+        const retry = await showPermissionHelp('microphone');
+        if (retry) {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          } catch {
+            toastError('Microphone is still blocked. Upload an audio file instead.');
+            return;
+          }
+        } else {
+          return;
+        }
+      } else if (error instanceof DOMException && error.name === 'NotFoundError') {
+        toastError('No microphone was found. Upload an audio file instead.');
+        return;
+      } else if (error instanceof DOMException && error.name === 'NotReadableError') {
+        toastError('Another app is using the microphone. Close it and try again.');
+        return;
+      } else {
+        toastError('Microphone access was blocked. Upload an audio file instead.');
+        return;
+      }
+    }
+
+    if (!stream) return;
+    const activeStream = stream;
+
+    try {
+      streamRef.current = activeStream;
       const preferredMime = preferredAudioMimeType();
       let recorder: MediaRecorder;
       try {
         recorder = preferredMime
-          ? new MediaRecorder(stream, { mimeType: preferredMime })
-          : new MediaRecorder(stream);
+          ? new MediaRecorder(activeStream, { mimeType: preferredMime })
+          : new MediaRecorder(activeStream);
       } catch {
-        recorder = new MediaRecorder(stream);
+        recorder = new MediaRecorder(activeStream);
       }
       chunksRef.current = [];
 
@@ -463,7 +692,7 @@ export default function Emergency() {
           setVoiceBlob(blob);
           setVoicePreview(URL.createObjectURL(blob));
         }
-        stream.getTracks().forEach((track) => track.stop());
+        activeStream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       };
 
@@ -472,7 +701,9 @@ export default function Emergency() {
       setRecordSeconds(0);
       setRecording(true);
     } catch {
-      toastError('Microphone access was blocked. Upload an audio file instead.');
+      activeStream.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      toastError('The microphone could not start. Upload an audio file instead.');
     }
   };
 
@@ -480,6 +711,20 @@ export default function Emergency() {
     recorderRef.current?.stop();
     recorderRef.current = null;
     setRecording(false);
+  };
+
+  const openMicrophonePermissionHelp = () => {
+    void showPermissionHelp('microphone', {
+      confirmLabel: 'I understand',
+      cancelLabel: 'Close',
+    });
+  };
+
+  const openLocationPermissionHelp = () => {
+    void showPermissionHelp('geolocation', {
+      confirmLabel: 'I understand',
+      cancelLabel: 'Close',
+    });
   };
 
   const removePhoto = () => {
@@ -601,7 +846,20 @@ export default function Emergency() {
     saveReport(stored, reportKey);
     setResult(stored);
     setSubmitting(false);
+
+    // The report is saved, so the draft no longer needs to survive a reload.
+    // Clear both keys in case the user id was discovered during submit.
+    writeDraft(draftKeyFor(userId), null);
+    if (activeUserId !== userId) writeDraft(draftKeyFor(activeUserId), null);
+    setEmergencyType('medical');
     setDescription('');
+    setLocationLabel('');
+    setLocation(null);
+    setManualLat('');
+    setManualLon('');
+    setManualOpen(false);
+    setHospitals([]);
+    hospitalLookup.reset();
     setPhotoFile(null);
     if (photoPreview) URL.revokeObjectURL(photoPreview);
     setPhotoPreview('');
@@ -616,6 +874,12 @@ export default function Emergency() {
     }
   };
 
+  const findingHospitals = hospitalLookup.isLoading;
+  const hospitalError =
+    hospitalLookup.error ??
+    (hospitalLookup.isSuccess && hospitals.length === 0
+      ? 'No hospital was found within 15 km. Call 112 now and use the map link.'
+      : '');
   const activeHospital = result?.nearest_hospital?.[0] || hospitals[0] || null;
   const reportCount = useMemo(() => reports.length, [reports]);
 
@@ -718,6 +982,7 @@ export default function Emergency() {
 
       <form
         onSubmit={submit}
+        data-state={submitting ? 'submitting' : result ? 'saved' : 'editing'}
         className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-7"
       >
         <div className="flex items-center gap-3">
@@ -775,7 +1040,10 @@ export default function Emergency() {
           />
         </label>
 
-        <div className="mt-4 rounded-2xl border border-gray-200 p-4">
+        <div
+          className="mt-4 rounded-2xl border border-gray-200 p-4"
+          data-permission={locationPermission}
+        >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold text-[#101217]">Location for hospital lookup</p>
@@ -787,7 +1055,7 @@ export default function Emergency() {
             </div>
             <button
               type="button"
-              onClick={useCurrentLocation}
+              onClick={() => void shareCurrentLocation()}
               disabled={locating}
               className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-primary px-4 text-[11px] font-bold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
@@ -826,7 +1094,7 @@ export default function Emergency() {
               />
               <button
                 type="button"
-                onClick={() => void useManualCoordinates()}
+                onClick={() => void applyManualCoordinates()}
                 className="min-h-[40px] rounded-xl border border-gray-200 bg-white px-4 text-[11px] font-bold text-[#101217] transition-colors hover:border-primary/30"
               >
                 Find hospitals
@@ -844,6 +1112,19 @@ export default function Emergency() {
               <MapPinIcon className="h-3.5 w-3.5" />
               Open this point in a map
             </a>
+          )}
+
+          {locationPermission === 'denied' && (
+            <p className="mt-2 text-[10px] font-semibold text-amber-600">
+              Location is blocked for Selorah.{' '}
+              <button
+                type="button"
+                onClick={() => void openLocationPermissionHelp()}
+                className="underline"
+              >
+                How to enable
+              </button>
+            </p>
           )}
         </div>
 
@@ -884,7 +1165,11 @@ export default function Emergency() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-gray-200 p-4">
+          <div
+            className="rounded-2xl border border-gray-200 p-4"
+            data-permission={microphonePermission}
+            data-state={recording ? 'recording' : voiceBlob ? 'ready' : 'idle'}
+          >
             <p className="text-xs font-bold text-[#101217]">Voice note</p>
             <p className="mt-0.5 text-[10px] font-medium text-gray-400">
               Record what you see if typing is difficult.
@@ -946,6 +1231,19 @@ export default function Emergency() {
                   />
                 </label>
               </div>
+            )}
+
+            {microphonePermission === 'denied' && (
+              <p className="mt-2 text-[10px] font-semibold text-amber-600">
+                Microphone is blocked for Selorah.{' '}
+                <button
+                  type="button"
+                  onClick={() => void openMicrophonePermissionHelp()}
+                  className="underline"
+                >
+                  How to enable
+                </button>
+              </p>
             )}
           </div>
         </div>
@@ -1055,7 +1353,7 @@ export default function Emergency() {
             </p>
             <button
               type="button"
-              onClick={useCurrentLocation}
+              onClick={() => void shareCurrentLocation()}
               disabled={locating}
               className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-full bg-primary px-5 text-[11px] font-bold text-white disabled:opacity-60"
             >

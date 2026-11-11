@@ -59,7 +59,7 @@ export default function ErrorFallback({ onRetry }: ErrorFallbackProps) {
             <span className="mx-auto mt-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <ArrowPathIcon className="h-5 w-5 animate-spin" />
             </span>
-            <h1 className="mt-5 text-xl font-bold tracking-tight">Updating Selorah</h1>
+            <h1 className="mt-5 text-xl font-bold tracking-tight">Opening Selorah</h1>
             <p className="mt-2 text-sm font-medium leading-relaxed text-gray-400">
               This will only take a moment. Your health data stays safe.
             </p>

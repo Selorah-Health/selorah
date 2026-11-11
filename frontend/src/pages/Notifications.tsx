@@ -33,6 +33,7 @@ import {
   syncPushSubscription,
   type PushStatus,
 } from '../lib/push';
+import { showPermissionHelp } from '../lib/permissions';
 
 function relativeTime(value?: string | null) {
   if (!value) return 'Just now';
@@ -182,6 +183,14 @@ export default function Notifications() {
     setPushBusy(true);
     setPushMessage(null);
     try {
+      // Once a browser permission is denied, requestPermission resolves to
+      // denied immediately. Show the settings path instead of a dead button.
+      if (getPushStatus() === 'denied') {
+        await showPermissionHelp('notifications');
+        setPushStatus(getPushStatus());
+        return;
+      }
+
       await enablePushNotifications(supabase);
       setPushStatus(getPushStatus());
       setPushMessage(
@@ -195,7 +204,15 @@ export default function Notifications() {
         // The subscription is already saved. The test is best effort.
       }
     } catch (error) {
-      setPushStatus(getPushStatus());
+      const status = getPushStatus();
+      setPushStatus(status);
+
+      if (status === 'denied') {
+        await showPermissionHelp('notifications');
+        setPushMessage('Notifications are blocked. Follow the settings steps to enable them.');
+        return;
+      }
+
       const message =
         error instanceof Error ? error.message : 'Could not turn on phone notifications.';
       setPushMessage(message);
@@ -313,7 +330,10 @@ export default function Notifications() {
         </div>
       )}
 
-      <section className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-6">
+      <section
+        data-state={pushStatus}
+        className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-6"
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -332,8 +352,14 @@ export default function Notifications() {
               )}
               {pushStatus === 'denied' && !pushMessage && (
                 <p className="mt-2 text-[11px] font-semibold leading-relaxed text-amber-600">
-                  Notifications are blocked. Open this site in your browser settings and allow
-                  notifications for Selorah.
+                  Notifications are blocked.{' '}
+                  <button
+                    type="button"
+                    onClick={() => void showPermissionHelp('notifications')}
+                    className="underline"
+                  >
+                    How to enable
+                  </button>
                 </p>
               )}
               {pushStatus === 'unconfigured' && !pushMessage && (
@@ -367,13 +393,16 @@ export default function Notifications() {
                 disabled={
                   pushBusy ||
                   pushStatus === 'unsupported' ||
-                  pushStatus === 'unconfigured' ||
-                  pushStatus === 'denied'
+                  pushStatus === 'unconfigured'
                 }
                 className="inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-[11px] font-bold text-white shadow-lg shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <BellAlertIcon className="h-4 w-4" />
-                {pushBusy ? 'Turning on' : 'Enable notifications'}
+                {pushBusy
+                  ? 'Turning on'
+                  : pushStatus === 'denied'
+                    ? 'How to enable'
+                    : 'Enable notifications'}
               </button>
             )}
             <span className="text-center text-[9px] font-black uppercase tracking-[0.12em] text-gray-300 sm:text-right">

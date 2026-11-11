@@ -243,7 +243,7 @@ export default function Home({
           {(!online || pending > 0) && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-orange-500">
               <SignalSlashIcon className="h-3.5 w-3.5" />
-              {online ? `${pending} waiting to sync` : 'Offline mode'}
+              {online ? `${pending} saved on this device` : 'Offline mode'}
             </span>
           )}
         </div>

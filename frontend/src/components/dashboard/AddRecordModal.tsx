@@ -10,7 +10,6 @@ import {
   ExclamationCircleIcon,
   HeartIcon,
   IdentificationIcon,
-  PencilSquareIcon,
   ShieldCheckIcon,
   SparklesIcon,
   UserGroupIcon,
@@ -28,6 +27,11 @@ import { dataUrlToBlob, prepareImageFile, readFileAsDataUrl } from '../../lib/im
 import { correctOcrText, extractTextFromImage, prewarmOcr } from '../../lib/ocr';
 import { enqueueAction } from '../../lib/offline/queue';
 import { cacheRecord } from '../../lib/offline/records';
+import {
+  isPermissionDeniedError,
+  showPermissionHelp,
+  usePermissionState,
+} from '../../lib/permissions';
 
 type Mode = 'profile' | 'file';
 
@@ -162,6 +166,7 @@ export default function AddRecordModal({
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraBusy, setCameraBusy] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const cameraPermission = usePermissionState('camera');
 
   useEffect(() => {
     mountedRef.current = true;
@@ -171,6 +176,9 @@ export default function AddRecordModal({
     };
   }, []);
 
+  // Opening the modal always starts a fresh form. This is an intentional
+  // reset of the previous draft, not a derived state update.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!isOpen) return;
     setMode('profile');
@@ -196,6 +204,7 @@ export default function AddRecordModal({
     setCameraBusy(false);
     setCameraError(null);
   }, [isOpen]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!cameraOpen) return;
@@ -375,13 +384,42 @@ export default function AddRecordModal({
       });
       streamRef.current = stream;
       setCameraOpen(true);
-    } catch {
+    } catch (error) {
       setCameraBusy(false);
-      setCameraError(
-        'The in-app camera could not start. Opening your phone camera instead.'
-      );
+
+      if (isPermissionDeniedError(error)) {
+        const retry = await showPermissionHelp('camera');
+        if (retry) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: { ideal: 'environment' } },
+              audio: false,
+            });
+            streamRef.current = stream;
+            setCameraOpen(true);
+            return;
+          } catch {
+            // Fall through to the file picker below.
+          }
+        }
+        setCameraError(
+          'Camera access is blocked. Allow camera access in settings, or use your phone camera instead.'
+        );
+      } else {
+        setCameraError(
+          'The in-app camera could not start. Opening your phone camera instead.'
+        );
+      }
+
       cameraRef.current?.click();
     }
+  };
+
+  const openCameraPermissionHelp = () => {
+    void showPermissionHelp('camera', {
+      confirmLabel: 'I understand',
+      cancelLabel: 'Close',
+    });
   };
 
   const capturePhoto = async () => {
@@ -531,7 +569,7 @@ export default function AddRecordModal({
   };
 
   const getProfile = async (user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }) => {
-    let profile = await ensurePatientProfile(supabase as SupabaseClient, {
+    const profile = await ensurePatientProfile(supabase as SupabaseClient, {
       id: user.id,
       email: user.email,
       user_metadata: user.user_metadata,
@@ -984,6 +1022,8 @@ export default function AddRecordModal({
                       type="button"
                       onClick={() => void openCamera()}
                       disabled={cameraBusy}
+                      data-state={cameraBusy ? 'starting' : cameraError ? 'error' : 'idle'}
+                      data-permission={cameraPermission}
                       className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-primary/40 bg-primary/5 p-5 text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
                     >
                       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm">
@@ -1015,6 +1055,18 @@ export default function AddRecordModal({
                   {cameraError && (
                     <p className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-[11px] font-semibold leading-relaxed text-amber-700">
                       {cameraError}
+                    </p>
+                  )}
+                  {cameraPermission === 'denied' && (
+                    <p className="mt-2 text-[10px] font-semibold text-amber-600">
+                      Camera is blocked for Selorah.{' '}
+                      <button
+                        type="button"
+                        onClick={() => void openCameraPermissionHelp()}
+                        className="underline"
+                      >
+                        How to enable
+                      </button>
                     </p>
                   )}
                 </>

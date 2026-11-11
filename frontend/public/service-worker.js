@@ -5,12 +5,17 @@ const BUILD_STAMP = '__SELORAH_BUILD_STAMP__';
 const VERSION = `selorah-${BUILD_STAMP}`;
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
-const PREVIOUS_CACHE_PREFIX = 'selorah-keep-';
+// Caches with this prefix hold data that must survive a new deployment. They
+// are intentionally excluded from the cleanup below.
+const PERSISTENT_CACHE_PREFIX = 'selorah-keep-';
 const PRECACHE_MANIFEST = '/precache-manifest.json';
 // The build replaces this comment with the hashed asset list. Keeping an
 // empty fallback means a dev or unstamped worker still installs the shell.
 const BUILD_ASSETS = /* __SELORAH_BUILD_ASSETS__ */ [];
 const NETWORK_TIMEOUT_MS = 4500;
+// Navigations bypass the HTTP cache so a new deployment is picked up even if
+// the browser still has an old index.html cached.
+const FRESH_HTML = { cache: 'reload' };
 
 const LEGAL_PATHS = new Set(['/privacy', '/terms', '/cookie-policy', '/dpa']);
 
@@ -55,11 +60,11 @@ const OFFLINE_HTML = `<!doctype html>
   </body>
 </html>`;
 
-function fetchWithTimeout(request, ms = NETWORK_TIMEOUT_MS) {
+function fetchWithTimeout(request, ms = NETWORK_TIMEOUT_MS, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
 
-  return fetch(request, { signal: controller.signal }).finally(() => {
+  return fetch(request, { ...options, signal: controller.signal }).finally(() => {
     clearTimeout(timer);
   });
 }
@@ -180,16 +185,24 @@ self.addEventListener('install', (event) => {
         retry = stillFailed;
       }
 
-      // A new build should take over immediately. The page listens for the
-      // controller change and reloads once, without asking the patient.
+      // skipWaiting is the custom-worker equivalent of Workbox's
+      // skipWaiting: true. The page listens for controllerchange and reloads
+      // once, without asking the patient.
       await self.skipWaiting();
-    })()
+    })().catch(() => {
+      // A cache failure must never leave the old worker in control. Activate
+      // the new worker even if some assets could not be prepared.
+      return self.skipWaiting().catch(() => undefined);
+    })
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
+      // Delete every cache from an older build. The current shell and asset
+      // caches are kept, and selorah-keep-* caches hold data that must survive
+      // deployments.
       const keys = await caches.keys();
       await Promise.all(
         keys
@@ -198,12 +211,19 @@ self.addEventListener('activate', (event) => {
               key.startsWith('selorah-') &&
               key !== SHELL_CACHE &&
               key !== ASSET_CACHE &&
-              !key.startsWith(PREVIOUS_CACHE_PREFIX)
+              !key.startsWith(PERSISTENT_CACHE_PREFIX)
           )
           .map((key) => caches.delete(key))
       );
+
+      // clientsClaim is the custom-worker equivalent of Workbox's
+      // clientsClaim: true. It puts the new worker in control immediately so
+      // the page can pick up the new build on this visit, not the next one.
       await self.clients.claim();
-    })()
+    })().catch(() => {
+      // Cache cleanup is best effort. Claim the page even if it fails.
+      return self.clients.claim().catch(() => undefined);
+    })
   );
 });
 
@@ -223,7 +243,11 @@ self.addEventListener('fetch', (event) => {
 
         if (LEGAL_PATHS.has(pathname)) {
           try {
-            const response = await fetchWithTimeout(request);
+            const response = await fetchWithTimeout(
+              request,
+              NETWORK_TIMEOUT_MS,
+              FRESH_HTML
+            );
             if (response.ok) await cache.put(request, response.clone());
             return response;
           } catch {
@@ -239,7 +263,11 @@ self.addEventListener('fetch', (event) => {
 
         const refresh = (async () => {
           try {
-            const response = await fetchWithTimeout(request);
+            const response = await fetchWithTimeout(
+              request,
+              NETWORK_TIMEOUT_MS,
+              FRESH_HTML
+            );
             if (response.ok) await cache.put('/index.html', response.clone());
           } catch {
             // Offline or slow network. The cached shell is still valid.
@@ -252,7 +280,11 @@ self.addEventListener('fetch', (event) => {
         }
 
         try {
-          const response = await fetchWithTimeout(request);
+          const response = await fetchWithTimeout(
+            request,
+            NETWORK_TIMEOUT_MS,
+            FRESH_HTML
+          );
           if (response.ok) await cache.put('/index.html', response.clone());
           return response;
         } catch {

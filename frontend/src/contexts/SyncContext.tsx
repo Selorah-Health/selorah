@@ -11,7 +11,6 @@ import {
 import { createClient } from '../lib/supabase/client';
 import { countQueuedActions, QUEUE_EVENT } from '../lib/offline/queue';
 import { flushQueue } from '../lib/offline/sync';
-import { useToast } from './ToastContext';
 
 type SyncContextValue = {
   online: boolean;
@@ -26,7 +25,6 @@ const SyncContext = createContext<SyncContextValue | null>(null);
 
 export function SyncProvider({ children }: { children: ReactNode }) {
   const supabase = createClient();
-  const { info, success, warning } = useToast();
   const [online, setOnline] = useState(
     typeof navigator === 'undefined' ? true : navigator.onLine
   );
@@ -40,7 +38,6 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     }
   });
   const syncingRef = useRef(false);
-  const wasOfflineRef = useRef(false);
 
   const refreshPending = useCallback(async () => {
     const count = await countQueuedActions();
@@ -64,10 +61,6 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         } catch {
           // ignore storage quota issues
         }
-        success(
-          `${result.synced} queued item${result.synced === 1 ? '' : 's'} synced.`,
-          'Back online'
-        );
       }
     } catch {
       // Keep the queue for the next attempt.
@@ -76,22 +69,20 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       setSyncing(false);
       refreshPending();
     }
-  }, [refreshPending, success, supabase]);
+  }, [refreshPending, supabase]);
 
   useEffect(() => {
     refreshPending();
 
+    // Sync is intentionally silent. The only offline UI is the quiet
+    // NetworkStatus indicator, so patients never see a sync prompt or toast.
     const handleOnline = () => {
       setOnline(true);
-      wasOfflineRef.current = false;
-      info('Connection restored. Your changes are syncing.');
       void syncNow();
     };
 
     const handleOffline = () => {
       setOnline(false);
-      wasOfflineRef.current = true;
-      warning('You are offline. Changes will be saved on this device and synced later.');
     };
 
     const handleQueue = () => {
@@ -118,7 +109,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
       window.removeEventListener(QUEUE_EVENT, handleQueue);
       window.clearInterval(interval);
     };
-  }, [info, refreshPending, syncNow, warning]);
+  }, [refreshPending, syncNow]);
 
   const value = useMemo<SyncContextValue>(
     () => ({ online, syncing, pending, lastSyncedAt, syncNow, refreshPending }),

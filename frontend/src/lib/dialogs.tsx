@@ -107,7 +107,7 @@ export function ConfirmDialogHost() {
             {options.message && (
               <p
                 id="selorah-confirm-message"
-                className="mt-1.5 text-xs font-medium leading-relaxed text-gray-500"
+                className="mt-1.5 whitespace-pre-line text-xs font-medium leading-relaxed text-gray-500"
               >
                 {options.message}
               </p>

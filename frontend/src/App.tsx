@@ -6,7 +6,6 @@ import RoleGuard from './components/RoleGuard';
 import ScrollToTop from './components/ScrollToTop';
 import InstallPrompt from './components/InstallPrompt';
 import PrivacyPrompt from './components/PrivacyPrompt';
-import PwaUpdatePrompt from './components/PwaUpdatePrompt';
 import { ConfirmDialogHost } from './lib/dialogs';
 import { ToastProvider } from './contexts/ToastContext';
 import { SyncProvider } from './contexts/SyncContext';
@@ -43,7 +42,6 @@ export default function App() {
       <ToastProvider>
         <SyncProvider>
           <ScrollToTop />
-          <PwaUpdatePrompt />
           <PrivacyPrompt />
           <ConfirmDialogHost />
           <ToastViewport />
