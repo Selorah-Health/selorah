@@ -113,6 +113,12 @@ CREATE TABLE waitlist (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
     full_name TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'patient' CHECK (role IN ('patient', 'doctor', 'hospital')),
+    source TEXT,
+    frustration TEXT,
+    details JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+CREATE UNIQUE INDEX waitlist_email_lower_key ON waitlist (lower(btrim(email)));
 

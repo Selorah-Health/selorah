@@ -27,6 +27,11 @@ import {
 import { createClient } from '../../lib/supabase/client';
 import { formatNaira } from '../../lib/earnings';
 import { readLocalSession, writeLocalSession } from '../../lib/auth/session';
+import {
+  normalizeWaitlistRole,
+  waitlistRoleLabel,
+  WAITLIST_ROLES,
+} from '../../lib/waitlist';
 import PortalSidebar from '../../components/PortalSidebar';
 import SEOTitle from '../../components/SEOTitle';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -46,6 +51,7 @@ type QaWaitlist = {
   role: string | null;
   source: string | null;
   frustration: string | null;
+  details: Record<string, unknown> | null;
   created_at: string;
 };
 
@@ -81,6 +87,8 @@ function roleTone(role?: string | null) {
   switch ((role || '').toLowerCase()) {
     case 'patient':
       return 'bg-primary/10 text-primary-hover';
+    case 'doctor':
+      return 'bg-[#EEF3FF] text-[#4262FF]';
     case 'provider':
     case 'hospital':
       return 'bg-[#EAFBF2] text-[#15955C]';
@@ -94,6 +102,11 @@ function roleTone(role?: string | null) {
     default:
       return 'bg-gray-100 text-gray-500';
   }
+}
+
+function waitlistDetail(row: QaWaitlist, key: string) {
+  const value = row.details?.[key];
+  return typeof value === 'string' ? value : '';
 }
 
 function initials(value?: string | null) {
@@ -274,15 +287,31 @@ export default function QaDashboard() {
             .order('created_at', { ascending: false }),
           supabase
             .from('waitlist')
-            .select('id, email, full_name, role, source, frustration, created_at')
+            .select('id, email, full_name, role, source, frustration, details, created_at')
             .order('created_at', { ascending: false }),
         ]);
 
+        let waitlistRows = (waitlistRes.data || []) as QaWaitlist[];
+        let waitlistError = waitlistRes.error;
+
+        if (
+          waitlistRes.error &&
+          /column .* does not exist/i.test(waitlistRes.error.message)
+        ) {
+          const fallback = await supabase
+            .from('waitlist')
+            .select('id, email, full_name, role, source, frustration, created_at')
+            .order('created_at', { ascending: false });
+
+          waitlistRows = (fallback.data || []) as QaWaitlist[];
+          waitlistError = fallback.error;
+        }
+
         if (usersRes.error) throw usersRes.error;
-        if (waitlistRes.error) throw waitlistRes.error;
+        if (waitlistError) throw waitlistError;
 
         setUsers((usersRes.data || []) as QaUser[]);
-        setWaitlist((waitlistRes.data || []) as QaWaitlist[]);
+        setWaitlist(waitlistRows);
         setError(null);
         setLastUpdated(new Date());
       } catch (err) {
@@ -395,11 +424,28 @@ export default function QaDashboard() {
 
   const exportWaitlist = () =>
     downloadCsv('selorah-waitlist.csv', [
-      ['Name', 'Email', 'Role', 'Source', 'Frustration', 'Joined'],
+      [
+        'Name',
+        'Email',
+        'Role',
+        'Contact person',
+        'Phone',
+        'City',
+        'Organization',
+        'Specialty',
+        'Source',
+        'Frustration',
+        'Joined',
+      ],
       ...waitlist.map((row) => [
         row.full_name,
         row.email,
-        roleLabel(row.role),
+        waitlistRoleLabel(row.role),
+        waitlistDetail(row, 'contact_name'),
+        waitlistDetail(row, 'phone'),
+        waitlistDetail(row, 'city'),
+        waitlistDetail(row, 'organization'),
+        waitlistDetail(row, 'specialty'),
         row.source || '',
         row.frustration || '',
         formatDate(row.created_at),
@@ -799,18 +845,12 @@ function WaitlistPage({
   const [query, setQuery] = useState('');
   const [role, setRole] = useState('all');
 
-  const roles = useMemo(() => {
-    const set = new Set<string>();
-    rows.forEach((row) => set.add((row.role || 'unknown').toLowerCase()));
-    return Array.from(set).sort();
-  }, [rows]);
-
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return rows.filter((row) => {
-      if (role !== 'all' && (row.role || 'unknown').toLowerCase() !== role) return false;
+      if (role !== 'all' && normalizeWaitlistRole(row.role) !== role) return false;
       if (!needle) return true;
-      return [row.full_name, row.email, row.role, row.source, row.frustration]
+      return [row.full_name, row.email, waitlistRoleLabel(row.role), row.source, row.frustration]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
@@ -858,16 +898,16 @@ function WaitlistPage({
           >
             All
           </button>
-          {roles.map((item) => (
+          {WAITLIST_ROLES.map((item) => (
             <button
-              key={item}
+              key={item.id}
               type="button"
-              onClick={() => setRole(item)}
+              onClick={() => setRole(item.id)}
               className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.08em] transition-colors ${
-                role === item ? 'bg-primary text-white' : 'bg-[#F8F9FE] text-gray-400'
+                role === item.id ? 'bg-primary text-white' : 'bg-[#F8F9FE] text-gray-400'
               }`}
             >
-              {roleLabel(item)}
+              {item.label}
             </button>
           ))}
         </div>
@@ -921,10 +961,10 @@ function WaitlistPage({
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={`w-fit rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] ${roleTone(
-                      row.role
+                      normalizeWaitlistRole(row.role)
                     )}`}
                   >
-                    {roleLabel(row.role)}
+                    {waitlistRoleLabel(row.role)}
                   </span>
                   <span className="text-[10px] font-medium capitalize text-gray-400 lg:hidden">
                     {row.source || 'Unknown source'}

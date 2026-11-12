@@ -14,6 +14,7 @@ import {
 } from './records';
 import { ensurePatientProfile } from '../records/patientProfile';
 import { insertMedicalRecord, uploadRecordFile } from '../records/storage';
+import { normalizeWaitlistRole } from '../waitlist';
 
 export type SyncResult = { synced: number; remaining: number };
 
@@ -140,7 +141,7 @@ async function runAction(supabase: SupabaseClient, action: QueuedAction) {
     const { error } = await supabase.from('waitlist').insert({
       email: action.payload.email,
       full_name: action.payload.fullName,
-      role: action.payload.role,
+      role: normalizeWaitlistRole(action.payload.role),
       source: action.payload.source,
     });
     if (!error) return { ok: true, permanent: false };

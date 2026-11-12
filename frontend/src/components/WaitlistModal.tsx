@@ -1,15 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRightIcon,
+  BuildingOffice2Icon,
   CheckIcon,
   EnvelopeIcon,
+  PhoneIcon,
   ShareIcon,
   UserIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
+import {
+  normalizeWaitlistRole,
+  WAITLIST_ROLES,
+  type WaitlistRole,
+} from '../lib/waitlist';
 
-export type WaitlistRole = 'patient' | 'doctor' | 'hospital' | 'other';
+export type { WaitlistRole } from '../lib/waitlist';
 
 interface WaitlistModalProps {
   isOpen: boolean;
@@ -17,13 +24,6 @@ interface WaitlistModalProps {
   initialRole?: WaitlistRole;
   source?: string;
 }
-
-const ROLES: { id: WaitlistRole; label: string; hint: string }[] = [
-  { id: 'patient', label: 'Patient', hint: 'Own my records' },
-  { id: 'doctor', label: 'Doctor', hint: 'Treat with context' },
-  { id: 'hospital', label: 'Hospital', hint: 'Faster intake' },
-  { id: 'other', label: 'Other', hint: 'Partner or ally' },
-];
 
 const FRUSTRATIONS = [
   'Lost or incomplete files',
@@ -43,8 +43,15 @@ export default function WaitlistModal({
 }: WaitlistModalProps) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<WaitlistRole>(initialRole);
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'survey'>('idle');
+  const [role, setRole] = useState<WaitlistRole>(() => normalizeWaitlistRole(initialRole));
+  const [contactName, setContactName] = useState('');
+  const [organization, setOrganization] = useState('');
+  const [specialty, setSpecialty] = useState('');
+  const [city, setCity] = useState('');
+  const [phone, setPhone] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'survey' | 'already'>(
+    'idle',
+  );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [savingSurvey, setSavingSurvey] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -58,7 +65,12 @@ export default function WaitlistModal({
     setStatus('idle');
     setFullName('');
     setEmail('');
-    setRole(initialRole);
+    setRole(normalizeWaitlistRole(initialRole));
+    setContactName('');
+    setOrganization('');
+    setSpecialty('');
+    setCity('');
+    setPhone('');
     setErrorMsg(null);
     setCopied(false);
 
@@ -79,10 +91,15 @@ export default function WaitlistModal({
 
   const validate = () => {
     if (fullName.trim().length < 2) {
-      return 'Tell us your full name so we can welcome you properly.';
+      return role === 'hospital'
+        ? 'Enter your hospital or clinic name.'
+        : 'Tell us your full name so we can welcome you properly.';
     }
     if (!EMAIL_PATTERN.test(email.trim())) {
       return 'Enter a valid email address.';
+    }
+    if (role === 'hospital' && contactName.trim().length < 2) {
+      return 'Add the name of the person we should contact at the hospital.';
     }
     return null;
   };
@@ -116,46 +133,80 @@ export default function WaitlistModal({
       }
 
       const supabase = createClient();
-      const row: Record<string, string> = {
+      const details: Record<string, string> = {};
+
+      if (role === 'hospital') {
+        details.contact_name = contactName.trim();
+        if (city.trim()) details.city = city.trim();
+        if (phone.trim()) details.phone = phone.trim();
+      }
+
+      if (role === 'doctor') {
+        if (organization.trim()) details.organization = organization.trim();
+        if (specialty.trim()) details.specialty = specialty.trim();
+      }
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc('join_waitlist', {
+        p_email: cleanEmail,
+        p_full_name: cleanName,
+        p_role: role,
+        p_source: source,
+        p_details: details,
+      });
+
+      if (!rpcError && rpcData) {
+        const payload = rpcData as { already_on_list?: boolean };
+        setStatus(payload.already_on_list ? 'already' : 'success');
+        return;
+      }
+
+      const baseRow: Record<string, unknown> = {
         email: cleanEmail,
         full_name: cleanName,
         role,
         source,
       };
+      if (Object.keys(details).length > 0) baseRow.details = details;
 
-      const { error } = await supabase.from('waitlist').insert(row);
+      const attempts: Record<string, unknown>[] = [
+        baseRow,
+        { email: cleanEmail, full_name: cleanName, role, source },
+        { email: cleanEmail, full_name: cleanName, role },
+        { email: cleanEmail, full_name: cleanName },
+      ];
 
-      if (error) {
-        if (/column .* does not exist/i.test(error.message)) {
-          const { error: fallbackError } = await supabase.from('waitlist').insert({
-            email: cleanEmail,
-            full_name: cleanName,
-          });
-          if (fallbackError) {
-            if (fallbackError.code === '23505' || /duplicate|unique/i.test(fallbackError.message)) {
-              throw new Error('already-on-list');
-            }
-            throw new Error(fallbackError.message || 'Failed to join waitlist');
-          }
-        } else if (error.code === '23505' || /duplicate|unique/i.test(error.message)) {
-          throw new Error('already-on-list');
-        } else if (error.code === '42P01' || /does not exist/i.test(error.message)) {
-          throw new Error('The waitlist is not available right now. Please try again soon.');
-        } else if (
-          error.code === '42501' ||
-          /row-level security|permission denied/i.test(error.message)
-        ) {
-          throw new Error('The waitlist is temporarily closed. Please try again soon.');
-        } else {
-          throw new Error(error.message || 'Failed to join waitlist');
+      let lastError: { message?: string; code?: string } | null = rpcError;
+
+      for (const attempt of attempts) {
+        const { error } = await supabase.from('waitlist').insert(attempt);
+        if (!error) {
+          setStatus('success');
+          return;
         }
+
+        lastError = error;
+
+        if (error.code === '23505' || /duplicate|unique/i.test(error.message)) {
+          setStatus('already');
+          return;
+        }
+
+        if (/column .* does not exist/i.test(error.message)) continue;
+        break;
       }
 
-      setStatus('success');
+      const message = lastError?.message || 'Failed to join waitlist';
+      if (lastError?.code === '42P01' || /does not exist/i.test(message)) {
+        throw new Error('The waitlist is not available right now. Please try again soon.');
+      }
+      if (lastError?.code === '42501' || /row-level security|permission denied/i.test(message)) {
+        throw new Error('The waitlist is temporarily closed. Please try again soon.');
+      }
+      throw new Error(message);
     } catch (error: unknown) {
       let message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
       if (message === 'already-on-list') {
-        setStatus('success');
+        setStatus('already');
         return;
       }
       if (/Failed to fetch|NetworkError|Load failed|fetch failed/i.test(message)) {
@@ -186,14 +237,14 @@ export default function WaitlistModal({
   const shareWaitlist = async () => {
     const shareData = {
       title: 'Selorah Health',
-      text: 'Join me on the Selorah Health waitlist. Own your medical records.',
+      text: 'I joined the Selorah Health waitlist. It gives patients ownership of their medical records. Join me:',
       url: window.location.origin,
     };
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(shareData.url);
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
         setCopied(true);
         setTimeout(() => setCopied(false), 2200);
       }
@@ -202,7 +253,9 @@ export default function WaitlistModal({
     }
   };
 
-  const success = status === 'success' || status === 'survey';
+  const success = status === 'success' || status === 'survey' || status === 'already';
+  const firstName = fullName.trim().split(' ')[0] || 'friend';
+  const isHospital = role === 'hospital';
 
   return (
     <div
@@ -243,18 +296,40 @@ export default function WaitlistModal({
               </div>
 
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#5FFAB0]">
-                You are on the list
+                {status === 'already' ? 'Already on the list' : 'You are on the list'}
               </p>
               <h3
                 id="waitlist-title"
                 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl"
               >
-                Welcome, {fullName.split(' ')[0] || 'friend'}.
+                {status === 'already'
+                  ? `You are already on the list, ${firstName}.`
+                  : isHospital
+                    ? 'We have your hospital request.'
+                    : `Welcome, ${firstName}.`}
               </h3>
               <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-[#9AA0C4]">
-                We will email <span className="font-semibold text-white">{email}</span> when early
-                access opens in your area.
+                {status === 'already' ? (
+                  <>
+                    We already have{' '}
+                    <span className="font-semibold text-white">{email}</span> saved. We will email
+                    you when early access opens in your area.
+                  </>
+                ) : (
+                  <>
+                    We will email <span className="font-semibold text-white">{email}</span> when
+                    early access opens in your area.
+                  </>
+                )}
               </p>
+
+              <div className="mt-7 rounded-2xl border border-[#5FFAB0]/20 bg-[#5FFAB0]/10 p-4 text-left">
+                <p className="text-sm font-semibold text-white">Know someone who needs this?</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#B7BCDA]">
+                  Invite a friend to join you on the waitlist. The more people who ask for portable
+                  records, the faster we can bring Selorah to your city.
+                </p>
+              </div>
 
               {status === 'success' && (
                 <div className="mt-7 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left">
@@ -293,19 +368,19 @@ export default function WaitlistModal({
               <div className="mt-7 grid gap-2.5">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={shareWaitlist}
                   className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-hover text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:brightness-110 active:scale-[0.99]"
                 >
-                  Back to home
-                  <ArrowRightIcon className="h-4 w-4" />
+                  <ShareIcon className="h-4 w-4" />
+                  {copied ? 'Invite link copied' : 'Invite a friend'}
                 </button>
                 <button
                   type="button"
-                  onClick={shareWaitlist}
+                  onClick={onClose}
                   className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] text-sm font-semibold text-white/80 transition-all hover:bg-white/[0.07]"
                 >
-                  <ShareIcon className="h-4 w-4" />
-                  {copied ? 'Link copied' : 'Invite a friend'}
+                  Back to home
+                  <ArrowRightIcon className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -346,26 +421,29 @@ export default function WaitlistModal({
                   <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">
                     I am joining as
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {ROLES.map((option) => {
+                  <div className="grid grid-cols-3 gap-2">
+                    {WAITLIST_ROLES.map((option) => {
                       const selected = role === option.id;
                       return (
                         <button
                           key={option.id}
                           type="button"
-                          onClick={() => setRole(option.id)}
+                          onClick={() => {
+                            setRole(option.id);
+                            setErrorMsg(null);
+                          }}
                           aria-pressed={selected}
-                          className={`min-h-[54px] rounded-2xl border px-3 py-2 text-left transition-all ${
+                          className={`min-h-[58px] rounded-2xl border px-2 py-2 text-left transition-all ${
                             selected
                               ? 'border-primary bg-primary/15 shadow-[inset_0_0_0_1px_rgba(97,131,255,0.65)]'
                               : 'border-white/10 bg-white/[0.03] hover:border-white/25'
                           }`}
                         >
-                          <span className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-bold text-white">{option.label}</span>
-                            {selected && <CheckIcon className="h-3.5 w-3.5 text-primary" />}
+                          <span className="flex items-center justify-between gap-1">
+                            <span className="text-[12px] font-bold text-white">{option.label}</span>
+                            {selected && <CheckIcon className="h-3 w-3 shrink-0 text-primary" />}
                           </span>
-                          <span className="mt-0.5 block text-[10px] font-medium text-white/40">
+                          <span className="mt-0.5 block text-[9px] font-medium leading-tight text-white/40">
                             {option.hint}
                           </span>
                         </button>
@@ -376,21 +454,25 @@ export default function WaitlistModal({
 
                 <label className="block">
                   <span className="mb-1.5 block text-xs font-semibold text-white/60">
-                    Full name
+                    {isHospital ? 'Hospital or clinic name' : 'Full name'}
                   </span>
                   <span className="relative block">
-                    <UserIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                    {isHospital ? (
+                      <BuildingOffice2Icon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                    ) : (
+                      <UserIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                    )}
                     <input
                       ref={nameRef}
                       type="text"
                       required
-                      autoComplete="name"
+                      autoComplete={isHospital ? 'organization' : 'name'}
                       value={fullName}
                       onChange={(event) => {
                         setFullName(event.target.value);
                         setErrorMsg(null);
                       }}
-                      placeholder="Your full name"
+                      placeholder={isHospital ? 'St. Mary Hospital' : 'Your full name'}
                       className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </span>
@@ -417,6 +499,93 @@ export default function WaitlistModal({
                     />
                   </span>
                 </label>
+
+                {isHospital && (
+                  <>
+                    <label className="block">
+                      <span className="mb-1.5 block text-xs font-semibold text-white/60">
+                        Contact person
+                      </span>
+                      <span className="relative block">
+                        <UserIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                        <input
+                          type="text"
+                          required
+                          autoComplete="name"
+                          value={contactName}
+                          onChange={(event) => {
+                            setContactName(event.target.value);
+                            setErrorMsg(null);
+                          }}
+                          placeholder="Who should we speak to?"
+                          className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                      </span>
+                    </label>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-white/60">
+                          City
+                        </span>
+                        <input
+                          type="text"
+                          autoComplete="address-level2"
+                          value={city}
+                          onChange={(event) => setCity(event.target.value)}
+                          placeholder="Lagos"
+                          className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] px-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1.5 block text-xs font-semibold text-white/60">
+                          Phone
+                        </span>
+                        <span className="relative block">
+                          <PhoneIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                          <input
+                            type="tel"
+                            autoComplete="tel"
+                            value={phone}
+                            onChange={(event) => setPhone(event.target.value)}
+                            placeholder="+234"
+                            className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </span>
+                      </label>
+                    </div>
+                  </>
+                )}
+
+                {role === 'doctor' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="mb-1.5 block text-xs font-semibold text-white/60">
+                        Hospital or clinic
+                      </span>
+                      <input
+                        type="text"
+                        autoComplete="organization"
+                        value={organization}
+                        onChange={(event) => setOrganization(event.target.value)}
+                        placeholder="Where you practise"
+                        className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] px-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1.5 block text-xs font-semibold text-white/60">
+                        Specialty
+                      </span>
+                      <input
+                        type="text"
+                        value={specialty}
+                        onChange={(event) => setSpecialty(event.target.value)}
+                        placeholder="Cardiology"
+                        className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] px-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </label>
+                  </div>
+                )}
 
                 <button
                   type="submit"

@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
 import SEOTitle from '../components/SEOTitle';
+import {
+  normalizeWaitlistRole,
+  WAITLIST_ROLES,
+  type WaitlistRole,
+} from '../lib/waitlist';
 
 type RoleBreakdown = Record<string, number>;
 
@@ -42,7 +47,7 @@ export default function WaitlistCount() {
       const msg = e instanceof Error ? e.message : 'Failed to load count';
       setError(
         /function .* does not exist|PGRST202/i.test(msg)
-          ? 'Run migrations/007_waitlist_stats_rpc.sql in Supabase, then refresh.'
+          ? 'Waitlist stats are not available yet. Apply the latest Supabase migrations, then refresh.'
           : msg
       );
     } finally {
@@ -56,7 +61,15 @@ export default function WaitlistCount() {
     return () => window.clearInterval(id);
   }, []);
 
-  const roleEntries = Object.entries(byRole).sort((a, b) => b[1] - a[1]);
+  const roleCounts = useMemo(() => {
+    const counts: Record<WaitlistRole, number> = { patient: 0, doctor: 0, hospital: 0 };
+    Object.entries(byRole).forEach(([role, count]) => {
+      counts[normalizeWaitlistRole(role)] += Number(count) || 0;
+    });
+    return counts;
+  }, [byRole]);
+
+  const hasRoleData = Object.keys(byRole).length > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#eef3fb] via-[#f5f8fc] to-[#e8eef8] font-sans flex flex-col items-center justify-center px-4 sm:px-6 py-16">
@@ -111,22 +124,20 @@ export default function WaitlistCount() {
           </div>
 
           {/* By role */}
-          {!error && !loading && roleEntries.length > 0 && (
+          {!error && !loading && hasRoleData && (
             <div className="border-t border-gray-100 pt-6">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-400 mb-3 px-1">
                 By role
               </p>
               <ul className="space-y-2">
-                {roleEntries.map(([role, n]) => (
+                {WAITLIST_ROLES.map(({ id, label }) => (
                   <li
-                    key={role}
+                    key={id}
                     className="flex items-center justify-between gap-3 bg-gray-50 rounded-full px-5 py-3"
                   >
-                    <span className="text-sm font-medium text-gray-800 capitalize truncate">
-                      {role === 'unknown' ? 'Unknown' : role}
-                    </span>
+                    <span className="text-sm font-medium text-gray-800 truncate">{label}</span>
                     <span className="text-sm font-bold text-gray-900 tabular-nums shrink-0">
-                      {n}
+                      {roleCounts[id]}
                     </span>
                   </li>
                 ))}
