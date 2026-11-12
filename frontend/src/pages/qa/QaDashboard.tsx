@@ -937,52 +937,69 @@ function WaitlistPage({
             <span className="text-right">Joined</span>
           </div>
           <div className="divide-y divide-gray-50">
-            {filtered.map((row) => (
-              <div
-                key={row.id}
-                className="grid gap-2 px-4 py-3.5 transition-colors hover:bg-[#F8F9FE] lg:grid-cols-[1.4fr_1.5fr_0.7fr_0.8fr_0.7fr] lg:items-center lg:gap-3"
-              >
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[10px] font-black uppercase text-primary">
-                    {initials(row.full_name || row.email)}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-bold text-[#101217]">
-                      {row.full_name || 'No name'}
-                    </p>
-                    <p className="mt-0.5 truncate text-[10px] font-medium text-gray-400 lg:hidden">
-                      {row.email}
-                    </p>
+            {filtered.map((row) => {
+              const meta = [
+                waitlistDetail(row, 'contact_name'),
+                waitlistDetail(row, 'organization'),
+                waitlistDetail(row, 'specialty'),
+                waitlistDetail(row, 'city'),
+                waitlistDetail(row, 'phone'),
+              ]
+                .filter(Boolean)
+                .join(' · ');
+
+              return (
+                <div
+                  key={row.id}
+                  className="grid gap-2 px-4 py-3.5 transition-colors hover:bg-[#F8F9FE] lg:grid-cols-[1.4fr_1.5fr_0.7fr_0.8fr_0.7fr] lg:items-center lg:gap-3"
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FE] text-[10px] font-black uppercase text-primary">
+                      {initials(row.full_name || row.email)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-[#101217]">
+                        {row.full_name || 'No name'}
+                      </p>
+                      {meta && (
+                        <p className="mt-0.5 truncate text-[10px] font-medium text-gray-400">
+                          {meta}
+                        </p>
+                      )}
+                      <p className="mt-0.5 truncate text-[10px] font-medium text-gray-400 lg:hidden">
+                        {row.email}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <p className="hidden min-w-0 truncate text-[11px] font-medium text-gray-500 lg:block">
-                  {row.email}
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`w-fit rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] ${roleTone(
-                      normalizeWaitlistRole(row.role)
-                    )}`}
-                  >
-                    {waitlistRoleLabel(row.role)}
-                  </span>
-                  <span className="text-[10px] font-medium capitalize text-gray-400 lg:hidden">
-                    {row.source || 'Unknown source'}
-                  </span>
-                </div>
-                <p className="hidden truncate text-[10px] font-medium capitalize text-gray-400 lg:block">
-                  {row.source || 'Unknown'}
-                </p>
-                <p className="text-[10px] font-semibold text-gray-400 lg:text-right">
-                  {formatDate(row.created_at)}
-                </p>
-                {row.frustration && (
-                  <p className="rounded-xl bg-[#F8F9FE] px-3 py-2 text-[10px] font-medium italic leading-relaxed text-gray-500 lg:col-span-5">
-                    “{row.frustration}”
+                  <p className="hidden min-w-0 truncate text-[11px] font-medium text-gray-500 lg:block">
+                    {row.email}
                   </p>
-                )}
-              </div>
-            ))}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`w-fit rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] ${roleTone(
+                        normalizeWaitlistRole(row.role)
+                      )}`}
+                    >
+                      {waitlistRoleLabel(row.role)}
+                    </span>
+                    <span className="text-[10px] font-medium capitalize text-gray-400 lg:hidden">
+                      {row.source || 'Unknown source'}
+                    </span>
+                  </div>
+                  <p className="hidden truncate text-[10px] font-medium capitalize text-gray-400 lg:block">
+                    {row.source || 'Unknown'}
+                  </p>
+                  <p className="text-[10px] font-semibold text-gray-400 lg:text-right">
+                    {formatDate(row.created_at)}
+                  </p>
+                  {row.frustration && (
+                    <p className="rounded-xl bg-[#F8F9FE] px-3 py-2 text-[10px] font-medium italic leading-relaxed text-gray-500 lg:col-span-5">
+                      “{row.frustration}”
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
