@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  ArrowRightIcon,
   ArrowUpRightIcon,
   CheckCircleIcon,
   DocumentTextIcon,
@@ -19,6 +20,17 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SEOTitle from '../components/SEOTitle';
 import CTAButton from '../components/CTAButton';
+import WaitlistProof from '../components/WaitlistProof';
+import MotionProvider from '../components/MotionProvider';
+import Reveal from '../components/landing/Reveal';
+import RoleSolutionsSection from '../components/landing/RoleSolutionsSection';
+import TrustSecuritySection from '../components/landing/TrustSecuritySection';
+import BlogTeaserSection from '../components/landing/BlogTeaserSection';
+import ProductPreviewSection from '../components/landing/ProductPreviewSection';
+import CareTeamsSection from '../components/landing/CareTeamsSection';
+import WhatHappensNext from '../components/landing/WhatHappensNext';
+import { AdSlot, PartnerBand } from '../components/landing/AdSections';
+import { useSiteContent } from '../contexts/SiteContentContext';
 
 const PROBLEM_CARDS = [
   {
@@ -46,7 +58,7 @@ const HOW_STEPS = [
     icon: DocumentTextIcon,
     detailTitle: 'Encrypted vault',
     detailBody:
-      'Upload lab results, scans, prescriptions and visit notes. Everything is encrypted before it leaves your device.',
+      'Upload lab results, scans, prescriptions, and visit notes. Everything is encrypted before it leaves your device.',
   },
   {
     n: '02',
@@ -86,44 +98,6 @@ const OWNERSHIP_CARDS = [
   },
 ];
 
-const FAQS = [
-  {
-    question: 'What exactly is Selorah Health?',
-    answer:
-      'Selorah is a patient-owned health record. You keep your lab results, scans, prescriptions and visit history in one encrypted place, then share them with any clinic using a time-limited QR code.',
-  },
-  {
-    question: 'Who can see my medical records?',
-    answer:
-      'Only you, until you choose to share. When you generate a code you pick the records and the duration. Every open is logged, and you can revoke access at any moment.',
-  },
-  {
-    question: 'Do hospitals need to be on Selorah?',
-    answer:
-      'No. A clinician can open your shared link in any browser and see the records you allowed. Hospitals that join get faster intake, NIN lookup and a full audit trail.',
-  },
-  {
-    question: 'How is my data protected?',
-    answer:
-      'Records are encrypted in transit and at rest. Access links expire, are single purpose, and can be revoked instantly. We never sell your health information.',
-  },
-  {
-    question: 'Can I log in with my phone number or NIN?',
-    answer:
-      'Yes. Once your phone number or 11-digit NIN is saved to your profile, you can use either to sign in instead of typing your email. You can still use email at any time.',
-  },
-  {
-    question: 'What does Selorah Pro add?',
-    answer:
-      'Pro starts at ₦2,000 a month, or ₦20,000 a year with two months free. It unlocks up to 10 emergency contacts, priority record verification, family sharing, ad-free use and early access to research rewards.',
-  },
-  {
-    question: 'Is Selorah available across Africa?',
-    answer:
-      'We are starting in Nigeria and building for the continent. Join the waitlist and we will tell you the moment your city is live.',
-  },
-];
-
 function ProgressBar() {
   const [progress, setProgress] = useState(0);
   useEffect(() => {
@@ -147,10 +121,12 @@ function ProgressBar() {
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm font-medium text-primary">{children}</p>;
+}
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-primary">
-      {children}
-    </p>
+    <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-primary">{children}</p>
   );
 }
 
@@ -158,10 +134,13 @@ function ProblemSection() {
   const [active, setActive] = useState(1);
 
   return (
-    <section className="bg-white px-5 py-16 sm:px-8 sm:py-20 md:py-24 lg:px-10">
+    <section
+      id="product"
+      className="scroll-mt-24 bg-white px-5 py-16 sm:px-8 sm:py-20 md:py-24 lg:px-10"
+    >
       <div className="mx-auto max-w-6xl">
         <div className="mb-10 max-w-3xl sm:mb-14">
-          <SectionLabel>The problem</SectionLabel>
+          <Eyebrow>The problem</Eyebrow>
           <h2 className="text-3xl font-bold leading-tight tracking-tight text-[#101217] sm:text-4xl md:text-[2.75rem]">
             Patients always start from zero at a new hospital.
           </h2>
@@ -182,14 +161,14 @@ function ProblemSection() {
                 onMouseEnter={() => setActive(index)}
                 onFocus={() => setActive(index)}
                 aria-pressed={isActive}
-                className={`group relative flex flex-col overflow-hidden rounded-3xl border p-6 text-left transition-all duration-300 sm:p-7 ${
+                className={`group relative flex flex-col overflow-hidden rounded-none border p-6 text-left transition-all duration-300 sm:p-7 ${
                   isActive
                     ? 'border-primary bg-primary text-white shadow-xl shadow-primary/20'
                     : 'border-gray-100 bg-[#F8F9FA] text-[#101217] hover:border-primary/30'
                 }`}
               >
                 <span
-                  className={`flex h-11 w-11 items-center justify-center rounded-2xl transition-colors ${
+                  className={`flex h-11 w-11 items-center justify-center rounded-none transition-colors ${
                     isActive ? 'bg-white/15 text-white' : 'bg-white text-primary shadow-sm'
                   }`}
                 >
@@ -232,7 +211,7 @@ function HowItWorksSection() {
     <section id="how-it-works" className="scroll-mt-24">
       <div className="bg-white px-5 pb-8 pt-16 sm:px-8 sm:pt-20 md:pt-24 lg:px-10">
         <div className="mx-auto max-w-6xl">
-          <SectionLabel>How it works</SectionLabel>
+          <Eyebrow>How it works</Eyebrow>
           <h2 className="text-3xl font-bold tracking-tight text-[#101217] sm:text-4xl md:text-[2.75rem]">
             THREE STEPS.
             <br />
@@ -255,7 +234,7 @@ function HowItWorksSection() {
                   onMouseLeave={() => setHovered(null)}
                 >
                   <div
-                    className={`relative z-10 flex flex-col gap-3 rounded-2xl px-4 py-5 transition-all duration-300 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-6 ${
+                    className={`relative z-10 flex flex-col gap-3 rounded-none px-4 py-5 transition-all duration-300 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-6 ${
                       isHovered
                         ? 'border-transparent bg-[#020924] text-white shadow-xl'
                         : 'border-b border-[var(--border)] bg-transparent text-[#101217]'
@@ -294,7 +273,7 @@ function HowItWorksSection() {
                       isHovered ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
                     }`}
                   >
-                    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
+                    <div className="overflow-hidden rounded-none border border-gray-100 bg-white shadow-2xl">
                       <div className="flex items-center gap-1.5 border-b border-gray-100 bg-gray-50 px-4 py-2.5">
                         <span className="h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />
                         <span className="h-2.5 w-2.5 rounded-full bg-[#FEBC2E]" />
@@ -302,7 +281,7 @@ function HowItWorksSection() {
                       </div>
                       <div className="grid min-h-[140px] grid-cols-2">
                         <div className="flex flex-col items-center justify-center gap-2.5 bg-primary/10 p-5">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-none bg-primary">
                             <Icon className="h-7 w-7 text-white" />
                           </div>
                           <p className="text-center text-sm font-bold leading-tight text-primary">
@@ -329,6 +308,10 @@ function HowItWorksSection() {
 
 function OwnershipSection() {
   const [hovered, setHovered] = useState<number | null>(null);
+  const { content } = useSiteContent();
+  const section = content.ownership;
+
+  if (!section.enabled) return null;
 
   return (
     <section
@@ -337,11 +320,16 @@ function OwnershipSection() {
     >
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 flex flex-col justify-between gap-6 sm:mb-16 md:flex-row md:items-end">
-          <h2 className="max-w-lg text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-[2.75rem]">
-            OWNERSHIP YOU <span className="text-primary">CAN FEEL</span>
-          </h2>
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-primary">
+              {section.eyebrow}
+            </p>
+            <h2 className="max-w-lg text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-[2.75rem]">
+              {section.title}
+            </h2>
+          </div>
           <p className="max-w-sm text-base leading-relaxed text-white/50 sm:text-lg">
-            Why Selorah exists, and why the timing matters for patients across Africa.
+            {section.body}
           </p>
         </div>
 
@@ -354,7 +342,7 @@ function OwnershipSection() {
                 key={card.title}
                 onMouseEnter={() => setHovered(index)}
                 onMouseLeave={() => setHovered(null)}
-                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-7 ${
+                className={`rounded-none border p-6 transition-all duration-300 sm:p-7 ${
                   isHovered
                     ? 'border-primary bg-primary shadow-xl shadow-primary/30'
                     : 'border-white/10 bg-white/5'
@@ -383,53 +371,55 @@ function OwnershipSection() {
 
 function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const { content } = useSiteContent();
+  const section = content.faq;
+
+  if (!section.enabled || section.items.length === 0) return null;
 
   return (
     <section
       id="faq"
-      className="scroll-mt-24 border-t border-gray-100 bg-white px-5 py-16 sm:px-8 sm:py-20 md:py-24 lg:px-10"
+      className="scroll-mt-24 border-t border-[#E5E7EB] bg-white px-5 py-20 sm:px-8 sm:py-24 lg:px-10"
     >
       <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
-        <div>
-          <SectionLabel>Questions</SectionLabel>
-          <h2 className="text-3xl font-bold tracking-tight text-[#101217] sm:text-4xl md:text-[2.75rem]">
-            Frequently asked
-          </h2>
-          <p className="mt-4 max-w-sm text-sm font-medium leading-relaxed text-gray-500 sm:text-base">
-            Still unsure? Tell us what is on your mind when you join the waitlist and we will
-            answer directly.
-          </p>
-        </div>
+        <Reveal>
+          <div>
+            <SectionLabel>{section.eyebrow}</SectionLabel>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[#101217] sm:text-4xl">
+              {section.title}
+            </h2>
+            <p className="mt-4 max-w-sm text-base leading-relaxed text-[#4B5563]">
+              {section.body}
+            </p>
+          </div>
+        </Reveal>
 
-        <div className="border-y border-gray-100">
-          {FAQS.map((item, index) => {
+        <div className="border-y border-[#E5E7EB]">
+          {section.items.map((item, index) => {
             const isOpen = openIndex === index;
             return (
-              <div key={item.question} className={index > 0 ? 'border-t border-gray-100' : ''}>
+              <div key={item.question} className={index > 0 ? 'border-t border-[#E5E7EB]' : ''}>
                 <button
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   aria-expanded={isOpen}
-                  className="flex w-full items-start justify-between gap-4 py-5 text-left transition-colors hover:text-primary sm:py-6"
+                  className="flex w-full items-start justify-between gap-6 py-5 text-left transition-colors sm:py-6"
                 >
                   <span
-                    className={`text-sm font-bold leading-snug sm:text-base ${
-                      isOpen ? 'text-primary' : 'text-[var(--foreground)]'
+                    className={`text-base font-medium leading-snug ${
+                      isOpen ? 'text-primary' : 'text-[#101217]'
                     }`}
                   >
                     {item.question}
                   </span>
-                  <span
-                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${
-                      isOpen ? 'bg-primary text-white' : 'bg-gray-50 text-gray-400'
-                    }`}
-                  >
-                    {isOpen ? (
-                      <MinusIcon className="h-3.5 w-3.5" strokeWidth={2.5} />
-                    ) : (
-                      <PlusIcon className="h-3.5 w-3.5" strokeWidth={2.5} />
-                    )}
-                  </span>
+                  {isOpen ? (
+                    <MinusIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
+                  ) : (
+                    <PlusIcon
+                      className="mt-0.5 h-4 w-4 shrink-0 text-[#8A94A6]"
+                      strokeWidth={2}
+                    />
+                  )}
                 </button>
                 <div
                   className={`grid transition-all duration-300 ease-out ${
@@ -437,7 +427,7 @@ function FaqSection() {
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <p className="max-w-xl pr-8 text-sm leading-relaxed text-gray-500">
+                    <p className="max-w-xl pr-8 text-sm leading-relaxed text-[#6B7280]">
                       {item.answer}
                     </p>
                   </div>
@@ -452,111 +442,113 @@ function FaqSection() {
 }
 
 function FounderSection() {
-  return (
-    <section className="relative overflow-hidden bg-[#F8F9FA] px-5 py-16 sm:px-8 sm:py-20 md:py-24 lg:px-10">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-32 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl"
-      />
-      <div className="relative mx-auto max-w-6xl">
-        <div className="mb-10 flex flex-col gap-4 sm:mb-14 md:flex-row md:items-end md:justify-between">
-          <div>
-            <SectionLabel>The founder</SectionLabel>
-            <h2 className="text-3xl font-bold tracking-tight text-[#101217] sm:text-4xl md:text-[2.75rem]">
-              MEET <span className="text-primary">SAMUEL</span>
-            </h2>
-          </div>
-          <p className="max-w-sm text-sm font-medium leading-relaxed text-gray-500">
-            One record. Every hospital. Built so patients stop starting over.
-          </p>
-        </div>
+  const { content } = useSiteContent();
+  const section = content.founder;
 
-        <div className="grid gap-5 lg:grid-cols-12">
-          <div className="relative overflow-hidden rounded-[32px] bg-[#020924] lg:col-span-5">
-            <div className="relative aspect-[4/5] w-full sm:aspect-[5/4] lg:aspect-[4/5]">
+  if (!section.enabled) return null;
+
+  return (
+    <section id="founder" className="scroll-mt-24 bg-[#F6F9FC] px-5 py-20 sm:px-8 sm:py-24 lg:px-10">
+      <div className="mx-auto max-w-6xl">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start lg:gap-16">
+          <Reveal>
+            <div>
               <img
-                src="/landing/team-samuel.png"
-                alt="Samuel Amanze, Founder of Selorah Health"
+                src={section.imageUrl}
+                alt={`${section.name}, Founder of Selorah Health`}
                 width={640}
                 height={800}
                 decoding="async"
                 fetchPriority="high"
-                className="absolute inset-0 h-full w-full object-cover"
+                className="aspect-[4/5] w-full rounded-none object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#020924] via-[#020924]/20 to-transparent" />
+              <div className="mt-4">
+                <p className="text-base font-semibold text-[#101217]">{section.name}</p>
+                <p className="text-sm text-[#6B7280]">{section.role}</p>
+              </div>
             </div>
-            <div className="absolute inset-x-0 bottom-0 p-6 sm:p-7">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#5FFAB0]">
-                Founder and CEO
-              </p>
-              <h3 className="mt-1 text-2xl font-bold text-white sm:text-3xl">Samuel Amanze</h3>
-              <p className="mt-1 text-xs font-semibold text-white/50">Selorah Health</p>
-            </div>
-          </div>
+          </Reveal>
 
-          <div className="flex flex-col justify-between gap-8 rounded-[32px] border border-gray-100 bg-white p-6 shadow-sm sm:p-9 lg:col-span-7 lg:p-10">
+          <Reveal delay={80}>
             <div>
-              <p className="text-xl font-semibold leading-relaxed tracking-tight text-[#101217] sm:text-2xl">
-                &ldquo;No one should have to carry a folder of paper to prove their own medical
-                history.&rdquo;
+              <SectionLabel>{section.eyebrow}</SectionLabel>
+              <p className="mt-3 max-w-2xl text-2xl font-medium leading-relaxed tracking-[-0.02em] text-[#101217] sm:text-3xl">
+                &ldquo;{section.quote}&rdquo;
               </p>
-              <p className="mt-5 text-sm leading-relaxed text-gray-500 sm:text-base">
-                Samuel is building Selorah Health so patients across Africa can own, carry, and
-                share their health records on their own terms. Not time-bound cards, not
-                duplicated tests, and not paper folders that never move with them.
-              </p>
-              <p className="mt-4 text-sm leading-relaxed text-gray-500 sm:text-base">
-                The vision is simple: your health story should follow you everywhere, and only you
-                decide who gets to read it.
-              </p>
-            </div>
-
-            <div className="grid gap-3 border-t border-gray-100 pt-6 sm:grid-cols-3">
-              {[
-                { value: '1', label: 'record you own' },
-                { value: '3', label: 'steps to share' },
-                { value: '0', label: 'data ever sold' },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <p className="text-2xl font-bold tracking-tight text-primary">{stat.value}</p>
-                  <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">
-                    {stat.label}
-                  </p>
-                </div>
+              {section.bio.map((paragraph) => (
+                <p key={paragraph} className="mt-4 max-w-xl text-base leading-relaxed text-[#4B5563] first:mt-6">
+                  {paragraph}
+                </p>
               ))}
-            </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <a
-                href="https://www.linkedin.com/in/thedesigngm"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Samuel Amanze on LinkedIn"
-                className="flex min-h-[44px] items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-[#101217] transition-colors hover:border-primary/40 hover:text-primary"
-              >
-                <svg className="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 9H1.778V20.452H5.337V9zM3.557 1.018c1.144 0 2.063.926 2.063 2.065 0 1.138-.92 2.063-2.063 2.063-1.14 0-2.064-.925-2.064-2.063 0-1.139.925-2.065 2.064-2.065zm1.782 17.434H1.778V9h3.561v9.452z" />
-                </svg>
-                LinkedIn
-              </a>
-              <a
-                href="https://x.com/thedesigngm"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Samuel Amanze on X"
-                className="flex min-h-[44px] items-center gap-2 rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-[#101217] transition-colors hover:border-primary/40 hover:text-primary"
-              >
-                <svg className="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.722-8.829L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
-                </svg>
-                X / Twitter
-              </a>
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-400">
-                <CheckCircleIcon className="h-3.5 w-3.5 text-[#5FFAB0]" />
-                Building in public
-              </span>
+              <div className="mt-7 flex flex-wrap items-center gap-5">
+                <a
+                  href={section.linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${section.name} on LinkedIn`}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-[#101217] transition-colors hover:text-primary"
+                >
+                  <img
+                    src="/landing/social-linkedin.png"
+                    alt=""
+                    className="h-4 w-4 object-contain"
+                    aria-hidden="true"
+                  />
+                  LinkedIn
+                </a>
+                <a
+                  href={section.xUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${section.name} on X`}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-[#101217] transition-colors hover:text-primary"
+                >
+                  <svg
+                    className="h-4 w-4 text-primary"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.722-8.829L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
+                  </svg>
+                  X / Twitter
+                </a>
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#6B7280]">
+                  <CheckCircleIcon className="h-4 w-4 text-[#0F9F6E]" />
+                  Building in public
+                </span>
+              </div>
             </div>
-          </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCtaSection({ onJoin }: { onJoin: () => void }) {
+  const { content } = useSiteContent();
+  const section = content.finalCta;
+
+  if (!section.enabled) return null;
+
+  return (
+    <section
+      id="waitlist"
+      className="scroll-mt-24 bg-[var(--background)] px-5 py-16 sm:px-8 sm:py-20 lg:px-10"
+    >
+      <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+        <Eyebrow>{section.eyebrow}</Eyebrow>
+        <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#101217] sm:text-4xl md:text-5xl">
+          {section.title}
+        </h2>
+        <p className="mb-8 max-w-lg text-base text-muted sm:text-lg">{section.body}</p>
+        <CTAButton size="lg" onClick={onJoin}>
+          {section.ctaLabel}
+        </CTAButton>
+        <div className="mt-6">
+          <WaitlistProof />
         </div>
       </div>
     </section>
@@ -570,6 +562,7 @@ export default function LandingPage() {
   const [showStickyCta, setShowStickyCta] = useState(false);
   const heroRef = useRef<HTMLElement | null>(null);
   const footerSentinelRef = useRef<HTMLDivElement | null>(null);
+  const { content } = useSiteContent();
 
   const openWaitlist = (role: WaitlistRole = 'patient', source = 'unknown') => {
     setModalRole(role);
@@ -590,103 +583,106 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[var(--background)] font-sans text-[var(--foreground)] selection:bg-primary/30 selection:text-primary">
-      <SEOTitle title="The OS for Health Records" />
-      <ProgressBar />
-      <Header />
+    <MotionProvider>
+      <div className="min-h-screen overflow-x-hidden bg-[var(--background)] font-sans text-[var(--foreground)] selection:bg-primary/30 selection:text-primary">
+        <SEOTitle
+          title="The OS for Health Records"
+          description="Selorah gives you one encrypted health record you can carry to any hospital, share with a time-limited QR code, and revoke whenever you choose. Join the waitlist."
+        />
+        <ProgressBar />
+        <Header
+          theme="dark"
+          announcementTone="dark"
+          announcement={
+            <span>
+              {content.announcement.text}{' '}
+              <button
+                type="button"
+                onClick={() => openWaitlist('patient', 'announcement')}
+                className="inline-flex items-center gap-1 font-medium text-[#8FA8FF] transition-colors hover:text-white"
+              >
+                {content.announcement.linkLabel}
+                <ArrowRightIcon className="h-3.5 w-3.5" strokeWidth={2} />
+              </button>
+            </span>
+          }
+        />
 
-      <section
-        ref={heroRef}
-        className="relative flex min-h-[100svh] w-full items-center overflow-hidden bg-black pt-16 sm:pt-20"
-      >
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster="/assets/hero-bg-image-1.jpg"
-          className="absolute inset-0 h-full w-full object-cover opacity-40"
+        <section
+          ref={heroRef}
+          className="relative flex min-h-[100svh] w-full items-center overflow-hidden bg-black pt-28 sm:pt-32"
         >
-          <source src="/assets/hero-bg-video-1.mp4" type="video/mp4" />
-        </video>
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster="/assets/hero-bg-image-1.jpg"
+            className="absolute inset-0 h-full w-full object-cover opacity-40"
+          >
+            <source src="/assets/hero-bg-video-1.mp4" type="video/mp4" />
+          </video>
 
-        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-5 pb-20 pt-8 text-center sm:px-8 sm:pb-24 sm:pt-12 lg:px-10">
-          <div className="flex w-full max-w-3xl flex-col items-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-1.5 text-xs font-medium text-white sm:mb-8 sm:text-sm">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#5FFAB0]" aria-hidden />
-              Health records for Africa
-            </div>
-            <h1 className="mb-5 text-4xl font-bold uppercase leading-[1.05] tracking-tighter text-white sm:mb-6 sm:text-5xl md:text-6xl lg:text-[4.25rem]">
-              Tired of having to
-              <br className="hidden sm:block" /> start from zero?
-            </h1>
-            <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-white/75 sm:mb-10 sm:text-lg md:text-xl">
-              Repeating the same tests and buying new cards at every hospital? Selorah gives you
-              complete ownership of your medical records.
-            </p>
-            <div className="mb-8">
-              <CTAButton size="lg" onClick={() => openWaitlist('patient', 'hero')}>
-                Join The Waitlist
-              </CTAButton>
-            </div>
-            <div className="flex items-center gap-3">
-              <img
-                src="/landing/hero-avatar.png"
-                alt="People joining Selorah"
-                width={280}
-                height={40}
-                decoding="async"
-                fetchPriority="high"
-                className="h-9 w-auto max-w-[200px] object-contain sm:h-11 sm:max-w-none"
-              />
-              <span className="text-xs text-white/60 sm:text-sm">Join 50+ on the waitlist</span>
+          <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-5 pb-20 pt-8 text-center sm:px-8 sm:pb-24 sm:pt-12 lg:px-10">
+            <div className="flex w-full max-w-3xl flex-col items-center">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-1.5 text-xs font-medium text-white sm:mb-8 sm:text-sm">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#5FFAB0]" aria-hidden />
+                {content.hero.eyebrow}
+              </div>
+              <h1 className="mb-5 max-w-3xl text-4xl font-bold uppercase leading-[1.05] tracking-tighter text-white sm:mb-6 sm:text-5xl md:text-6xl lg:text-[4.25rem]">
+                {content.hero.title}
+              </h1>
+              <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-white/75 sm:mb-10 sm:text-lg md:text-xl">
+                {content.hero.subtitle}
+              </p>
+              <div className="mb-8">
+                <CTAButton size="lg" onClick={() => openWaitlist('patient', 'hero')}>
+                  {content.hero.ctaLabel}
+                </CTAButton>
+              </div>
+              <WaitlistProof tone="dark" />
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <ProblemSection />
-      <HowItWorksSection />
-      <OwnershipSection />
-      <FaqSection />
-      <FounderSection />
+        <ProductPreviewSection />
+        <PartnerBand />
+        <ProblemSection />
+        <HowItWorksSection />
+        <CareTeamsSection onJoin={openWaitlist} />
+        <AdSlot />
+        <RoleSolutionsSection onJoin={openWaitlist} />
+        <OwnershipSection />
+        <TrustSecuritySection />
+        <BlogTeaserSection />
+        <WhatHappensNext />
+        <AdSlot variant="native" />
+        <FaqSection />
+        <FounderSection />
+        <FinalCtaSection onJoin={() => openWaitlist('patient', 'final-cta')} />
 
-      <section className="bg-[var(--background)] px-5 py-16 sm:px-8 sm:py-20 lg:px-10">
-        <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-          <SectionLabel>Waitlist</SectionLabel>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-[#101217] sm:text-4xl md:text-5xl">
-            JOIN THE WAITLIST!
-          </h2>
-          <p className="mb-8 max-w-lg text-base text-muted sm:text-lg">
-            Get early access to health record ownership across Africa.
-          </p>
-          <CTAButton size="lg" onClick={() => openWaitlist('patient', 'final-cta')}>
-            Join The Waitlist
-          </CTAButton>
-        </div>
-      </section>
+        <div ref={footerSentinelRef} aria-hidden className="h-px" />
+        <Footer />
 
-      <div ref={footerSentinelRef} aria-hidden className="h-px" />
-      <Footer />
+        {showStickyCta && (
+          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md sm:hidden">
+            <CTAButton
+              className="w-full justify-center"
+              onClick={() => openWaitlist('patient', 'sticky-mobile')}
+            >
+              Join The Waitlist
+            </CTAButton>
+          </div>
+        )}
 
-      {showStickyCta && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md sm:hidden">
-          <CTAButton
-            className="w-full justify-center"
-            onClick={() => openWaitlist('patient', 'sticky-mobile')}
-          >
-            Join The Waitlist
-          </CTAButton>
-        </div>
-      )}
-
-      <WaitlistModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        initialRole={modalRole}
-        source={modalSource}
-      />
-    </div>
+        <WaitlistModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          initialRole={modalRole}
+          source={modalSource}
+        />
+      </div>
+    </MotionProvider>
   );
 }

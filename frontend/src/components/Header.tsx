@@ -5,94 +5,97 @@ import {
   Bars3Icon,
   BeakerIcon,
   BuildingOffice2Icon,
-  CheckCircleIcon,
   ChevronDownIcon,
   ShieldCheckIcon,
   UserCircleIcon,
+  UserGroupIcon,
   UserIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import WaitlistModal from './WaitlistModal';
+import WaitlistModal, { type WaitlistRole } from './WaitlistModal';
 import CTAButton from './CTAButton';
 import ThemeToggle from './ThemeToggle';
+import { contactPathForRole } from '../lib/contact';
+import { listenForTheme, readTheme, type Theme } from '../lib/theme';
 
 interface HeaderProps {
   theme?: 'dark' | 'light';
   isLoggedIn?: boolean;
   userAvatar?: string;
+  /** Slim announcement bar shown above the main navigation. */
+  announcement?: React.ReactNode;
+  /** Force the announcement bar to a dark treatment while keeping the nav light. */
+  announcementTone?: 'light' | 'dark';
+  /** Path that section links should scroll within. Defaults to the home page. */
+  basePath?: string;
 }
 
-const PORTALS = [
+const SOLUTIONS: {
+  id: string;
+  role?: WaitlistRole;
+  name: string;
+  description: string;
+  icon: typeof UserIcon;
+  href?: string;
+}[] = [
   {
     id: 'patient',
-    name: 'Patient Dashboard',
-    description:
-      'Own and share your health records with time-bound QR codes. You decide who sees what and for how long.',
-    href: '/login',
+    role: 'patient',
+    name: 'For patients',
+    description: 'Own your history and share it with a time-limited code.',
     icon: UserIcon,
-    features: [
-      'Time-bound QR sharing',
-      'Full history in one place',
-      'Emergency info when it counts',
-      'Earn from research shares',
-    ],
+  },
+  {
+    id: 'doctor',
+    role: 'doctor',
+    name: 'For doctors',
+    description: 'Open a shared record in the browser, without a new portal.',
+    icon: UserGroupIcon,
   },
   {
     id: 'hospital',
-    name: 'Hospitals Portal',
-    description:
-      'Faster intake when patients bring a clear trail. Less missing paperwork at the desk.',
-    href: '/login',
+    name: 'For hospitals',
+    description: 'Discuss intake, record access, and a hospital rollout.',
     icon: BuildingOffice2Icon,
-    features: [
-      'Scan or open a patient shared QR code',
-      'Unified EMR search by NIN',
-      'Faster emergency handovers',
-      'Share of research revenue',
-    ],
+    href: contactPathForRole('hospital'),
   },
   {
     id: 'researcher',
-    name: 'Researchers Portal',
-    description:
-      'Consent-first participation. Access structured, patient-controlled data while patients retain full ownership.',
-    href: '/login',
+    name: 'For researchers',
+    description: 'Discuss studies, cohorts, and approved data access.',
     icon: BeakerIcon,
-    features: [
-      'Clear consent paths',
-      'Structured datasets',
-      'Patient stays in control',
-      'Ethical data access',
-    ],
+    href: contactPathForRole('researcher'),
   },
   {
     id: 'insurer',
-    name: 'Insurers Portal',
-    description:
-      'Receive patient-authorised medical context for cleaner claims. Full audit trail of every access granted.',
-    href: '/login',
+    name: 'For insurers',
+    description: 'Discuss claims workflows and member record access.',
     icon: ShieldCheckIcon,
-    features: [
-      'Patient-authorised context',
-      'Fewer missing documents',
-      'Clear audit of shares',
-      'Faster claims processing',
-    ],
+    href: contactPathForRole('insurer'),
   },
 ];
 
-export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar }: HeaderProps) {
+export default function Header({
+  theme = 'dark',
+  isLoggedIn = false,
+  userAvatar,
+  announcement,
+  announcementTone = 'light',
+  basePath = '/',
+}: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalRole, setModalRole] = useState<WaitlistRole>('patient');
+  const [modalSource, setModalSource] = useState('header');
   const [isScrolled, setIsScrolled] = useState(false);
-  const [portalsOpen, setPortalsOpen] = useState(false);
-  const [activePortal, setActivePortal] = useState(PORTALS[0]);
-  const portalsRef = useRef<HTMLDivElement>(null);
+  const [solutionsOpen, setSolutionsOpen] = useState(false);
+  const [appearance, setAppearance] = useState<Theme>(() => readTheme());
+  const solutionsRef = useRef<HTMLDivElement>(null);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isDark = theme === 'dark';
+  const isDark = theme === 'dark' || appearance === 'dark';
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 16);
@@ -101,15 +104,17 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => listenForTheme(setAppearance), []);
+
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
-      if (portalsRef.current && !portalsRef.current.contains(event.target as Node)) {
-        setPortalsOpen(false);
+      if (solutionsRef.current && !solutionsRef.current.contains(event.target as Node)) {
+        setSolutionsOpen(false);
       }
     };
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setPortalsOpen(false);
+        setSolutionsOpen(false);
         setIsMenuOpen(false);
       }
     };
@@ -122,8 +127,10 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
   }, []);
 
   useEffect(() => {
+    // Route changes close any open navigation surface.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMenuOpen(false);
-    setPortalsOpen(false);
+    setSolutionsOpen(false);
     document.body.style.overflow = '';
   }, [location.pathname]);
 
@@ -136,42 +143,73 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
 
   const scrollToSection = (id: string) => {
     setIsMenuOpen(false);
-    setPortalsOpen(false);
-    if (location.pathname !== '/') {
-      navigate('/#' + id);
-      setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 120);
+    setSolutionsOpen(false);
+    if (location.pathname !== basePath) {
+      navigate(basePath + '#' + id);
+      window.setTimeout(
+        () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }),
+        120
+      );
       return;
     }
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const openPortals = () => {
+  const openSolutions = () => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
-    setPortalsOpen(true);
+    setSolutionsOpen(true);
   };
 
-  const closePortals = () => {
-    hoverTimer.current = setTimeout(() => setPortalsOpen(false), 140);
+  const closeSolutions = () => {
+    hoverTimer.current = setTimeout(() => setSolutionsOpen(false), 140);
+  };
+
+  const openWaitlist = (role: WaitlistRole = 'patient', source = 'header') => {
+    setModalRole(role);
+    setModalSource(source);
+    setIsModalOpen(true);
+    setSolutionsOpen(false);
+    setIsMenuOpen(false);
   };
 
   const navBg = isScrolled
     ? isDark
       ? 'border-b border-white/10 bg-[#05081a]/80 shadow-[0_12px_40px_-18px_rgba(0,0,0,0.8)] backdrop-blur-xl'
-      : 'border-b border-gray-100 bg-white/85 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.22)] backdrop-blur-xl'
+      : 'border-b border-[#E7EBF3] bg-white/85 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.22)] backdrop-blur-xl'
     : 'border-b border-transparent bg-transparent';
 
-  const navLink = `rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors ${
+  const navLink = `rounded-none px-3 py-2 text-sm font-medium transition-colors ${
     isDark
       ? 'text-white/70 hover:bg-white/[0.06] hover:text-white'
-      : 'text-gray-600 hover:bg-gray-50 hover:text-[#101217]'
+      : 'text-[#4B5563] hover:bg-[#F6F8FA] hover:text-[#101217]'
   }`;
 
   return (
     <>
-      <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <WaitlistModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialRole={modalRole}
+        source={modalSource}
+      />
 
       <nav className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${navBg}`}>
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:h-[4.5rem] sm:px-8 lg:px-10">
+        {announcement && (
+          <div
+            className={`border-b px-5 py-2 text-center text-xs font-medium sm:text-sm ${
+              announcementTone === 'dark'
+                ? 'border-white/10 bg-[#020924] text-white/70'
+                : isDark
+                  ? 'border-white/10 bg-[#05081a] text-white/70'
+                  : 'border-[#E7EBF3] bg-[#F6F9FC] text-[#4B5563]'
+            }`}
+          >
+            <div className="mx-auto flex max-w-6xl items-center justify-center gap-1.5">
+              {announcement}
+            </div>
+          </div>
+        )}
+        <div className="flex h-16 w-full items-center justify-between gap-4 px-5 sm:h-[4.5rem] sm:px-8 lg:px-10">
           <Link
             to="/"
             className="group flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-85"
@@ -192,156 +230,133 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
           </Link>
 
           <div
-            className={`hidden items-center gap-0.5 lg:flex ${
-              isDark ? 'text-white/70' : 'text-gray-600'
+            className={`hidden flex-1 items-center justify-center gap-0.5 lg:flex ${
+              isDark ? 'text-white/70' : 'text-[#4B5563]'
             }`}
           >
-            <button type="button" onClick={() => scrollToSection('how-it-works')} className={navLink}>
-              How It Works
+            <button type="button" onClick={() => scrollToSection('product')} className={navLink}>
+              Product
             </button>
 
             <div
-              ref={portalsRef}
+              ref={solutionsRef}
               className="relative"
-              onMouseEnter={openPortals}
-              onMouseLeave={closePortals}
+              onMouseEnter={openSolutions}
+              onMouseLeave={closeSolutions}
             >
               <button
                 type="button"
-                aria-expanded={portalsOpen}
+                aria-expanded={solutionsOpen}
                 aria-haspopup="true"
-                onClick={() => setPortalsOpen((value) => !value)}
+                onClick={() => setSolutionsOpen((value) => !value)}
                 className={`${navLink} flex items-center gap-1 ${
-                  portalsOpen
+                  solutionsOpen
                     ? isDark
                       ? 'bg-white/[0.08] text-white'
-                      : 'bg-gray-50 text-[#101217]'
+                      : 'bg-[#F6F8FA] text-[#101217]'
                     : ''
                 }`}
               >
-                Portals
+                Solutions
                 <ChevronDownIcon
                   className={`h-3.5 w-3.5 transition-transform duration-200 ${
-                    portalsOpen ? 'rotate-180' : ''
+                    solutionsOpen ? 'rotate-180' : ''
                   }`}
                 />
               </button>
 
               <div
-                className={`absolute left-1/2 top-full z-50 w-[640px] max-w-[calc(100vw-3rem)] -translate-x-1/2 pt-3 transition-all duration-200 ${
-                  portalsOpen
+                className={`absolute left-1/2 top-full z-50 w-[640px] max-w-[calc(100vw-3rem)] -translate-x-1/2 pt-2 transition-all duration-200 ${
+                  solutionsOpen
                     ? 'pointer-events-auto translate-y-0 opacity-100'
                     : 'pointer-events-none -translate-y-1 opacity-0'
                 }`}
               >
-                <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-[0_30px_80px_-24px_rgba(15,23,42,0.35)]">
-                  <div className="flex items-center justify-between border-b border-gray-50 px-5 py-3.5">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-300">
-                        Choose your portal
-                      </p>
-                      <p className="text-sm font-bold text-[#101217]">
-                        One record, every care setting
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-primary">
-                      4 roles
-                    </span>
+                <div className="overflow-hidden rounded-none border border-[#E5E7EB] bg-white shadow-[0_16px_40px_-20px_rgba(15,23,42,0.24)]">
+                  <div className="grid grid-cols-3 gap-1 p-1.5">
+                    {SOLUTIONS.map((solution) => {
+                      const Icon = solution.icon;
+                      const cardClass =
+                        'group flex h-full flex-col items-start gap-3 rounded-none px-3 py-3 text-left transition-colors hover:bg-[#F6F8FA] focus-visible:bg-[#F6F8FA] focus-visible:outline-none';
+                      const content = (
+                        <>
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none border border-[#E5E7EB] bg-white text-[#6B7280] transition-colors group-hover:text-primary">
+                            <Icon className="h-4 w-4" strokeWidth={1.8} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-medium text-[#101217]">
+                              {solution.name}
+                            </span>
+                            <span className="mt-1 block text-xs leading-relaxed text-[#6B7280]">
+                              {solution.description}
+                            </span>
+                          </span>
+                        </>
+                      );
+
+                      if (solution.href) {
+                        return (
+                          <Link
+                            key={solution.id}
+                            to={solution.href}
+                            onClick={() => setSolutionsOpen(false)}
+                            className={cardClass}
+                          >
+                            {content}
+                          </Link>
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={solution.id}
+                          type="button"
+                          onClick={() =>
+                            openWaitlist(solution.role || 'patient', `header-${solution.id}`)
+                          }
+                          className={cardClass}
+                        >
+                          {content}
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  <div className="flex min-h-[268px]">
-                    <div className="flex w-[220px] shrink-0 flex-col gap-1 border-r border-gray-50 bg-[#F8F9FA] p-2.5">
-                      {PORTALS.map((portal) => {
-                        const Icon = portal.icon;
-                        const isActive = activePortal.id === portal.id;
-                        return (
-                          <button
-                            key={portal.id}
-                            type="button"
-                            onMouseEnter={() => setActivePortal(portal)}
-                            onFocus={() => setActivePortal(portal)}
-                            onClick={() => {
-                              navigate(portal.href);
-                              setPortalsOpen(false);
-                            }}
-                            className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all ${
-                              isActive
-                                ? 'bg-white text-[#101217] shadow-sm ring-1 ring-primary/15'
-                                : 'text-gray-500 hover:bg-white/70 hover:text-[#101217]'
-                            }`}
-                          >
-                            <span
-                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                                isActive ? 'bg-primary text-white' : 'bg-white text-primary'
-                              }`}
-                            >
-                              <Icon className="h-4 w-4" strokeWidth={1.8} />
-                            </span>
-                            <span className="truncate">{portal.name}</span>
-                            {isActive && (
-                              <ArrowRightIcon className="ml-auto h-3.5 w-3.5 text-primary" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex flex-1 flex-col p-5">
-                      <p className="text-sm leading-relaxed text-gray-600">
-                        {activePortal.description}
-                      </p>
-                      <ul className="mt-4 space-y-2.5">
-                        {activePortal.features.map((feature) => (
-                          <li key={feature} className="flex items-start gap-2.5 text-sm text-gray-700">
-                            <CheckCircleIcon
-                              className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-                              strokeWidth={2}
-                            />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigate(activePortal.href);
-                          setPortalsOpen(false);
-                        }}
-                        className="mt-auto flex items-center gap-1.5 pt-4 text-xs font-bold text-primary transition-colors hover:text-primary-hover"
-                      >
-                        Continue to {activePortal.name}
-                        <ArrowRightIcon className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                  <div className="flex items-center justify-between gap-4 border-t border-[#EFF2F7] px-4 py-3">
+                    <span className="text-xs text-[#8A94A6]">Built for the whole visit.</span>
+                    <button
+                      type="button"
+                      onClick={() => openWaitlist('patient', 'header-solutions-footer')}
+                      className="shrink-0 text-xs font-medium text-primary transition-colors hover:text-primary-hover"
+                    >
+                      Join the waitlist
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <button type="button" onClick={() => scrollToSection('ownership')} className={navLink}>
-              Benefits
+            <button type="button" onClick={() => scrollToSection('security')} className={navLink}>
+              Security
             </button>
-            <button type="button" onClick={() => scrollToSection('faq')} className={navLink}>
-              FAQ
-            </button>
+            <Link to="/blog" className={navLink}>
+              Blog
+            </Link>
             <Link to="/pricing" className={navLink}>
               Pricing
             </Link>
-            <Link to="/contact" className={navLink}>
-              Contact
-            </Link>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex shrink-0 items-center gap-2.5">
             <div className="hidden items-center gap-2 lg:flex">
               <ThemeToggle tone={isDark ? 'dark' : 'light'} />
               {isLoggedIn ? (
                 <Link
                   to="/dashboard"
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
+                  className={`flex items-center gap-2 rounded-none border px-3 py-1.5 text-sm font-medium transition-colors ${
                     isDark
                       ? 'border-white/15 text-white/80 hover:border-white/30 hover:text-white'
-                      : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:text-[#101217]'
+                      : 'border-[#E7EBF3] text-[#4B5563] hover:border-[#D5DCE8] hover:text-[#101217]'
                   }`}
                 >
                   <span className="flex h-7 w-7 overflow-hidden rounded-full border border-white/20 bg-primary/10">
@@ -354,21 +369,9 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
                   Dashboard
                 </Link>
               ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className={`rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors ${
-                      isDark
-                        ? 'text-white/70 hover:bg-white/[0.06] hover:text-white'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-[#101217]'
-                    }`}
-                  >
-                    Log in
-                  </Link>
-                  <CTAButton size="sm" onClick={() => setIsModalOpen(true)}>
-                    Join The Waitlist
-                  </CTAButton>
-                </>
+                <CTAButton size="sm" onClick={() => openWaitlist('patient', 'header-cta')}>
+                  Join the waitlist
+                </CTAButton>
               )}
             </div>
 
@@ -376,8 +379,8 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
 
             <button
               type="button"
-              className={`relative z-50 flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-full transition-colors lg:hidden ${
-                isDark ? 'text-white hover:bg-white/10' : 'text-gray-900 hover:bg-gray-100'
+              className={`relative z-50 flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-none transition-colors lg:hidden ${
+                isDark ? 'text-white hover:bg-white/10' : 'text-[#101217] hover:bg-[#F4F6FA]'
               }`}
               onClick={() => setIsMenuOpen((value) => !value)}
               aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
@@ -390,91 +393,109 @@ export default function Header({ theme = 'dark', isLoggedIn = false, userAvatar 
       </nav>
 
       {isMenuOpen && (
-        <div className="fixed inset-0 z-40 overflow-y-auto bg-[#05081a] px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-24 lg:hidden">
+        <div className="fixed inset-0 z-40 overflow-y-auto bg-white px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-24 lg:hidden">
           <div className="mx-auto flex max-w-md flex-col">
-            <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
+            <p className="mb-3 text-xs font-medium text-[#8A94A6]">
               Navigate
             </p>
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+            <div className="overflow-hidden rounded-none border border-[#E5E7EB] bg-white">
               {[
-                { label: 'How It Works', id: 'how-it-works' },
-                { label: 'Benefits', id: 'ownership' },
+                { label: 'Product', id: 'product' },
+                { label: 'Security', id: 'security' },
                 { label: 'FAQ', id: 'faq' },
               ].map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => scrollToSection(item.id)}
-                  className="flex min-h-[52px] w-full items-center justify-between border-b border-white/[0.06] px-4 text-left text-[15px] font-semibold text-white/85 last:border-b-0 hover:bg-white/[0.04]"
+                  className="flex min-h-[52px] w-full items-center justify-between border-b border-[#EFF2F7] px-4 text-left text-[15px] font-medium text-[#101217] last:border-b-0 hover:bg-[#F6F8FA]"
                 >
                   {item.label}
-                  <ArrowRightIcon className="h-4 w-4 text-white/30" />
+                  <ArrowRightIcon className="h-4 w-4 text-[#A7B0C0]" />
                 </button>
               ))}
               <Link
-                to="/pricing"
+                to="/blog"
                 onClick={() => setIsMenuOpen(false)}
-                className="flex min-h-[52px] w-full items-center justify-between border-b border-white/[0.06] px-4 text-left text-[15px] font-semibold text-white/85 hover:bg-white/[0.04]"
+                className="flex min-h-[52px] w-full items-center justify-between border-b border-[#EFF2F7] px-4 text-left text-[15px] font-medium text-[#101217] hover:bg-[#F6F8FA]"
               >
-                Pricing
-                <ArrowRightIcon className="h-4 w-4 text-white/30" />
+                Blog
+                <ArrowRightIcon className="h-4 w-4 text-[#A7B0C0]" />
               </Link>
               <Link
-                to="/contact"
+                to="/pricing"
                 onClick={() => setIsMenuOpen(false)}
-                className="flex min-h-[52px] w-full items-center justify-between px-4 text-left text-[15px] font-semibold text-white/85 hover:bg-white/[0.04]"
+                className="flex min-h-[52px] w-full items-center justify-between px-4 text-left text-[15px] font-medium text-[#101217] hover:bg-[#F6F8FA]"
               >
-                Contact
-                <ArrowRightIcon className="h-4 w-4 text-white/30" />
+                Pricing
+                <ArrowRightIcon className="h-4 w-4 text-[#A7B0C0]" />
               </Link>
             </div>
 
-            <p className="mb-3 mt-7 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
-              Portals
+            <p className="mb-3 mt-7 text-xs font-medium text-[#8A94A6]">
+              Solutions
             </p>
             <div className="grid grid-cols-1 gap-2">
-              {PORTALS.map((portal) => {
-                const Icon = portal.icon;
-                return (
-                  <Link
-                    key={portal.id}
-                    to={portal.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex min-w-0 min-h-[60px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors hover:border-primary/40 hover:bg-primary/10"
-                  >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              {SOLUTIONS.map((solution) => {
+                const Icon = solution.icon;
+                const className =
+                  'flex min-w-0 min-h-[60px] items-center gap-3 rounded-none border border-[#E5E7EB] bg-white px-4 py-3 text-left transition-colors hover:bg-[#F6F8FA]';
+                const content = (
+                  <>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-none bg-primary/10 text-primary">
                       <Icon className="h-5 w-5" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold text-white">
-                        {portal.name}
+                      <span className="block truncate text-sm font-medium text-[#101217]">
+                        {solution.name}
                       </span>
-                      <span className="mt-0.5 block truncate text-[11px] text-white/40">
-                        {portal.description}
+                      <span className="mt-0.5 block truncate text-xs text-[#6B7280]">
+                        {solution.href ? 'Talk to our team' : 'Join the waitlist'}
                       </span>
                     </span>
-                    <ArrowRightIcon className="h-4 w-4 shrink-0 text-white/30" />
-                  </Link>
+                    <ArrowRightIcon className="h-4 w-4 shrink-0 text-[#A7B0C0]" />
+                  </>
+                );
+
+                if (solution.href) {
+                  return (
+                    <Link
+                      key={solution.id}
+                      to={solution.href}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={className}
+                    >
+                      {content}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <button
+                    key={solution.id}
+                    type="button"
+                    onClick={() => openWaitlist(solution.role || 'patient', `mobile-${solution.id}`)}
+                    className={className}
+                  >
+                    {content}
+                  </button>
                 );
               })}
             </div>
 
             <div className="mt-7 grid grid-cols-1 gap-2.5">
-              {!isLoggedIn && (
+              {isLoggedIn && (
                 <Link
-                  to="/login"
+                  to="/dashboard"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex min-h-[50px] items-center justify-center rounded-2xl border border-white/15 text-sm font-bold text-white"
+                  className="flex min-h-[50px] items-center justify-center rounded-none border border-[#E5E7EB] text-sm font-medium text-[#101217]"
                 >
-                  Log in
+                  Dashboard
                 </Link>
               )}
               <CTAButton
                 className="w-full justify-center"
-                onClick={() => {
-                  setIsModalOpen(true);
-                  setIsMenuOpen(false);
-                }}
+                onClick={() => openWaitlist('patient', 'mobile-cta')}
               >
                 Join The Waitlist
               </CTAButton>

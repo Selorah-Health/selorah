@@ -6,6 +6,7 @@ import {
   FireIcon,
   SparklesIcon,
   TrophyIcon,
+  UserPlusIcon,
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '../lib/supabase/client';
@@ -117,15 +118,22 @@ export default function Rewards() {
   }, [supabase, toastError]);
 
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => void load(), 0);
     const refresh = () => void load();
     window.addEventListener(POINTS_EVENT, refresh);
-    return () => window.removeEventListener(POINTS_EVENT, refresh);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(POINTS_EVENT, refresh);
+    };
   }, [load]);
 
   const claimed = useMemo(
     () => new Set(events.map((event) => event.reference)),
     [events]
+  );
+  const claimedTaskCount = useMemo(
+    () => TASKS.filter((task) => claimed.has(`task:${task.id}`)).length,
+    [claimed]
   );
   const level = levelFor(total);
 
@@ -180,8 +188,45 @@ export default function Rewards() {
           <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-600">
             Health points on this page measure your progress and unlock levels. They are not cash
             and cannot be withdrawn. Survey points are separate: they are paid in Earnings at N20
-            per point.
+            per point. Referral rewards are also paid in Earnings, N1,000 for you and N800 for your
+            friend, once your friend claims 3 tasks.
           </p>
+        </div>
+      </div>
+
+      <div className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EEF3FF] text-primary">
+              <UserPlusIcon className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+                Referral reward progress
+              </p>
+              <p className="mt-1 text-2xl font-bold tracking-tight text-[#101217]">
+                {Math.min(claimedTaskCount, 3)} of 3 tasks
+              </p>
+              <p className="mt-1 max-w-xl text-[11px] font-medium leading-relaxed text-gray-400">
+                Claim any 3 tasks to unlock N800 for you and N1,000 for the friend who invited you.
+                Both rewards land in Earnings and can be withdrawn once you have at least N1,000.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/referrals')}
+            className="flex min-h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 text-[10px] font-bold text-primary transition-colors hover:border-primary/40"
+          >
+            Open referrals
+            <ChevronRightIcon className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-100">
+          <div
+            className="h-full rounded-full bg-primary transition-all"
+            style={{ width: `${Math.min(100, (claimedTaskCount / 3) * 100)}%` }}
+          />
         </div>
       </div>
 
@@ -219,8 +264,8 @@ export default function Rewards() {
           </p>
           <p className="mt-1 text-2xl font-bold text-[#101217]">{events.length}</p>
           <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-400">
-            Health points track your level and are not cash. Survey points are separate and pay N20
-            each in Earnings.
+            Health points track your level and are not cash. Survey points pay N20 each in
+            Earnings. Referral rewards unlock after 3 tasks.
           </p>
           <button
             type="button"

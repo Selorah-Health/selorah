@@ -1,13 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  CheckIcon,
-  LockClosedIcon,
-  MagnifyingGlassIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import {
   hasPrivacyDecision,
   listenForPrivacy,
@@ -32,13 +25,13 @@ function Toggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`relative flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
         checked ? 'border-primary bg-primary' : 'border-gray-200 bg-gray-200'
       }`}
     >
       <span
-        className={`absolute h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-          checked ? 'translate-x-[26px]' : 'translate-x-[3px]'
+        className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+          checked ? 'translate-x-[22px]' : 'translate-x-[2px]'
         }`}
       />
     </button>
@@ -105,53 +98,37 @@ export default function PrivacyPrompt() {
     <>
       {!open && (
         <div className="fixed inset-x-0 bottom-0 z-[250] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5">
-          <div className="mx-auto max-w-3xl overflow-hidden rounded-[26px] border border-white/60 bg-white/85 shadow-[0_28px_90px_-24px_rgba(5,8,26,0.55)] backdrop-blur-2xl">
-            <div className="h-1 w-full bg-primary" aria-hidden />
-            <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
-              <div className="flex min-w-0 flex-1 items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <ShieldCheckIcon className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-black tracking-tight text-[#101217]">
-                    Your privacy, your call
-                  </p>
-                  <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-500">
-                    Essential storage keeps you signed in. Optional storage only remembers
-                    preferences on this device. No advertising cookies, ever.
-                  </p>
-                </div>
+          <div className="mx-auto max-w-3xl rounded-none border border-[#E5E7EB] bg-white p-4 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.28)] sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="max-w-xl">
+                <p className="text-sm font-semibold text-[#101217]">Privacy choices</p>
+                <p className="mt-1 text-sm leading-relaxed text-[#6B7280]">
+                  Essential storage keeps you signed in. Optional storage only remembers
+                  preferences on this device. No advertising cookies, ever.
+                </p>
               </div>
 
-              <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:items-center">
-                <button
-                  type="button"
-                  onClick={() => finish(true, true)}
-                  className="col-span-2 min-h-[42px] rounded-full bg-primary px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover sm:col-span-1"
-                >
-                  Accept all
-                </button>
+              <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                 <button
                   type="button"
                   onClick={() => finish(false, false)}
-                  className="min-h-[42px] rounded-full border border-gray-200 bg-white px-3.5 text-[10px] font-black uppercase tracking-[0.08em] text-gray-500 transition-colors hover:border-gray-300 hover:text-[#101217]"
+                  className="min-h-[40px] rounded-none border border-[#E5E7EB] bg-white px-3.5 text-xs font-semibold text-[#4B5563] transition-colors hover:bg-[#F6F8FA]"
                 >
                   Essential only
                 </button>
                 <button
                   type="button"
-                  onClick={() => setOpen(true)}
-                  className="min-h-[42px] rounded-full px-3 text-[10px] font-black uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary/10 hover:text-primary-hover"
+                  onClick={() => finish(true, true)}
+                  className="min-h-[40px] rounded-none bg-primary px-3.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover"
                 >
-                  Manage
+                  Accept all
                 </button>
                 <button
                   type="button"
-                  onClick={() => finish(false, false)}
-                  aria-label="Decline optional storage"
-                  className="flex h-11 w-11 items-center justify-center justify-self-end rounded-full text-gray-300 transition-colors hover:bg-gray-100 hover:text-gray-500 sm:h-8 sm:w-8"
+                  onClick={() => setOpen(true)}
+                  className="min-h-[40px] rounded-none px-2 text-xs font-semibold text-primary transition-colors hover:text-primary-hover"
                 >
-                  <XMarkIcon className="h-4 w-4" />
+                  Manage
                 </button>
               </div>
             </div>
@@ -161,7 +138,7 @@ export default function PrivacyPrompt() {
 
       {open && (
         <div
-          className="fixed inset-0 z-[260] flex items-end justify-center bg-[#05081A]/45 p-0 backdrop-blur-md sm:items-center sm:p-6"
+          className="fixed inset-0 z-[260] flex items-end justify-center bg-[#0F172A]/40 p-0 sm:items-center sm:p-6"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setOpen(false);
@@ -171,127 +148,98 @@ export default function PrivacyPrompt() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="privacy-title"
-            className="flex max-h-[calc(100dvh-0.25rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-white/60 bg-white/85 shadow-[0_40px_100px_-30px_rgba(5,8,26,0.65)] backdrop-blur-2xl sm:max-h-[min(90dvh,760px)] sm:rounded-[28px]"
+            className="flex max-h-[calc(100dvh-0.25rem)] w-full max-w-lg flex-col overflow-hidden rounded-none border border-[#E5E7EB] bg-white shadow-[0_24px_70px_-20px_rgba(15,23,42,0.35)] sm:max-h-[min(90dvh,720px)]"
           >
-            <div className="shrink-0 border-b border-white/40 bg-primary/10 px-5 pb-5 pt-5 backdrop-blur-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25">
-                    <ShieldCheckIcon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
-                      Privacy choices
-                    </p>
-                    <h2
-                      id="privacy-title"
-                      className="mt-0.5 text-lg font-black tracking-tight text-[#101217]"
-                    >
-                      You are in control
-                    </h2>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  aria-label="Close privacy choices"
-                  className="-mr-1 -mt-1 flex h-10 w-10 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-white hover:text-gray-600 sm:h-8 sm:w-8"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
+            <div className="flex items-start justify-between gap-4 border-b border-[#EFF2F7] px-5 py-4">
+              <div>
+                <h2 id="privacy-title" className="text-base font-semibold text-[#101217]">
+                  Privacy choices
+                </h2>
+                <p className="mt-1 text-sm leading-relaxed text-[#6B7280]">
+                  Choose what Selorah can remember on this device. Your health records always stay
+                  in your secure account.
+                </p>
               </div>
-              <p className="mt-3 text-[11px] font-medium leading-relaxed text-gray-500">
-                Selorah does not use advertising or tracking cookies. Your health records always
-                live in your secure account, not in this browser.
-              </p>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close privacy choices"
+                className="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-none text-[#8A94A6] transition-colors hover:bg-[#F6F8FA] hover:text-[#4B5563]"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
             </div>
 
-            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain px-5 py-4">
-              <div className="flex items-start gap-3 rounded-2xl border border-white/40 bg-[#F8F9FE]/60 p-3.5 backdrop-blur-sm">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#15955C] shadow-sm">
-                  <LockClosedIcon className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold text-[#101217]">Essential storage</p>
-                    <span className="rounded-full bg-[#EAFBF2] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-[#15955C]">
-                      Always on
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[10px] font-medium leading-relaxed text-gray-400">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5">
+              <div className="flex items-start justify-between gap-4 border-b border-[#EFF2F7] py-4">
+                <div>
+                  <p className="text-sm font-semibold text-[#101217]">Essential storage</p>
+                  <p className="mt-1 text-sm leading-relaxed text-[#6B7280]">
                     Keeps you signed in, protects your session, and remembers this privacy choice.
                     Required for Selorah to work.
                   </p>
                 </div>
+                <span className="mt-0.5 shrink-0 rounded-none bg-[#F6F8FA] px-2 py-1 text-[11px] font-medium text-[#6B7280]">
+                  Always on
+                </span>
               </div>
 
-              <div className="flex items-start gap-3 rounded-2xl border border-gray-100 p-3.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <SparklesIcon className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold text-[#101217]">Personalisation</p>
-                    <Toggle
-                      checked={personalisation}
-                      onChange={setPersonalisation}
-                      label="Personalisation storage"
-                    />
-                  </div>
-                  <p className="mt-1 text-[10px] font-medium leading-relaxed text-gray-400">
+              <div className="flex items-start justify-between gap-4 border-b border-[#EFF2F7] py-4">
+                <div>
+                  <p className="text-sm font-semibold text-[#101217]">Personalisation</p>
+                  <p className="mt-1 text-sm leading-relaxed text-[#6B7280]">
                     Remembers your theme and dismissed tips on this device. Off means Selorah
                     forgets them when you close the browser.
                   </p>
                 </div>
+                <Toggle
+                  checked={personalisation}
+                  onChange={setPersonalisation}
+                  label="Personalisation storage"
+                />
               </div>
 
-              <div className="flex items-start gap-3 rounded-2xl border border-gray-100 p-3.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EAFBF2] text-[#15955C]">
-                  <MagnifyingGlassIcon className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold text-[#101217]">Search history</p>
-                    <Toggle
-                      checked={searchHistory}
-                      onChange={setSearchHistory}
-                      label="Search history storage"
-                    />
-                  </div>
-                  <p className="mt-1 text-[10px] font-medium leading-relaxed text-gray-400">
+              <div className="flex items-start justify-between gap-4 py-4">
+                <div>
+                  <p className="text-sm font-semibold text-[#101217]">Search history</p>
+                  <p className="mt-1 text-sm leading-relaxed text-[#6B7280]">
                     Keeps your last few searches on this device so you can pick up quickly. Never
                     shared with anyone.
                   </p>
                 </div>
+                <Toggle
+                  checked={searchHistory}
+                  onChange={setSearchHistory}
+                  label="Search history storage"
+                />
               </div>
 
-              <p className="px-1 pt-1 text-[10px] font-medium leading-relaxed text-gray-400">
+              <p className="border-t border-[#EFF2F7] py-4 text-xs leading-relaxed text-[#8A94A6]">
                 You can change this at any time in Profile and settings. Read the{' '}
-                <Link to="/privacy" className="font-bold text-primary hover:underline">
+                <Link to="/privacy" className="font-semibold text-primary hover:underline">
                   Privacy Policy
                 </Link>{' '}
                 and{' '}
-                <Link to="/cookie-policy" className="font-bold text-primary hover:underline">
-                  Storage Policy
+                <Link to="/cookie-policy" className="font-semibold text-primary hover:underline">
+                  Cookie Policy
                 </Link>
                 .
               </p>
             </div>
 
-            <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-white/40 bg-[#F8F9FE]/60 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur-sm sm:flex-row sm:justify-end sm:pb-4">
+            <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[#EFF2F7] px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:flex-row sm:justify-end sm:pb-4">
               <button
                 type="button"
                 onClick={() => finish(false, false)}
-                className="min-h-[44px] rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-gray-500 transition-colors hover:border-gray-300 hover:text-[#101217]"
+                className="min-h-[44px] rounded-none border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#4B5563] transition-colors hover:bg-[#F6F8FA]"
               >
                 Essential only
               </button>
               <button
                 type="button"
                 onClick={() => finish(personalisation, searchHistory)}
-                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+                className="min-h-[44px] rounded-none bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
               >
-                <CheckIcon className="h-4 w-4" />
                 Save choices
               </button>
             </div>

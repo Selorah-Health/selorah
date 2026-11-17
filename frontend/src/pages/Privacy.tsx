@@ -88,7 +88,7 @@ export default function Privacy() {
       <section className="mb-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">14. Changes and Contact</h2>
         <p className="text-gray-600 mb-4">We may update this Privacy Policy by posting a new version with a revised “Last Updated” date. Material changes will be highlighted in the product or by email where appropriate.</p>
-        <p className="text-gray-600">Privacy contact: privacy@selorah.health — Selorah Health Limited. For processor arrangements, see the Data Processing Agreement.</p>
+        <p className="text-gray-600">Privacy contact: privacy@selorah.health. Selorah Health Limited. For processor arrangements, see the Data Processing Agreement.</p>
       </section>
     </LegalLayout>
   );

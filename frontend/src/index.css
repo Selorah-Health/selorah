@@ -1,28 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap');
 @import "tailwindcss";
 
-/* Hide Google Translate UI */
-.goog-te-banner-frame.skiptranslate, 
-.goog-te-banner-frame,
-#goog-gt-tt, 
-.goog-te-balloon-frame {
-  display: none !important;
-}
-body {
-  top: 0px !important;
-}
-.goog-te-gadget {
-  display: none !important;
-}
-.goog-te-menu-value {
-  display: none !important;
-}
-.goog-text-highlight {
-  background-color: transparent !important;
-  box-shadow: none !important;
-}
-/* End Hide Google Translate UI */
-
 :root {
   /* Off-white background colors. Meeting WCAG contrast requirements with foreground */
   --background: #F8F9FA;
@@ -45,6 +23,35 @@ body {
   --color-muted: var(--muted);
   --font-sora: 'Sora', sans-serif;
   --font-sans: 'Sora', sans-serif;
+}
+
+/*
+ * Marketing dark bands. The variables keep the dark bands readable in light
+ * mode and invert them to a light surface in dark mode, so a dark section never
+ * sits inside a dark page without contrast.
+ */
+.marketing-dark {
+  --md-bg: #020924;
+  --md-fg: #ffffff;
+  --md-muted: rgba(255, 255, 255, 0.64);
+  --md-subtle: rgba(255, 255, 255, 0.42);
+  --md-border: rgba(255, 255, 255, 0.12);
+  --md-card: rgba(255, 255, 255, 0.06);
+  --md-accent: #5ffab0;
+  --md-accent-soft: rgba(95, 250, 176, 0.12);
+  background-color: var(--md-bg);
+  color: var(--md-fg);
+}
+
+.dark .marketing-dark {
+  --md-bg: #f6f8fb;
+  --md-fg: #101217;
+  --md-muted: #4b5563;
+  --md-subtle: #6b7280;
+  --md-border: #e5e7eb;
+  --md-card: #ffffff;
+  --md-accent: #0f9f6e;
+  --md-accent-soft: #e9fbf3;
 }
 
 body {
@@ -734,6 +741,97 @@ a:hover .btn-arrow-right {
 
 .dark .recharts-cartesian-grid line {
   stroke: rgba(255, 255, 255, 0.08);
+}
+
+/* Stripe-style marketing and CMS surfaces */
+.dark [class~='bg-[#F6F9FC]'],
+.dark [class~='bg-[#FBFCFE]'],
+.dark [class~='bg-[#F4F6FA]'],
+.dark [class~='bg-[#F4F7FF]'],
+.dark [class~='bg-[#F6F8FA]'] {
+  background-color: #121727 !important;
+}
+
+.dark [class~='bg-[#F3FCF8]'],
+.dark [class~='bg-[#E9FBF3]'] {
+  background-color: #10251c !important;
+}
+
+.dark [class~='bg-[#FFF1F0]'],
+.dark [class~='bg-[#FFF8F7]'] {
+  background-color: #221313 !important;
+}
+
+.dark [class~='bg-[#FFF5E8]'] {
+  background-color: #2a2010 !important;
+}
+
+.dark [class~='text-[#4B5563]'],
+.dark [class~='text-[#6B7280]'] {
+  color: #c3cad8 !important;
+}
+
+.dark [class~='text-[#8A94A6]'] {
+  color: #8b95a9 !important;
+}
+
+.dark [class~='text-[#A7B0C0]'] {
+  color: #6f798e !important;
+}
+
+.dark [class~='text-[#C4CBD6]'] {
+  color: #5b6578 !important;
+}
+
+.dark [class~='text-[#D5DCE8]'] {
+  color: #3a4356 !important;
+}
+
+.dark [class~='text-[#0F9F6E]'],
+.dark [class~='text-[#15955C]'],
+.dark [class~='text-[#0F7A55]'] {
+  color: #5ee0a6 !important;
+}
+
+.dark [class~='text-[#B86A12]'] {
+  color: #fcd34d !important;
+}
+
+.dark [class~='text-[#B42318]'],
+.dark [class~='text-[#D92D20]'] {
+  color: #fca5a5 !important;
+}
+
+.dark [class~='border-[#E7EBF3]'],
+.dark [class~='border-[#E5E7EB]'],
+.dark [class~='border-[#EFF2F7]'],
+.dark [class~='border-[#E9EDF5]'],
+.dark [class~='border-[#E1E7F0]'],
+.dark [class~='border-[#DDE4EE]'],
+.dark [class~='border-[#D5DCE8]'] {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark [class~='border-[#FFD5D2]'] {
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+.dark [class~='border-[#B7F0D8]'] {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+.dark [class~='hover:bg-[#F6F8FA]']:hover,
+.dark [class~='hover:bg-[#FBFCFE]']:hover,
+.dark [class~='hover:bg-[#F4F6FA]']:hover {
+  background-color: #171d2c !important;
+}
+
+.dark [class~='hover:text-[#101217]']:hover {
+  color: #f3f5fa !important;
+}
+
+.dark [class~='hover:border-[#D5DCE8]']:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Custom vertical scrollbar */

@@ -16,12 +16,16 @@ import {
   EMPTY_EARNINGS,
   fetchEarnings,
   formatNaira,
+  MIN_WITHDRAWAL,
+  REFERRAL_REWARD_REFEREE,
+  REFERRAL_REWARD_REFERRER,
   requestWithdrawal,
   subscribeEarnings,
   type EarningsSummary,
 } from '../../lib/earnings';
 import { useToast } from '../../contexts/ToastContext';
 import { readSnapshot } from '../../lib/offlineSnapshot';
+import { useNavigate } from 'react-router-dom';
 
 const BANKS = [
   { code: '044', name: 'Access Bank' },
@@ -58,6 +62,7 @@ function statusTone(status: string) {
 
 export default function Earnings() {
   const supabase = createClient();
+  const navigate = useNavigate();
   const { success, error: toastError, info } = useToast();
   const [data, setData] = useState<EarningsSummary>(
     () => readSnapshot<EarningsSummary>('earnings') || EMPTY_EARNINGS
@@ -92,10 +97,13 @@ export default function Earnings() {
   );
 
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => void load(), 0);
     const refresh = () => void load(true);
     window.addEventListener(EARNINGS_EVENT, refresh);
-    return () => window.removeEventListener(EARNINGS_EVENT, refresh);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener(EARNINGS_EVENT, refresh);
+    };
   }, [load]);
 
   useEffect(() => {
@@ -109,8 +117,8 @@ export default function Earnings() {
   );
 
   const openWithdraw = () => {
-    if (data.available < 1000) {
-      info('You need at least N1,000 available before you can withdraw.');
+    if (data.available < MIN_WITHDRAWAL) {
+      info(`You need at least ${formatNaira(MIN_WITHDRAWAL)} available before you can withdraw.`);
       return;
     }
     setForm((current) => ({ ...current, amount: String(Math.floor(data.available)) }));
@@ -121,8 +129,8 @@ export default function Earnings() {
     event.preventDefault();
     const amount = Number(form.amount);
 
-    if (!Number.isFinite(amount) || amount < 1000) {
-      toastError('The minimum withdrawal is N1,000.');
+    if (!Number.isFinite(amount) || amount < MIN_WITHDRAWAL) {
+      toastError(`The minimum withdrawal is ${formatNaira(MIN_WITHDRAWAL)}.`);
       return;
     }
     if (amount > data.available) {
@@ -182,7 +190,9 @@ export default function Earnings() {
             Earnings
           </h2>
           <p className="mt-1 text-sm font-medium text-gray-400">
-            Every survey point is worth N20. Withdraw to your bank when you are ready.
+            Survey points pay N20 each. Referral rewards pay {formatNaira(REFERRAL_REWARD_REFERRER)}{' '}
+            to you and {formatNaira(REFERRAL_REWARD_REFEREE)} to a friend after 3 tasks. Withdraw to
+            your bank when you are ready.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -249,13 +259,31 @@ export default function Earnings() {
         ))}
       </div>
 
+      <button
+        type="button"
+        onClick={() => navigate('/dashboard/referrals')}
+        className="flex w-full flex-col gap-3 rounded-[24px] border border-primary/15 bg-primary/10 p-4 text-left transition-colors hover:border-primary/30 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <p className="text-xs font-bold text-[#101217]">Referral rewards</p>
+          <p className="mt-1 text-[11px] font-medium leading-relaxed text-gray-600">
+            Invite a friend with your username. When they claim 3 tasks in Rewards, you get{' '}
+            {formatNaira(REFERRAL_REWARD_REFERRER)} and they get{' '}
+            {formatNaira(REFERRAL_REWARD_REFEREE)}. Both rewards land here.
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-white px-3.5 py-2 text-[10px] font-bold text-primary">
+          Open referrals
+        </span>
+      </button>
+
       <div className="grid gap-5 lg:grid-cols-12">
         <div className="rounded-[28px] border border-gray-50 bg-white p-5 shadow-sm sm:p-6 lg:col-span-7">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-bold text-[#101217]">Reward history</h3>
               <p className="text-[11px] font-medium text-gray-400">
-                Survey rewards land here the moment you submit.
+                Survey and referral rewards land here.
               </p>
             </div>
             <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-primary">
@@ -268,7 +296,8 @@ export default function Earnings() {
               <BanknotesIcon className="mx-auto h-7 w-7 text-gray-300" />
               <p className="mt-2 text-sm font-bold text-[#101217]">No rewards yet</p>
               <p className="mx-auto mt-1 max-w-xs text-[11px] font-medium leading-relaxed text-gray-400">
-                Complete a survey in Research to earn your first reward.
+                Complete a survey in Research or invite a friend from Referrals to earn your first
+                reward.
               </p>
             </div>
           ) : (
@@ -280,7 +309,8 @@ export default function Earnings() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-bold text-[#101217]">
-                      {row.description || 'Survey reward'}
+                      {row.description ||
+                        (row.source === 'referral' ? 'Referral reward' : 'Survey reward')}
                     </p>
                     <p className="text-[10px] font-medium text-gray-400">
                       {new Date(row.created_at).toLocaleDateString(undefined, {

@@ -20,6 +20,7 @@ import { recordLogin } from '../lib/notifications';
 import { getDeviceLabel } from '../lib/qr';
 import {
   homeForRole,
+  isSelorahSiteAdminEmail,
   isValidNin,
   normalizeRole,
   resolvePortalAccess,
@@ -90,7 +91,7 @@ export default function Login() {
     }
 
     const { data: row } = await supabase
-      .from('users')
+      .from('profiles')
       .select('email')
       .eq('id', profile.user_id)
       .maybeSingle();
@@ -120,13 +121,14 @@ export default function Login() {
         throw new Error('NIN must be exactly 11 digits.');
       }
 
-      if (portalMode === 'staff' && !formData.orgId.trim()) {
-        throw new Error('Organization ID is required for staff login.');
-      }
-
       let email = formData.identifier.trim();
       if (portalMode === 'patient' && method !== 'email') {
         email = await resolveEmailForAuth(formData.identifier, method);
+      }
+
+      const isCmsEmail = isSelorahSiteAdminEmail(email);
+      if (portalMode === 'staff' && !isCmsEmail && !formData.orgId.trim()) {
+        throw new Error('Organization ID is required for staff login.');
       }
 
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -137,8 +139,8 @@ export default function Login() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Login failed. Please try again.');
 
-      const [{ data: userRow }, { data: patientRow }, { data: hospitalRow }] = await Promise.all([
-        supabase.from('users').select('*').eq('id', authData.user.id).maybeSingle(),
+      const [{ data: profileRow }, { data: patientRow }, { data: hospitalRow }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', authData.user.id).maybeSingle(),
         supabase.from('patient_profiles').select('*').eq('user_id', authData.user.id).maybeSingle(),
         supabase
           .from('hospital_profiles')
@@ -147,12 +149,16 @@ export default function Login() {
           .maybeSingle(),
       ]);
 
-      const role = normalizeRole(userRow?.role || 'patient');
+      const isCmsUser = isSelorahSiteAdminEmail(authData.user.email) || isCmsEmail;
+      const role = normalizeRole(profileRow?.role || 'patient');
+      const fullName = profileRow?.full_name || patientRow?.full_name || '';
+      const nameParts = fullName.split(' ').filter(Boolean);
       const profileData = {
-        ...userRow,
+        ...profileRow,
         ...patientRow,
-        first_name: patientRow?.full_name?.split(' ')?.[0],
-        last_name: patientRow?.full_name?.split(' ')?.slice(1).join(' '),
+        first_name: profileRow?.first_name || nameParts[0] || undefined,
+        last_name: profileRow?.last_name || nameParts.slice(1).join(' ') || undefined,
+        email: profileRow?.email || authData.user.email,
         phone_number: patientRow?.phone,
         nin: patientRow?.nin,
         org_id: hospitalRow?.org_id,
@@ -162,7 +168,7 @@ export default function Login() {
           authData.user.user_metadata?.is_pro === true,
       };
 
-      if (portalMode === 'staff') {
+      if (portalMode === 'staff' && !isCmsUser) {
         if (!['provider', 'researcher', 'insurer'].includes(role)) {
           throw new Error(
             'This account is not registered as hospital, researcher, or insurer staff.'
@@ -187,6 +193,7 @@ export default function Login() {
         nin: (profileData as { nin?: string })?.nin,
         first_name: profileData?.first_name || authData.user.user_metadata?.first_name,
         last_name: profileData?.last_name || authData.user.user_metadata?.last_name,
+        avatar_url: profileRow?.avatar_url || undefined,
         role,
         org_id: (profileData as { org_id?: string })?.org_id || formData.orgId.trim() || undefined,
         is_pro: profileData?.is_pro || false,
@@ -199,11 +206,17 @@ export default function Login() {
       }
 
       if (fromPath) {
-        const access = resolvePortalAccess(role, fromPath);
+        const access = resolvePortalAccess(role, fromPath, authData.user.email);
         if (access.allowed) {
           navigate(fromPath);
           return;
         }
+      }
+
+      // Internal staff land in the website admin. Everyone else keeps their role home.
+      if (isCmsUser) {
+        navigate('/adb');
+        return;
       }
 
       navigate(homeForRole(role));

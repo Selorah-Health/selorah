@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="One patient. One record. More control.">
+<rect width="1200" height="675" fill="#6183FF"/>
+<circle cx="1070" cy="60" r="250" fill="#FFFFFF" fill-opacity="0.08"/>
+<circle cx="120" cy="640" r="190" fill="#FFFFFF" fill-opacity="0.06"/>
+<path d="M0 540 C 260 470, 520 620, 760 540 S 1090 470, 1200 520 L 1200 675 L 0 675 Z" fill="#FFFFFF" fill-opacity="0.05"/>
+<text x="80" y="104" fill="#FFFFFF" fill-opacity="0.9" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="5">SELORAH HEALTH</text>
+<text x="80" y="319.1666666666667" fill="#FFFFFF" font-family="Sora, Inter, system-ui, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.5">One patient. One record.</text><text x="80" y="397.1666666666667" fill="#FFFFFF" font-family="Sora, Inter, system-ui, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.5">More control.</text>
+<text x="80" y="596" fill="#FFFFFF" fill-opacity="0.86" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="600" letter-spacing="3">COMPANY</text>
+<text x="1120" y="626" text-anchor="end" fill="#FFFFFF" fill-opacity="0.8" font-family="Inter, system-ui, sans-serif" font-size="22">selorah.app</text>
+</svg>

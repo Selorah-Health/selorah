@@ -26,3 +26,17 @@ export function waitlistRoleLabel(role?: string | null) {
   if (normalized === 'hospital') return 'Hospital';
   return 'Patient';
 }
+
+/**
+ * Public proof should never expose the exact waitlist total. Round up to the
+ * next multiple of ten so the number stays true as signups continue.
+ */
+export function nextTenWaitlistCount(total?: number | null) {
+  const value = Number(total);
+  if (!Number.isFinite(value) || value <= 0) return 100;
+  return Math.ceil(value / 10) * 10;
+}
+
+export function waitlistProofLabel(total?: number | null) {
+  return `${nextTenWaitlistCount(total).toLocaleString()}+`;
+}

@@ -4,6 +4,13 @@ import { isOffline, readSnapshot, writeSnapshot } from './offlineSnapshot';
 
 export const EARNINGS_EVENT = 'selorah:earnings-updated';
 
+/** The smallest amount a patient can request in one withdrawal. */
+export const MIN_WITHDRAWAL = 1000;
+
+/** Referral reward amounts. Both unlock after the referee claims 3 tasks. */
+export const REFERRAL_REWARD_REFERRER = 1000;
+export const REFERRAL_REWARD_REFEREE = 800;
+
 export type EarningRow = {
   id: string;
   amount_local: number;

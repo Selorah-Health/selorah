@@ -43,13 +43,17 @@ export default function RoleGuard({ children, requireAuth = true }: RoleGuardPro
   const [ready, setReady] = useState(false);
   const supabase = createClient();
   const entryPath = useRef(location.pathname);
+  const timedOut = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    const isWebsiteAdmin = entryPath.current.startsWith('/adb');
 
-    // Never leave the portal behind a spinner if the network stalls.
+    // Never leave the portal behind a spinner if the network stalls. If a local
+    // session exists, let the page render and show its own access message.
     const fallback = window.setTimeout(() => {
       if (cancelled) return;
+      timedOut.current = true;
       const local = readLocalSession();
       if (requireAuth && !local) {
         navigate('/login', { replace: true, state: { from: entryPath.current } });
@@ -61,6 +65,7 @@ export default function RoleGuard({ children, requireAuth = true }: RoleGuardPro
     async function check() {
       const local = readLocalSession();
       let role = local?.role ? normalizeRole(local.role) : null;
+      let email = local?.email || '';
       let hasSession = !!local;
 
       try {
@@ -70,9 +75,10 @@ export default function RoleGuard({ children, requireAuth = true }: RoleGuardPro
 
         if (user) {
           hasSession = true;
-          // Prefer profile role when available.
+          email = user.email || email;
+          // The app stores portal roles in public.profiles, not the legacy users table.
           const { data: profile } = await withTimeout(
-            supabase.from('users').select('role').eq('id', user.id).maybeSingle(),
+            supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
             CHECK_TIMEOUT_MS
           );
 
@@ -88,7 +94,7 @@ export default function RoleGuard({ children, requireAuth = true }: RoleGuardPro
         // Offline or a slow network: fall back to the local session.
       }
 
-      if (cancelled) return;
+      if (cancelled || timedOut.current) return;
       window.clearTimeout(fallback);
 
       if (requireAuth && !hasSession) {
@@ -97,8 +103,14 @@ export default function RoleGuard({ children, requireAuth = true }: RoleGuardPro
       }
 
       if (hasSession && role) {
-        const access = resolvePortalAccess(role, entryPath.current);
+        const access = resolvePortalAccess(role, entryPath.current, email);
         if (!access.allowed) {
+          // The website admin owns its access message. Bouncing to the patient
+          // dashboard hides the reason and can look like a broken route.
+          if (isWebsiteAdmin || access.redirectTo === entryPath.current) {
+            setReady(true);
+            return;
+          }
           navigate(access.redirectTo || homeForRole(role), { replace: true });
           return;
         }

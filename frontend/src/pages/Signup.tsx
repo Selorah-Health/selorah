@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -13,11 +13,14 @@ import {
   PhoneIcon,
   ShieldCheckIcon,
   UserIcon,
+  UserPlusIcon,
 } from '@heroicons/react/24/outline';
 import SEOTitle from '../components/SEOTitle';
 import ThemeToggle from '../components/ThemeToggle';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import { createClient } from '../lib/supabase/client';
+import { kickEmailQueue } from '../lib/emailQueue';
+import { contactPathForRole } from '../lib/contact';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -45,11 +48,20 @@ const ROLE_OPTIONS = [
 
 export default function Signup() {
   const supabase = createClient();
+  const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [submittedEmail, setSubmittedEmail] = useState('');
+  const [referralState, setReferralState] = useState<
+    'idle' | 'checking' | 'valid' | 'invalid' | 'unavailable'
+  >('idle');
+  const [referralMessage, setReferralMessage] = useState<string | null>(null);
+  const initialReferral =
+    searchParams.get('ref')?.trim() ||
+    window.localStorage.getItem('selorah_referral_code')?.trim() ||
+    '';
   const [formData, setFormData] = useState({
     role: 'patient' as 'patient' | 'hospital' | 'researcher' | 'insurer',
     firstName: '',
@@ -58,9 +70,15 @@ export default function Signup() {
     workEmail: '',
     email: '',
     phone: '',
+    referralCode: initialReferral.toLowerCase(),
     password: '',
     agree: false,
   });
+
+  useEffect(() => {
+    if (!initialReferral) return;
+    window.localStorage.setItem('selorah_referral_code', initialReferral.toLowerCase());
+  }, [initialReferral]);
 
   const isOrg =
     formData.role === 'hospital' ||
@@ -69,6 +87,52 @@ export default function Signup() {
 
   const update = (key: keyof typeof formData, value: string | boolean) =>
     setFormData((current) => ({ ...current, [key]: value }));
+
+  const checkReferralCode = async () => {
+    const code = formData.referralCode.trim().toLowerCase();
+    if (!code) {
+      setReferralState('idle');
+      setReferralMessage(null);
+      window.localStorage.removeItem('selorah_referral_code');
+      return;
+    }
+
+    setReferralState('checking');
+    setReferralMessage(null);
+
+    try {
+      const { data, error: rpcError } = await supabase.rpc('check_referral_code', {
+        p_code: code,
+      });
+
+      if (rpcError) {
+        const missingFunction =
+          rpcError.code === 'PGRST202' || /could not find the function/i.test(rpcError.message);
+        if (missingFunction) {
+          setReferralState('unavailable');
+          setReferralMessage('Referral checks are not live yet. You can still continue.');
+          window.localStorage.setItem('selorah_referral_code', code);
+          return;
+        }
+        setReferralState('invalid');
+        setReferralMessage(rpcError.message);
+        return;
+      }
+
+      const result = data as { ok?: boolean; message?: string } | null;
+      if (result?.ok) {
+        setReferralState('valid');
+        setReferralMessage('Referral code applied.');
+        window.localStorage.setItem('selorah_referral_code', code);
+      } else {
+        setReferralState('invalid');
+        setReferralMessage(result?.message || 'That referral code was not found.');
+      }
+    } catch {
+      setReferralState('unavailable');
+      setReferralMessage('We could not check the code. You can still continue.');
+    }
+  };
 
   const passwordScore = (() => {
     const value = formData.password;
@@ -105,6 +169,11 @@ export default function Signup() {
       return;
     }
 
+    if (!isOrg && formData.referralCode.trim() && referralState === 'invalid') {
+      setError('That referral code was not found. Clear it to continue without a referral.');
+      return;
+    }
+
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
@@ -120,6 +189,7 @@ export default function Signup() {
     const displayFirst = isOrg ? formData.orgName.trim() : formData.firstName.trim();
     const displayLast = isOrg ? '' : formData.lastName.trim();
     const phone = formData.phone.trim();
+    const referralCode = isOrg ? '' : formData.referralCode.trim().toLowerCase();
 
     try {
       const url = import.meta.env.VITE_SUPABASE_URL;
@@ -141,11 +211,18 @@ export default function Signup() {
             org_name: isOrg ? formData.orgName.trim() : undefined,
             role: formData.role,
             phone: phone || undefined,
+            referral_code: referralCode || undefined,
           },
         },
       });
 
       if (authError) throw authError;
+
+      if (referralCode) {
+        window.localStorage.setItem('selorah_referral_code', referralCode);
+      } else {
+        window.localStorage.removeItem('selorah_referral_code');
+      }
 
       localStorage.setItem(
         'selorah_user',
@@ -162,6 +239,7 @@ export default function Signup() {
 
       setSubmittedEmail(signupEmail);
       setStep(2);
+      void kickEmailQueue();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong.';
       if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
@@ -358,6 +436,31 @@ export default function Signup() {
                       );
                     })}
                   </div>
+                  <p className="mt-2 px-1 text-[10px] font-medium leading-relaxed text-gray-400">
+                    Hospital, research, or insurance team? You can create an account, or talk to
+                    our team first:{' '}
+                    <Link
+                      to={contactPathForRole('hospital')}
+                      className="font-bold text-primary hover:underline"
+                    >
+                      hospital
+                    </Link>
+                    {', '}
+                    <Link
+                      to={contactPathForRole('researcher')}
+                      className="font-bold text-primary hover:underline"
+                    >
+                      research
+                    </Link>
+                    {', or '}
+                    <Link
+                      to={contactPathForRole('insurer')}
+                      className="font-bold text-primary hover:underline"
+                    >
+                      insurance
+                    </Link>
+                    .
+                  </p>
                 </div>
 
                 {isOrg ? (
@@ -477,6 +580,52 @@ export default function Signup() {
                       </span>
                       <span className="mt-1.5 block px-1 text-[10px] font-medium text-gray-400">
                         Add this to log in with your phone instead of email.
+                      </span>
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                        Referral code
+                        <span className="font-semibold normal-case tracking-normal text-gray-300">
+                          Optional
+                        </span>
+                      </span>
+                      <span className="relative block">
+                        <UserPlusIcon className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-300" />
+                        <input
+                          type="text"
+                          autoComplete="off"
+                          placeholder="Friend's username"
+                          className={`${inputClass} pl-11`}
+                          value={formData.referralCode}
+                          onChange={(event) => {
+                            update('referralCode', event.target.value);
+                            if (referralState !== 'idle') {
+                              setReferralState('idle');
+                              setReferralMessage(null);
+                            }
+                          }}
+                          onBlur={() => {
+                            void checkReferralCode();
+                          }}
+                        />
+                      </span>
+                      {referralMessage && (
+                        <span
+                          className={`mt-1.5 block px-1 text-[10px] font-semibold ${
+                            referralState === 'valid'
+                              ? 'text-[#15955C]'
+                              : referralState === 'invalid'
+                                ? 'text-red-500'
+                                : 'text-gray-400'
+                          }`}
+                        >
+                          {referralMessage}
+                        </span>
+                      )}
+                      <span className="mt-1.5 block px-1 text-[10px] font-medium leading-relaxed text-gray-400">
+                        Add the username of the friend who invited you. You both earn when you
+                        complete 3 tasks in Rewards.
                       </span>
                     </label>
                   </>

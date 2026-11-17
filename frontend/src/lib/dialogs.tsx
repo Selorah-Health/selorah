@@ -90,11 +90,11 @@ export function ConfirmDialogHost() {
         aria-modal="true"
         aria-labelledby="selorah-confirm-title"
         aria-describedby={options.message ? 'selorah-confirm-message' : undefined}
-        className="w-full max-w-md overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_40px_100px_-30px_rgba(5,8,26,0.6)] animate-in slide-in-from-bottom-4 sm:zoom-in-95"
+        className="w-full max-w-md overflow-hidden rounded-none border border-white/60 bg-white shadow-[0_40px_100px_-30px_rgba(5,8,26,0.6)] animate-in slide-in-from-bottom-4 sm:zoom-in-95"
       >
         <div className="flex items-start gap-3.5 px-5 pt-5">
           <span
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-none ${
               danger ? 'bg-red-50 text-red-500' : 'bg-primary/10 text-primary'
             }`}
           >
@@ -117,7 +117,7 @@ export function ConfirmDialogHost() {
             type="button"
             onClick={() => settle(false)}
             aria-label="Close dialog"
-            className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-gray-100 hover:text-gray-500"
+            className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-none text-gray-300 transition-colors hover:bg-gray-100 hover:text-gray-500"
           >
             <XMarkIcon className="h-4 w-4" />
           </button>
@@ -127,7 +127,7 @@ export function ConfirmDialogHost() {
           <button
             type="button"
             onClick={() => settle(false)}
-            className="min-h-[44px] rounded-full border border-gray-200 bg-white px-4 text-xs font-bold text-gray-500 transition-colors hover:border-gray-300 hover:text-[#101217]"
+            className="min-h-[44px] rounded-none border border-gray-200 bg-white px-4 text-xs font-bold text-gray-500 transition-colors hover:border-gray-300 hover:text-[#101217]"
           >
             {options.cancelLabel || 'Cancel'}
           </button>
@@ -135,7 +135,7 @@ export function ConfirmDialogHost() {
             ref={confirmRef}
             type="button"
             onClick={() => settle(true)}
-            className={`min-h-[44px] rounded-full px-5 text-xs font-bold text-white shadow-lg transition-all active:scale-[0.99] ${
+            className={`min-h-[44px] rounded-none px-5 text-xs font-bold text-white shadow-lg transition-all active:scale-[0.99] ${
               danger
                 ? 'bg-red-500 shadow-red-500/20 hover:bg-red-600'
                 : 'bg-primary shadow-primary/20 hover:bg-primary-hover'

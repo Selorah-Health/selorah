@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, m } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import {
   ArrowRightIcon,
   BuildingOffice2Icon,
@@ -10,6 +12,8 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { createClient } from '../lib/supabase/client';
+import { kickEmailQueue } from '../lib/emailQueue';
+import { contactPathForRole } from '../lib/contact';
 import {
   normalizeWaitlistRole,
   WAITLIST_ROLES,
@@ -62,6 +66,8 @@ export default function WaitlistModal({
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    /* eslint-disable react-hooks/set-state-in-effect */
+    // Opening the modal is the reset boundary for this short form.
     setStatus('idle');
     setFullName('');
     setEmail('');
@@ -73,6 +79,7 @@ export default function WaitlistModal({
     setPhone('');
     setErrorMsg(null);
     setCopied(false);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     const focusTimer = setTimeout(() => nameRef.current?.focus(), 80);
     const onKeyDown = (event: KeyboardEvent) => {
@@ -86,8 +93,6 @@ export default function WaitlistModal({
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [isOpen, initialRole, onClose]);
-
-  if (!isOpen) return null;
 
   const validate = () => {
     if (fullName.trim().length < 2) {
@@ -156,7 +161,9 @@ export default function WaitlistModal({
 
       if (!rpcError && rpcData) {
         const payload = rpcData as { already_on_list?: boolean };
-        setStatus(payload.already_on_list ? 'already' : 'success');
+        const already = Boolean(payload.already_on_list);
+        setStatus(already ? 'already' : 'success');
+        if (!already) void kickEmailQueue();
         return;
       }
 
@@ -181,6 +188,7 @@ export default function WaitlistModal({
         const { error } = await supabase.from('waitlist').insert(attempt);
         if (!error) {
           setStatus('success');
+          void kickEmailQueue();
           return;
         }
 
@@ -258,16 +266,29 @@ export default function WaitlistModal({
   const isHospital = role === 'hospital';
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-[#05081a]/70 p-0 backdrop-blur-md sm:items-center sm:p-5"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="waitlist-title"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className="relative max-h-[94dvh] w-full max-w-[440px] overflow-hidden rounded-t-[32px] border border-white/10 bg-[#0B0E1F] text-white shadow-[0_32px_120px_-20px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-4 sm:rounded-[32px]">
+    <AnimatePresence>
+      {isOpen && (
+        <m.div
+          key="waitlist-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-[#05081a]/70 p-0 backdrop-blur-md sm:items-center sm:p-5"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="waitlist-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) onClose();
+          }}
+        >
+          <m.div
+            initial={{ opacity: 0, y: 18, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.985 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="relative max-h-[94dvh] w-full max-w-[440px] overflow-hidden rounded-none border border-white/10 bg-[#0B0E1F] text-white shadow-[0_32px_120px_-20px_rgba(0,0,0,0.8)]"
+          >
         <div
           aria-hidden
           className="pointer-events-none absolute -top-28 left-1/2 h-56 w-[130%] -translate-x-1/2 rounded-full bg-primary opacity-25 blur-[90px]"
@@ -281,7 +302,7 @@ export default function WaitlistModal({
           type="button"
           onClick={onClose}
           aria-label="Close waitlist"
-          className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+          className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-none border border-white/10 bg-white/5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
         >
           <XMarkIcon className="h-5 w-5" />
         </button>
@@ -295,12 +316,12 @@ export default function WaitlistModal({
                 <CheckIcon className="relative h-9 w-9 text-[#5FFAB0]" strokeWidth={2.4} />
               </div>
 
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#5FFAB0]">
+              <p className="text-xs font-medium text-[#5FFAB0]">
                 {status === 'already' ? 'Already on the list' : 'You are on the list'}
               </p>
               <h3
                 id="waitlist-title"
-                className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl"
+                className="mt-2 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl"
               >
                 {status === 'already'
                   ? `You are already on the list, ${firstName}.`
@@ -323,7 +344,7 @@ export default function WaitlistModal({
                 )}
               </p>
 
-              <div className="mt-7 rounded-2xl border border-[#5FFAB0]/20 bg-[#5FFAB0]/10 p-4 text-left">
+              <div className="mt-7 rounded-none border border-[#5FFAB0]/20 bg-[#5FFAB0]/10 p-4 text-left">
                 <p className="text-sm font-semibold text-white">Know someone who needs this?</p>
                 <p className="mt-1 text-xs leading-relaxed text-[#B7BCDA]">
                   Invite a friend to join you on the waitlist. The more people who ask for portable
@@ -332,7 +353,7 @@ export default function WaitlistModal({
               </div>
 
               {status === 'success' && (
-                <div className="mt-7 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left">
+                <div className="mt-7 rounded-none border border-white/10 bg-white/[0.04] p-4 text-left">
                   <p className="text-sm font-semibold text-white">
                     Optional: what is your biggest frustration with medical records?
                   </p>
@@ -343,7 +364,7 @@ export default function WaitlistModal({
                         type="button"
                         onClick={() => saveFrustration(frustration)}
                         disabled={savingSurvey}
-                        className="min-h-[38px] rounded-full border border-white/10 px-3 py-2 text-left text-[11px] font-medium text-[#B7BCDA] transition-all hover:border-primary/60 hover:bg-primary/10 hover:text-white disabled:opacity-50"
+                        className="min-h-[38px] rounded-none border border-white/10 px-3 py-2 text-left text-[11px] font-medium text-[#B7BCDA] transition-all hover:border-primary/60 hover:bg-primary/10 hover:text-white disabled:opacity-50"
                       >
                         {frustration}
                       </button>
@@ -369,7 +390,7 @@ export default function WaitlistModal({
                 <button
                   type="button"
                   onClick={shareWaitlist}
-                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-hover text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:brightness-110 active:scale-[0.99]"
+                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-none bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary-hover active:scale-[0.99]"
                 >
                   <ShareIcon className="h-4 w-4" />
                   {copied ? 'Invite link copied' : 'Invite a friend'}
@@ -377,7 +398,7 @@ export default function WaitlistModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] text-sm font-semibold text-white/80 transition-all hover:bg-white/[0.07]"
+                  className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-none border border-white/10 bg-white/[0.03] text-sm font-semibold text-white/80 transition-all hover:bg-white/[0.07]"
                 >
                   Back to home
                   <ArrowRightIcon className="h-4 w-4" />
@@ -387,15 +408,9 @@ export default function WaitlistModal({
           ) : (
             <div>
               <div className="pr-12">
-                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#5FFAB0]" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/60">
-                    Early access
-                  </span>
-                </div>
                 <h3
                   id="waitlist-title"
-                  className="text-2xl font-bold leading-tight tracking-tight sm:text-[1.75rem]"
+                  className="text-2xl font-semibold leading-tight tracking-[-0.02em] sm:text-[1.75rem]"
                 >
                   Your records.
                   <br />
@@ -411,14 +426,14 @@ export default function WaitlistModal({
                 {errorMsg && (
                   <div
                     role="alert"
-                    className="rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+                    className="rounded-none border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300"
                   >
                     {errorMsg}
                   </div>
                 )}
 
                 <div>
-                  <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">
+                  <p className="mb-2 text-xs font-medium text-white/45">
                     I am joining as
                   </p>
                   <div className="grid grid-cols-3 gap-2">
@@ -433,14 +448,14 @@ export default function WaitlistModal({
                             setErrorMsg(null);
                           }}
                           aria-pressed={selected}
-                          className={`min-h-[58px] rounded-2xl border px-2 py-2 text-left transition-all ${
+                          className={`min-h-[58px] rounded-none border px-2 py-2 text-left transition-all ${
                             selected
                               ? 'border-primary bg-primary/15 shadow-[inset_0_0_0_1px_rgba(97,131,255,0.65)]'
                               : 'border-white/10 bg-white/[0.03] hover:border-white/25'
                           }`}
                         >
                           <span className="flex items-center justify-between gap-1">
-                            <span className="text-[12px] font-bold text-white">{option.label}</span>
+                            <span className="text-[12px] font-semibold text-white">{option.label}</span>
                             {selected && <CheckIcon className="h-3 w-3 shrink-0 text-primary" />}
                           </span>
                           <span className="mt-0.5 block text-[9px] font-medium leading-tight text-white/40">
@@ -450,6 +465,17 @@ export default function WaitlistModal({
                       );
                     })}
                   </div>
+                  <p className="mt-2 text-[10px] font-medium leading-relaxed text-white/35">
+                    Hospital, research, or insurance team?{' '}
+                    <Link
+                      to={contactPathForRole('hospital')}
+                      onClick={onClose}
+                      className="font-semibold text-primary hover:underline"
+                    >
+                      Talk to our team first
+                    </Link>
+                    .
+                  </p>
                 </div>
 
                 <label className="block">
@@ -473,7 +499,7 @@ export default function WaitlistModal({
                         setErrorMsg(null);
                       }}
                       placeholder={isHospital ? 'St. Mary Hospital' : 'Your full name'}
-                      className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="min-h-[50px] w-full rounded-none border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </span>
                 </label>
@@ -495,7 +521,7 @@ export default function WaitlistModal({
                         setErrorMsg(null);
                       }}
                       placeholder="you@email.com"
-                      className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="min-h-[50px] w-full rounded-none border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </span>
                 </label>
@@ -518,7 +544,7 @@ export default function WaitlistModal({
                             setErrorMsg(null);
                           }}
                           placeholder="Who should we speak to?"
-                          className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          className="min-h-[50px] w-full rounded-none border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
                       </span>
                     </label>
@@ -534,7 +560,7 @@ export default function WaitlistModal({
                           value={city}
                           onChange={(event) => setCity(event.target.value)}
                           placeholder="Lagos"
-                          className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] px-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          className="min-h-[50px] w-full rounded-none border border-white/10 bg-[#080A16] px-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
                       </label>
                       <label className="block">
@@ -549,7 +575,7 @@ export default function WaitlistModal({
                             value={phone}
                             onChange={(event) => setPhone(event.target.value)}
                             placeholder="+234"
-                            className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            className="min-h-[50px] w-full rounded-none border border-white/10 bg-[#080A16] pl-11 pr-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                           />
                         </span>
                       </label>
@@ -569,7 +595,7 @@ export default function WaitlistModal({
                         value={organization}
                         onChange={(event) => setOrganization(event.target.value)}
                         placeholder="Where you practise"
-                        className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] px-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="min-h-[50px] w-full rounded-none border border-white/10 bg-[#080A16] px-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </label>
                     <label className="block">
@@ -581,7 +607,7 @@ export default function WaitlistModal({
                         value={specialty}
                         onChange={(event) => setSpecialty(event.target.value)}
                         placeholder="Cardiology"
-                        className="min-h-[50px] w-full rounded-2xl border border-white/10 bg-[#080A16] px-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="min-h-[50px] w-full rounded-none border border-white/10 bg-[#080A16] px-4 text-base text-white placeholder:text-white/25 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </label>
                   </div>
@@ -590,7 +616,7 @@ export default function WaitlistModal({
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-hover text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
+                  className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-none bg-primary text-sm font-semibold text-white transition-colors hover:bg-primary-hover active:scale-[0.99] disabled:opacity-60"
                 >
                   {status === 'loading' ? (
                     <>
@@ -612,7 +638,9 @@ export default function WaitlistModal({
             </div>
           )}
         </div>
-      </div>
-    </div>
+          </m.div>
+        </m.div>
+      )}
+    </AnimatePresence>
   );
 }

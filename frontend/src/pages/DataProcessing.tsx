@@ -81,7 +81,7 @@ export default function DataProcessing() {
       <section className="mb-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">14. Liability, Precedence, and Contact</h2>
         <p className="text-gray-600 mb-4">Liability under this DPA is subject to the limitations in the main commercial agreement between the parties, except where prohibited by law. If there is a conflict between this DPA and other terms regarding data protection, this DPA prevails for Processing under Controller instructions.</p>
-        <p className="text-gray-600">Contact for DPA notices: legal@selorah.health and privacy@selorah.health — Selorah Health Limited.</p>
+        <p className="text-gray-600">Contact for DPA notices: legal@selorah.health and privacy@selorah.health. Selorah Health Limited.</p>
       </section>
     </LegalLayout>
   );

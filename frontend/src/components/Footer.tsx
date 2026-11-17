@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRightIcon } from '@heroicons/react/24/outline';
 import WaitlistModal from './WaitlistModal';
+import { contactPathForRole } from '../lib/contact';
 
 export default function Footer() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,10 +80,12 @@ export default function Footer() {
               <div>
                 <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">Product</h4>
                 <ul className="space-y-2.5 text-sm font-medium">
-                  <li><Link to="/login" className="hover:text-white/80 transition-colors">Patient Dashboard</Link></li>
-                  <li><Link to="/login" className="hover:text-white/80 transition-colors">Hospital Portal</Link></li>
-                  <li><Link to="/login" className="hover:text-white/80 transition-colors">Researcher Portal</Link></li>
-                  <li><Link to="/login" className="hover:text-white/80 transition-colors">Insurer Portal</Link></li>
+                  <li><Link to="/#solutions" className="hover:text-white/80 transition-colors">For patients</Link></li>
+                  <li><Link to="/#solutions" className="hover:text-white/80 transition-colors">For doctors</Link></li>
+                  <li><Link to={contactPathForRole('hospital')} className="hover:text-white/80 transition-colors">For hospitals</Link></li>
+                  <li><Link to={contactPathForRole('researcher')} className="hover:text-white/80 transition-colors">For researchers</Link></li>
+                  <li><Link to={contactPathForRole('insurer')} className="hover:text-white/80 transition-colors">For insurers</Link></li>
+                  <li><Link to="/#security" className="hover:text-white/80 transition-colors">Security</Link></li>
                   <li><Link to="/pricing" className="hover:text-white/80 transition-colors">Pricing</Link></li>
                 </ul>
               </div>
@@ -91,6 +94,7 @@ export default function Footer() {
                 <h4 className="font-bold text-white/70 text-xs uppercase tracking-widest mb-4">Company</h4>
                 <ul className="space-y-2.5 text-sm font-medium">
                   <li><Link to="/about" className="hover:text-white/80 transition-colors">About</Link></li>
+                  <li><Link to="/blog" className="hover:text-white/80 transition-colors">Blog</Link></li>
                   <li><Link to="/contact" className="hover:text-white/80 transition-colors">Schedule a Meeting</Link></li>
                   <li><Link to="/careers" className="hover:text-white/80 transition-colors">Careers</Link></li>
                 </ul>
@@ -112,6 +116,7 @@ export default function Footer() {
             <span>Copyright (c) 2026 Selorah Health</span>
             <span className="sm:inline">All Rights Reserved.</span>
             <div className="flex items-center gap-4">
+              <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
               <Link to="/about" className="hover:text-white transition-colors">Help Center</Link>
               <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
             </div>

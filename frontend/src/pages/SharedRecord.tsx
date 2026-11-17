@@ -485,7 +485,6 @@ export default function SharedRecord() {
     ? `${(patient.first_name || 'P')[0]}${(patient.last_name || '')[0] || ''}`.toUpperCase()
     : 'P';
 
-  const accent = '#4262ff';
   const isGuest = accessMode === 'guest';
   const patientDisplay = patient
     ? `${patient.first_name || 'Patient'} ${(patient.last_name || '').charAt(0)}${patient.last_name ? '.' : ''}`
@@ -493,12 +492,12 @@ export default function SharedRecord() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F6F8FC] p-6 font-sora">
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F9FA] p-6 font-sora">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-lg shadow-blue-500/5">
+          <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-white shadow-lg shadow-blue-500/5">
             <img src="/logo.svg" alt="Selorah" className="h-8 w-8 object-contain" />
           </div>
-          <p className="text-sm font-semibold text-gray-400">Opening secure share...</p>
+          <p className="text-sm font-semibold text-[#8A94A6]">Opening secure share...</p>
         </div>
       </div>
     );
@@ -510,37 +509,37 @@ export default function SharedRecord() {
           title: 'This link cannot be opened',
           body: loadError,
           icon: ExclamationTriangleIcon,
-          tone: 'text-amber-500 bg-amber-50 border-amber-100',
+          tone: 'text-amber-500 bg-amber-50 border-amber-200',
         }
       : isRevoked
         ? {
             title: 'Access revoked',
             body: 'The patient revoked this link. Ask for a new secure share if you still need the record.',
             icon: LockClosedIcon,
-            tone: 'text-red-500 bg-red-50 border-red-100',
+            tone: 'text-red-500 bg-red-50 border-red-200',
           }
         : {
             title: 'Access expired',
             body: 'This link reached its time limit. Ask the patient to share a new link.',
             icon: ClockIcon,
-            tone: 'text-red-500 bg-red-50 border-red-100',
+            tone: 'text-red-500 bg-red-50 border-red-200',
           };
     const StateIcon = state.icon;
 
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F6F8FC] p-4 font-sora sm:p-6">
-        <div className="w-full max-w-md rounded-[32px] border border-gray-100 bg-white p-8 text-center shadow-2xl shadow-blue-500/5 sm:p-10">
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F9FA] p-4 font-sora sm:p-6">
+        <div className="w-full max-w-md rounded-xl border border-[#E5E7EB] bg-white p-8 text-center shadow-sm sm:p-10">
           <div
-            className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border ${state.tone}`}
+            className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-lg border ${state.tone}`}
           >
             <StateIcon className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-[#0A0B14]">{state.title}</h1>
-          <p className="mt-3 text-sm font-medium leading-relaxed text-gray-500">{state.body}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-[#101217]">{state.title}</h1>
+          <p className="mt-3 text-sm font-medium leading-relaxed text-[#6B7280]">{state.body}</p>
           <button
             type="button"
             onClick={() => (window.location.href = '/')}
-            className="mt-8 min-h-[48px] w-full rounded-2xl bg-[#0A0B14] px-5 text-sm font-bold text-white transition-colors hover:bg-black"
+            className="mt-8 min-h-[48px] w-full rounded-lg bg-[#101217] px-5 text-sm font-semibold text-white transition-colors hover:bg-black"
           >
             Back to Selorah
           </button>
@@ -551,86 +550,68 @@ export default function SharedRecord() {
 
   if (accessMode === 'gate') {
     return (
-      <div className="min-h-screen bg-[#F6F8FC] font-sora text-[#101217]">
-        <div className="mx-auto grid min-h-screen max-w-6xl lg:grid-cols-[0.95fr_1.05fr]">
-          <section className="relative overflow-hidden bg-[#05081A] px-6 py-10 text-white sm:px-10 lg:flex lg:flex-col lg:justify-between lg:px-14 lg:py-12">
-            <div
-              aria-hidden
-              className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#4262ff]/30 blur-3xl"
-            />
-            <div
-              aria-hidden
-              className="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-[#14F1D9]/10 blur-3xl"
-            />
-
-            <div className="relative">
+      <div className="min-h-screen bg-[#F8F9FA] font-sora text-[#101217]">
+        <div className="mx-auto grid min-h-screen max-w-6xl lg:grid-cols-[0.9fr_1.1fr]">
+          <section className="flex flex-col justify-between border-b border-[#E5E7EB] bg-[#F6F8FA] px-6 py-10 sm:px-10 lg:border-b-0 lg:border-r lg:px-12 lg:py-12">
+            <div>
               <div className="flex items-center gap-3">
-                <img src="/logo.svg" alt="Selorah" className="h-10 w-10 object-contain" />
+                <img src="/logo.svg" alt="Selorah" className="h-9 w-9 object-contain" />
                 <div>
-                  <p className="text-lg font-bold leading-none">Selorah Health</p>
-                  <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/40">
-                    Secure patient share
-                  </p>
+                  <p className="text-base font-semibold leading-none">Selorah Health</p>
+                  <p className="mt-1 text-xs font-medium text-[#6B7280]">Secure patient share</p>
                 </div>
               </div>
 
               <div className="mt-12 flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-tr from-primary to-[#14F1D9] text-2xl font-black text-white">
+                <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary text-lg font-semibold text-white">
                   {initials}
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/40">
-                    Shared with you
-                  </p>
-                  <p className="mt-1 text-2xl font-black tracking-tight">{patientDisplay}</p>
+                  <p className="text-xs font-medium text-[#6B7280]">Shared with you</p>
+                  <p className="mt-1 text-2xl font-semibold tracking-tight">{patientDisplay}</p>
                 </div>
               </div>
 
-              <p className="mt-8 max-w-sm text-sm font-medium leading-relaxed text-white/55">
+              <p className="mt-6 max-w-sm text-sm leading-relaxed text-[#4B5563]">
                 A patient chose to share their medical record with you. Access is time limited and
                 every opening is added to their access log.
               </p>
 
-              <div className="mt-8 grid gap-3">
+              <div className="mt-8 space-y-4">
                 {[
                   { icon: ClockIcon, text: 'Access closes automatically when the timer ends' },
                   { icon: ShieldCheckIcon, text: 'Views are recorded for the patient to review' },
                   { icon: LockClosedIcon, text: 'The link is private. Do not forward it' },
                 ].map((item) => (
-                  <div
-                    key={item.text}
-                    className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3"
-                  >
-                    <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <p className="text-xs font-semibold leading-relaxed text-white/65">
-                      {item.text}
-                    </p>
+                  <div key={item.text} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#E5E7EB] bg-white text-[#6B7280]">
+                      <item.icon className="h-3.5 w-3.5" />
+                    </span>
+                    <p className="text-sm leading-relaxed text-[#4B5563]">{item.text}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="relative mt-10 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-[11px] font-bold text-white/70">
-                <ClockIcon className="h-3.5 w-3.5 text-[#5FFAB0]" />
+            <div className="mt-10 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-md border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-medium text-[#4B5563]">
+                <ClockIcon className="h-3.5 w-3.5 text-[#6B7280]" />
                 {formatTime(timeLeft)} left
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-[11px] font-bold text-white/70">
-                <DocumentTextIcon className="h-3.5 w-3.5 text-primary" />
+              <span className="inline-flex items-center gap-2 rounded-md border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-medium text-[#4B5563]">
+                <DocumentTextIcon className="h-3.5 w-3.5 text-[#6B7280]" />
                 {patient?.singleRecord ? 'Single record' : 'Full record'}
               </span>
             </div>
           </section>
 
-          <section className="flex items-center px-5 py-8 sm:px-10 lg:px-14">
+          <section className="flex items-center px-5 py-10 sm:px-10 lg:px-14">
             <div className="w-full">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4262ff]">
-                Before you continue
-              </p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0A0B14] sm:text-4xl">
+              <p className="text-xs font-medium text-[#6B7280]">Before you continue</p>
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#101217] sm:text-3xl">
                 Who is viewing this record?
               </h1>
-              <p className="mt-3 max-w-md text-sm font-medium leading-relaxed text-gray-500">
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-[#6B7280]">
                 The patient will see your name, role, and facility in their access log. This keeps
                 sharing accountable without slowing down care.
               </p>
@@ -643,9 +624,7 @@ export default function SharedRecord() {
                 }}
               >
                 <div>
-                  <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
-                    Your role
-                  </span>
+                  <span className="mb-2 block text-xs font-medium text-[#4B5563]">Your role</span>
                   <div className="flex flex-wrap gap-2">
                     {ROLE_OPTIONS.map((option) => (
                       <button
@@ -654,10 +633,10 @@ export default function SharedRecord() {
                         onClick={() =>
                           setProvider((previous) => ({ ...previous, role: option.id }))
                         }
-                        className={`min-h-[40px] rounded-full border px-4 text-xs font-bold transition-all ${
+                        className={`min-h-[38px] rounded-md border px-3 text-xs font-medium transition-colors ${
                           provider.role === option.id
-                            ? 'border-[#4262ff] bg-primary/10 text-[#4262ff]'
-                            : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+                            ? 'border-primary bg-primary/5 text-primary'
+                            : 'border-[#E5E7EB] bg-white text-[#4B5563] hover:bg-[#F6F8FA]'
                         }`}
                       >
                         {option.label}
@@ -668,7 +647,7 @@ export default function SharedRecord() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block">
-                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                    <span className="mb-1.5 block text-xs font-medium text-[#4B5563]">
                       Full name
                     </span>
                     <input
@@ -678,12 +657,12 @@ export default function SharedRecord() {
                       }
                       placeholder="Dr. Ada Okafor"
                       autoComplete="name"
-                      className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                      className="min-h-[44px] w-full rounded-md border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#101217] outline-none transition-colors placeholder:text-[#A7B0C0] focus:border-primary focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
 
                   <label className="block">
-                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
+                    <span className="mb-1.5 block text-xs font-medium text-[#4B5563]">
                       License or staff number
                     </span>
                     <input
@@ -693,14 +672,14 @@ export default function SharedRecord() {
                       }
                       placeholder="MDCN / staff ID"
                       autoComplete="off"
-                      className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                      className="min-h-[44px] w-full rounded-md border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#101217] outline-none transition-colors placeholder:text-[#A7B0C0] focus:border-primary focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                 </div>
 
                 <label className="block">
-                  <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
-                    Facility <span className="font-semibold normal-case tracking-normal">(optional)</span>
+                  <span className="mb-1.5 block text-xs font-medium text-[#4B5563]">
+                    Facility <span className="font-normal text-[#8A94A6]">(optional)</span>
                   </span>
                   <input
                     value={provider.facility}
@@ -709,12 +688,12 @@ export default function SharedRecord() {
                     }
                     placeholder="Hospital or clinic name"
                     autoComplete="organization"
-                    className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                    className="min-h-[44px] w-full rounded-md border border-[#E5E7EB] bg-white px-3.5 text-sm text-[#101217] outline-none transition-colors placeholder:text-[#A7B0C0] focus:border-primary focus:ring-2 focus:ring-primary/15"
                   />
                 </label>
 
                 {accessError && (
-                  <p className="flex items-start gap-2 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-700">
+                  <p className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-700">
                     <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
                     {accessError}
                   </p>
@@ -723,31 +702,29 @@ export default function SharedRecord() {
                 <button
                   type="submit"
                   disabled={loggingAccess}
-                  className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#4262ff] px-5 text-base font-bold text-white shadow-xl shadow-blue-500/20 transition-colors hover:bg-[#3252DF] disabled:opacity-60"
+                  className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
                 >
                   {loggingAccess ? 'Opening record...' : 'Open patient record'}
-                  {!loggingAccess && <ChevronRightIcon className="h-5 w-5" />}
+                  {!loggingAccess && <ChevronRightIcon className="h-4 w-4" />}
                 </button>
               </form>
 
               <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-gray-200" />
-                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-300">
-                  or
-                </span>
-                <div className="h-px flex-1 bg-gray-200" />
+                <div className="h-px flex-1 bg-[#E5E7EB]" />
+                <span className="text-xs text-[#8A94A6]">or</span>
+                <div className="h-px flex-1 bg-[#E5E7EB]" />
               </div>
 
               <button
                 type="button"
                 onClick={() => void openRecord('guest')}
                 disabled={loggingAccess}
-                className="min-h-[48px] w-full rounded-2xl border border-gray-200 bg-white px-5 text-sm font-bold text-gray-600 transition-colors hover:border-gray-300 hover:text-[#101217] disabled:opacity-60"
+                className="min-h-[44px] w-full rounded-md border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#4B5563] transition-colors hover:bg-[#F6F8FA] hover:text-[#101217] disabled:opacity-60"
               >
                 Continue with emergency preview
               </button>
 
-              <p className="mt-4 text-center text-[11px] font-medium leading-relaxed text-gray-400">
+              <p className="mt-4 text-center text-xs leading-relaxed text-[#8A94A6]">
                 Emergency preview shows blood group, genotype, allergies, and emergency contacts
                 only. Clinical history stays hidden.
               </p>
@@ -759,21 +736,19 @@ export default function SharedRecord() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F8FC] font-sora text-[#101217] print:bg-white">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/85 backdrop-blur-xl print:hidden">
+    <div className="min-h-screen bg-[#F8F9FA] font-sora text-[#101217] print:bg-white">
+      <header className="sticky top-0 z-40 border-b border-[#E5E7EB] bg-white/85 backdrop-blur-xl print:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <img src="/logo.svg" alt="Selorah" className="h-8 w-8 shrink-0 object-contain" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-none text-[#0A0B14]">
+              <p className="truncate text-sm font-semibold leading-none text-[#101217]">
                 Selorah Health
               </p>
-              <p className="mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#4262ff]">
-                Shared access
-              </p>
+              <p className="mt-1 text-xs font-medium text-[#6B7280]">Shared access</p>
             </div>
-            <span className="ml-1 hidden items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-500 sm:inline-flex">
-              <ClockIcon className="h-3.5 w-3.5 text-[#4262ff]" />
+            <span className="ml-1 hidden items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-medium text-[#6B7280] sm:inline-flex">
+              <ClockIcon className="h-3.5 w-3.5 text-[#6B7280]" />
               {formatTime(timeLeft)} left
             </span>
           </div>
@@ -783,7 +758,7 @@ export default function SharedRecord() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3.5 text-[11px] font-bold text-gray-600 transition-colors hover:border-gray-300 hover:text-[#101217] sm:px-4"
+              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-md border border-[#E5E7EB] bg-white px-3.5 text-[11px] font-semibold text-[#4B5563] transition-colors hover:border-[#D5DCE8] hover:text-[#101217] sm:px-4"
             >
               <PrinterIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Print</span>
@@ -792,7 +767,7 @@ export default function SharedRecord() {
               <button
                 type="button"
                 onClick={() => setShowVisitReportModal(true)}
-                className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-[#4262ff] px-3.5 text-[11px] font-bold text-white shadow-lg shadow-blue-500/20 transition-colors hover:bg-[#3252DF] sm:px-4"
+                className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-md bg-primary px-3.5 text-[11px] font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover sm:px-4"
               >
                 <DocumentPlusIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Add visit report</span>
@@ -805,11 +780,11 @@ export default function SharedRecord() {
 
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 print:max-w-none print:px-0 print:py-0">
         {isGuest && (
-          <div className="flex flex-col gap-3 rounded-3xl border border-amber-100 bg-amber-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
               <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
               <div>
-                <p className="text-sm font-bold text-amber-900">Emergency preview only</p>
+                <p className="text-sm font-semibold text-amber-900">Emergency preview only</p>
                 <p className="mt-0.5 text-xs font-medium leading-relaxed text-amber-700">
                   Clinical history is hidden. Confirm your provider details to open the full record.
                 </p>
@@ -818,25 +793,20 @@ export default function SharedRecord() {
             <button
               type="button"
               onClick={() => setAccessMode('gate')}
-              className="min-h-[40px] shrink-0 rounded-full bg-amber-500 px-4 text-[11px] font-bold text-white transition-colors hover:bg-amber-600"
+              className="min-h-[40px] shrink-0 rounded-md bg-amber-500 px-4 text-[11px] font-semibold text-white transition-colors hover:bg-amber-600"
             >
               Open full record
             </button>
           </div>
         )}
 
-        <section className="overflow-hidden rounded-[32px] border border-gray-100 bg-white shadow-xl shadow-blue-500/5">
-          <div className="relative h-24 bg-gradient-to-r from-primary/10 via-[#F5F7FF] to-[#E8FBF7] sm:h-28">
-            <div
-              aria-hidden
-              className="absolute right-6 top-4 h-24 w-24 rounded-full border border-white/60 bg-white/30 backdrop-blur-sm sm:h-32 sm:w-32"
-            />
-          </div>
+        <section className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-sm">
+          <div className="h-20 border-b border-[#E5E7EB] bg-[#F6F8FA]" />
 
           <div className="px-5 pb-6 sm:px-8 sm:pb-8">
-            <div className="-mt-12 flex flex-col gap-4 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
+            <div className="-mt-10 flex flex-col gap-4 sm:-mt-12 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex min-w-0 items-end gap-4">
-                <div className="relative z-10 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[24px] border-4 border-white bg-gradient-to-tr from-primary to-[#14F1D9] text-2xl font-black text-white shadow-lg sm:h-24 sm:w-24 sm:text-3xl">
+                <div className="relative z-10 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-white bg-primary text-2xl font-semibold text-white sm:h-24 sm:w-24 sm:text-3xl">
                   {patient?.avatarUrl ? (
                     <img
                       src={patient.avatarUrl}
@@ -849,16 +819,16 @@ export default function SharedRecord() {
                 </div>
                 <div className="min-w-0 pb-1">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <h1 className="min-w-0 max-w-full truncate text-2xl font-black tracking-tight text-[#0A0B14] sm:text-3xl">
+                    <h1 className="min-w-0 max-w-full truncate text-2xl font-semibold tracking-tight text-[#101217] sm:text-3xl">
                       {patient?.full_name}
                     </h1>
                     {patient?.singleRecord && (
-                      <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#4262ff]">
+                      <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                         Single record
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 truncate text-xs font-semibold text-gray-400">
+                  <p className="mt-1 truncate text-xs font-medium text-[#8A94A6]">
                     Patient ID {patient?.patientId}
                   </p>
                 </div>
@@ -867,10 +837,10 @@ export default function SharedRecord() {
               <div className="flex w-full flex-col gap-2 pb-1 sm:w-auto sm:items-end">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold ${
+                    className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium ${
                       accessLogged
-                        ? 'border-green-100 bg-green-50 text-green-700'
-                        : 'border-amber-100 bg-amber-50 text-amber-700'
+                        ? 'border-green-200 bg-green-50 text-green-700'
+                        : 'border-amber-200 bg-amber-50 text-amber-700'
                     }`}
                   >
                     {accessLogged ? (
@@ -880,8 +850,8 @@ export default function SharedRecord() {
                     )}
                     {accessLogged ? 'Access logged' : 'Session not logged'}
                   </span>
-                  <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[10px] font-bold text-gray-500">
-                    <UserIcon className="h-3.5 w-3.5 shrink-0 text-[#4262ff]" />
+                  <span className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-medium text-[#6B7280]">
+                    <UserIcon className="h-3.5 w-3.5 shrink-0 text-[#6B7280]" />
                     <span className="truncate">
                       {accessMode === 'guest'
                         ? 'Guest preview'
@@ -896,33 +866,33 @@ export default function SharedRecord() {
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                { label: 'Blood group', value: patient?.bloodGroup, tone: 'text-[#4262ff]' },
-                { label: 'Genotype', value: patient?.genotype, tone: 'text-[#0A0B14]' },
+                { label: 'Blood group', value: patient?.bloodGroup, tone: 'text-primary' },
+                { label: 'Genotype', value: patient?.genotype, tone: 'text-[#101217]' },
                 {
                   label: 'Age',
                   value: patient?.age != null ? `${patient.age} years` : 'Not recorded',
-                  tone: 'text-[#0A0B14]',
+                  tone: 'text-[#101217]',
                 },
                 {
                   label: 'Sex',
                   value: patient?.gender || 'Not recorded',
-                  tone: 'text-[#0A0B14]',
+                  tone: 'text-[#101217]',
                 },
               ].map((item) => (
-                <div key={item.label} className="rounded-2xl bg-[#F8F9FE] px-4 py-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400">
+                <div key={item.label} className="rounded-lg bg-[#F6F8FA] px-4 py-3">
+                  <p className="text-xs font-medium text-[#6B7280]">
                     {item.label}
                   </p>
-                  <p className={`mt-1 text-base font-black ${item.tone}`}>{item.value}</p>
+                  <p className={`mt-1 text-base font-semibold ${item.tone}`}>{item.value}</p>
                 </div>
               ))}
             </div>
 
             {patient?.allergies?.length > 0 && (
-              <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 sm:flex-row sm:items-center">
+              <div className="mt-4 flex flex-col gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-2">
                   <ExclamationTriangleIcon className="h-4 w-4 shrink-0 text-red-500" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-red-500">
+                  <p className="text-xs font-semibold text-red-600">
                     Allergy alert
                   </p>
                 </div>
@@ -930,7 +900,7 @@ export default function SharedRecord() {
                   {patient.allergies.map((allergy: string) => (
                     <span
                       key={allergy}
-                      className="rounded-full border border-red-200 bg-white px-2.5 py-1 text-[11px] font-bold text-red-600"
+                      className="rounded-md border border-red-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-red-600"
                     >
                       {allergy}
                     </span>
@@ -944,50 +914,50 @@ export default function SharedRecord() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
             {isGuest ? (
-              <section className="rounded-[28px] border border-gray-100 bg-white p-6 text-center shadow-sm sm:p-10">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-[#4262ff]">
+              <section className="rounded-xl border border-[#E5E7EB] bg-white p-6 text-center shadow-sm sm:p-10">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <LockClosedIcon className="h-6 w-6" />
                 </div>
-                <h2 className="mt-4 text-xl font-black tracking-tight text-[#0A0B14]">
+                <h2 className="mt-4 text-xl font-semibold tracking-tight text-[#101217]">
                   Clinical history is hidden
                 </h2>
-                <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-relaxed text-gray-500">
+                <p className="mx-auto mt-2 max-w-sm text-sm font-medium leading-relaxed text-[#6B7280]">
                   Confirm your provider details to view lab results, imaging, prescriptions, and
                   visit reports.
                 </p>
                 <button
                   type="button"
                   onClick={() => setAccessMode('gate')}
-                  className="mt-6 inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full bg-[#4262ff] px-6 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-colors hover:bg-[#3252DF]"
+                  className="mt-6 inline-flex min-h-[46px] items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
                 >
                   Open full record
                   <ChevronRightIcon className="h-4 w-4" />
                 </button>
               </section>
             ) : (
-              <section className="rounded-[28px] border border-gray-100 bg-white p-5 shadow-sm sm:p-7">
+              <section className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-7">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="text-lg font-black tracking-tight text-[#0A0B14]">
+                    <h2 className="text-lg font-semibold tracking-tight text-[#101217]">
                       Clinical records
                     </h2>
-                    <p className="mt-1 text-xs font-medium text-gray-400">
+                    <p className="mt-1 text-xs font-medium text-[#8A94A6]">
                       {filteredRecords.length} of {records.length} records
                     </p>
                   </div>
 
                   <label className="relative block w-full sm:w-64">
-                    <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
+                    <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A7B0C0]" />
                     <input
                       value={recordQuery}
                       onChange={(event) => setRecordQuery(event.target.value)}
                       placeholder="Search records"
-                      className="min-h-[42px] w-full rounded-full border border-gray-200 bg-[#F8F9FE] pl-10 pr-4 text-xs font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff] focus:bg-white"
+                      className="min-h-[42px] w-full rounded-md border border-[#E5E7EB] bg-[#F6F8FA] pl-10 pr-4 text-sm text-[#101217] outline-none transition-colors placeholder:text-[#A7B0C0] focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-1.5 rounded-2xl bg-[#F8F9FE] p-1.5">
+                <div className="mt-4 flex flex-wrap gap-1.5 rounded-lg bg-[#F6F8FA] p-1.5">
                   {[
                     { id: 'all', label: 'All' },
                     { id: 'lab', label: 'Labs' },
@@ -999,10 +969,10 @@ export default function SharedRecord() {
                       key={category.id}
                       type="button"
                       onClick={() => setActiveCategory(category.id as 'all' | RecordCategory)}
-                      className={`min-h-[34px] flex-1 rounded-xl px-2 text-[10px] font-black uppercase tracking-[0.08em] transition-all ${
+                      className={`min-h-[34px] flex-1 rounded-md px-2 text-xs font-medium transition-all ${
                         activeCategory === category.id
-                          ? 'bg-white text-[#4262ff] shadow-sm'
-                          : 'text-gray-400 hover:text-gray-600'
+                          ? 'bg-white text-[#101217] shadow-sm'
+                          : 'text-[#8A94A6] hover:text-[#4B5563]'
                       }`}
                     >
                       {category.label}
@@ -1012,10 +982,10 @@ export default function SharedRecord() {
 
                 <div className="mt-5 space-y-3">
                   {filteredRecords.length === 0 && (
-                    <div className="rounded-2xl border border-dashed border-gray-200 px-5 py-10 text-center">
-                      <DocumentTextIcon className="mx-auto h-7 w-7 text-gray-200" />
-                      <p className="mt-3 text-sm font-bold text-gray-500">No records to show</p>
-                      <p className="mt-1 text-xs font-medium text-gray-400">
+                    <div className="rounded-lg border border-dashed border-[#E5E7EB] px-5 py-10 text-center">
+                      <DocumentTextIcon className="mx-auto h-7 w-7 text-[#C4CBD6]" />
+                      <p className="mt-3 text-sm font-semibold text-[#6B7280]">No records to show</p>
+                      <p className="mt-1 text-xs font-medium text-[#8A94A6]">
                         {recordQuery
                           ? 'Try a different search term or category.'
                           : 'This patient has not added a record in this category yet.'}
@@ -1029,32 +999,32 @@ export default function SharedRecord() {
                     return (
                       <article
                         key={record.id}
-                        className="group rounded-2xl border border-gray-100 bg-white p-4 transition-all hover:border-[#4262ff]/25 hover:shadow-lg hover:shadow-blue-500/5 sm:p-5"
+                        className="group rounded-lg border border-[#E5E7EB] bg-white p-4 transition-all hover:border-primary/25 hover:shadow-sm sm:p-5"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[#4262ff]">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                             <Icon className="h-5 w-5" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                              <h3 className="font-bold leading-snug text-[#0A0B14]">
+                              <h3 className="font-semibold leading-snug text-[#101217]">
                                 {record.title}
                               </h3>
-                              <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400">
+                              <span className="shrink-0 text-xs font-medium text-[#8A94A6]">
                                 {record.date}
                               </span>
                             </div>
 
-                            <p className="mt-2 line-clamp-3 whitespace-pre-line text-xs font-medium leading-relaxed text-gray-500">
+                            <p className="mt-2 line-clamp-3 whitespace-pre-line text-sm leading-relaxed text-[#6B7280]">
                               {record.content}
                             </p>
 
                             <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <span className="rounded-full bg-[#F8F9FE] px-2.5 py-1 text-[10px] font-semibold text-gray-500">
+                              <span className="rounded-md bg-[#F6F8FA] px-2.5 py-1 text-xs font-medium text-[#6B7280]">
                                 {record.facility}
                               </span>
                               {record.doctor && record.doctor !== 'Not recorded' && (
-                                <span className="rounded-full bg-[#F8F9FE] px-2.5 py-1 text-[10px] font-semibold text-gray-500">
+                                <span className="rounded-md bg-[#F6F8FA] px-2.5 py-1 text-xs font-medium text-[#6B7280]">
                                   {record.doctor}
                                 </span>
                               )}
@@ -1063,7 +1033,7 @@ export default function SharedRecord() {
                                   href={record.file_url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-[#4262ff] hover:underline"
+                                  className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                                 >
                                   Open document
                                   <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
@@ -1081,9 +1051,9 @@ export default function SharedRecord() {
           </div>
 
           <aside className="space-y-5">
-            <section className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm">
-              <h2 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#4262ff]">
-                <HeartIcon className="h-4 w-4" />
+            <section className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-[#101217]">
+                <HeartIcon className="h-4 w-4 text-[#6B7280]" />
                 Physical vitals
               </h2>
               <div className="mt-4 grid grid-cols-2 gap-3">
@@ -1093,19 +1063,19 @@ export default function SharedRecord() {
                   { label: 'Blood group', value: patient?.bloodGroup },
                   { label: 'Genotype', value: patient?.genotype },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-xl bg-[#F8F9FE] px-3 py-2.5">
-                    <p className="text-[9px] font-black uppercase tracking-[0.12em] text-gray-400">
+                  <div key={item.label} className="rounded-xl bg-[#F6F8FA] px-3 py-2.5">
+                    <p className="text-xs font-medium text-[#6B7280]">
                       {item.label}
                     </p>
-                    <p className="mt-1 truncate text-sm font-bold text-[#0A0B14]">{item.value}</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-[#101217]">{item.value}</p>
                   </div>
                 ))}
               </div>
             </section>
 
-            <section className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm">
-              <h2 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-red-500">
-                <ExclamationTriangleIcon className="h-4 w-4" />
+            <section className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-[#101217]">
+                <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
                 Allergies
               </h2>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -1113,19 +1083,19 @@ export default function SharedRecord() {
                   patient.allergies.map((allergy: string) => (
                     <span
                       key={allergy}
-                      className="rounded-full border border-red-100 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-600"
+                      className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-semibold text-red-600"
                     >
                       {allergy}
                     </span>
                   ))
                 ) : (
-                  <p className="text-xs font-medium text-gray-400">None recorded</p>
+                  <p className="text-xs font-medium text-[#8A94A6]">None recorded</p>
                 )}
               </div>
             </section>
 
-            <section className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm">
-              <h2 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#4262ff]">
+            <section className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-[#101217]">
                 <UserPlusIcon className="h-4 w-4" />
                 Emergency contacts
               </h2>
@@ -1134,18 +1104,18 @@ export default function SharedRecord() {
                   patient.emergencyContacts.map((contact: any, index: number) => (
                     <div
                       key={`${contact.name}-${index}`}
-                      className="rounded-xl border-l-2 border-[#4262ff] bg-[#F8F9FE] px-3 py-2.5"
+                      className="rounded-xl border-l-2 border-primary bg-[#F6F8FA] px-3 py-2.5"
                     >
-                      <p className="text-xs font-bold text-[#0A0B14]">
+                      <p className="text-xs font-semibold text-[#101217]">
                         {contact.name || 'Contact'}
                       </p>
-                      <p className="mt-0.5 text-[10px] font-semibold text-gray-400">
+                      <p className="mt-0.5 text-[10px] font-semibold text-[#8A94A6]">
                         {contact.relationship}
                       </p>
                       {contact.phone && (
                         <a
                           href={`tel:${contact.phone.replace(/\s/g, '')}`}
-                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#4262ff]"
+                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-primary"
                         >
                           <PhoneIcon className="h-3.5 w-3.5" />
                           {contact.phone}
@@ -1154,31 +1124,31 @@ export default function SharedRecord() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs font-medium text-gray-400">None recorded</p>
+                  <p className="text-xs font-medium text-[#8A94A6]">None recorded</p>
                 )}
               </div>
             </section>
 
             {!isGuest && (
-              <section className="rounded-[24px] border border-gray-100 bg-white p-5 shadow-sm">
-                <h2 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#4262ff]">
+              <section className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-[#101217]">
                   <ClipboardDocumentListIcon className="h-4 w-4" />
                   Medical history
                 </h2>
                 <div className="mt-4 space-y-4">
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400">
+                    <p className="text-xs font-medium text-[#6B7280]">
                       Family history
                     </p>
-                    <p className="mt-1 text-xs font-medium leading-relaxed text-gray-600">
+                    <p className="mt-1 text-xs font-medium leading-relaxed text-[#4B5563]">
                       {patient?.familyHistory}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.14em] text-gray-400">
+                    <p className="text-xs font-medium text-[#6B7280]">
                       Medication history
                     </p>
-                    <p className="mt-1 text-xs font-medium leading-relaxed text-gray-600">
+                    <p className="mt-1 text-xs font-medium leading-relaxed text-[#4B5563]">
                       {patient?.medicationHistory}
                     </p>
                   </div>
@@ -1189,12 +1159,12 @@ export default function SharedRecord() {
         </div>
 
         <footer className="pb-8 print:hidden">
-          <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-5 py-4 text-center sm:flex-row sm:text-left">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400">
+          <div className="flex flex-col items-center justify-between gap-3 rounded-lg border border-[#E5E7EB] bg-white px-5 py-4 text-center sm:flex-row sm:text-left">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#6B7280]">
               <ShieldCheckIcon className="h-4 w-4 text-green-500" />
               Encrypted share, audited access
             </div>
-            <p className="text-[10px] font-medium text-gray-400">
+            <p className="text-[10px] font-medium text-[#8A94A6]">
               Powered by Selorah Health. The patient can revoke this link at any time.
             </p>
           </div>
@@ -1203,21 +1173,21 @@ export default function SharedRecord() {
 
       {showVisitReportModal && (
         <div
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-[#05081A]/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-[#020924]/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="visit-report-title"
         >
-          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
-            <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-gray-100 bg-white/95 px-5 py-4 backdrop-blur sm:px-7 sm:py-5">
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-xl bg-white shadow-lg sm:rounded-xl">
+            <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-[#E5E7EB] bg-white/95 px-5 py-4 backdrop-blur sm:px-7 sm:py-5">
               <div>
                 <h2
                   id="visit-report-title"
-                  className="text-lg font-black tracking-tight text-[#0A0B14] sm:text-xl"
+                  className="text-lg font-semibold tracking-tight text-[#101217] sm:text-xl"
                 >
                   Add visit report
                 </h2>
-                <p className="mt-0.5 text-xs font-medium text-gray-400">
+                <p className="mt-0.5 text-xs font-medium text-[#8A94A6]">
                   Saved to {patient?.first_name || 'the patient'}&apos;s record after you submit.
                 </p>
               </div>
@@ -1225,7 +1195,7 @@ export default function SharedRecord() {
                 type="button"
                 onClick={() => setShowVisitReportModal(false)}
                 aria-label="Close"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-colors hover:bg-gray-100"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#F6F8FA] text-[#8A94A6] transition-colors hover:bg-[#F6F8FA]"
               >
                 <XMarkIcon className="h-4 w-4" />
               </button>
@@ -1234,31 +1204,31 @@ export default function SharedRecord() {
             <div className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                  <span className="mb-1.5 block text-xs font-medium text-[#4B5563]">
                     Facility
                   </span>
                   <input
                     value={visitFacility}
                     onChange={(event) => setVisitFacility(event.target.value)}
                     placeholder={provider.facility || 'Hospital or clinic'}
-                    className="min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                    className="min-h-[46px] w-full rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-[#A7B0C0] focus:border-primary"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                  <span className="mb-1.5 block text-xs font-medium text-[#4B5563]">
                     Doctor or clinician
                   </span>
                   <input
                     value={visitDoctor}
                     onChange={(event) => setVisitDoctor(event.target.value)}
                     placeholder={provider.name || 'Name of the clinician'}
-                    className="min-h-[46px] w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                    className="min-h-[46px] w-full rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm font-semibold text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-[#A7B0C0] focus:border-primary"
                   />
                 </label>
               </div>
 
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                <span className="mb-1.5 block text-xs font-medium text-[#4B5563]">
                   Observations and notes
                 </span>
                 <textarea
@@ -1266,22 +1236,22 @@ export default function SharedRecord() {
                   onChange={(event) => setVisitNotes(event.target.value)}
                   placeholder="Diagnosis, observations, treatment, and follow up."
                   rows={7}
-                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium leading-relaxed text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-gray-300 focus:border-[#4262ff]"
+                  className="w-full rounded-lg border border-[#E5E7EB] bg-white px-4 py-3 text-sm font-medium leading-relaxed text-[#101217] outline-none transition-colors placeholder:font-medium placeholder:text-[#A7B0C0] focus:border-primary"
                 />
               </label>
 
-              <p className="flex items-start gap-2 rounded-xl bg-[#F8F9FE] px-3 py-2.5 text-[10px] font-medium leading-relaxed text-gray-500">
-                <ShieldCheckIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#4262ff]" />
+              <p className="flex items-start gap-2 rounded-xl bg-[#F6F8FA] px-3 py-2.5 text-[10px] font-medium leading-relaxed text-[#6B7280]">
+                <ShieldCheckIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                 This report is added to the patient&apos;s medical record and appears in their
                 access history.
               </p>
             </div>
 
-            <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-gray-100 bg-white/95 px-5 py-4 backdrop-blur sm:flex-row sm:justify-end sm:px-7">
+            <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-[#E5E7EB] bg-white/95 px-5 py-4 backdrop-blur sm:flex-row sm:justify-end sm:px-7">
               <button
                 type="button"
                 onClick={() => setShowVisitReportModal(false)}
-                className="min-h-[46px] rounded-xl border border-gray-200 px-5 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-50"
+                className="min-h-[46px] rounded-xl border border-[#E5E7EB] px-5 text-sm font-semibold text-[#4B5563] transition-colors hover:bg-[#F6F8FA]"
               >
                 Cancel
               </button>
@@ -1354,7 +1324,7 @@ export default function SharedRecord() {
                   }
                 }}
                 disabled={submittingReport}
-                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#4262ff] px-6 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-colors hover:bg-[#3252DF] disabled:opacity-60"
+                className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover disabled:opacity-60"
               >
                 {submittingReport ? 'Saving...' : 'Submit report'}
                 {!submittingReport && <ChevronRightIcon className="h-4 w-4" />}

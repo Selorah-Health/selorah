@@ -90,7 +90,7 @@ export default function Terms() {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">14. Governing Law, Disputes, and Changes</h2>
         <p className="text-gray-600 mb-4">These Terms are governed by the laws of Nigeria, without regard to conflict-of-law rules, unless mandatory consumer protections in your country of residence apply. Courts in Lagos, Nigeria shall have exclusive jurisdiction, subject to any non-waivable rights to bring claims in your local courts.</p>
         <p className="text-gray-600 mb-4">We may update these Terms by posting a revised version and updating the “Last Updated” date. Material changes will be communicated through the Services or email where appropriate. Continued use after the effective date constitutes acceptance.</p>
-        <p className="text-gray-600">Contact: legal@selorah.health — Selorah Health Limited.</p>
+        <p className="text-gray-600">Contact: legal@selorah.health. Selorah Health Limited.</p>
       </section>
     </LegalLayout>
   );

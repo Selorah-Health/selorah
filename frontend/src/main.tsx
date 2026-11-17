@@ -26,24 +26,8 @@ window.addEventListener('vite:preloadError', (event) => {
 registerServiceWorker();
 initTheme();
 
-// Initialize Google Translate
-// const script = document.createElement('script');
-// script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-// script.async = true;
-// document.body.appendChild(script);
-
-// (window as any).googleTranslateElementInit = () => {
-//   new (window as any).google.translate.TranslateElement({
-//     pageLanguage: 'en',
-//     includedLanguages: 'en,fr',
-//     layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
-//     autoDisplay: false
-//   }, 'google_translate_element');
-// };
-
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    {/* <div id="google_translate_element" style={{ visibility: 'hidden', height: 0, overflow: 'hidden', position: 'absolute' }}></div> */}
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <LanguageProvider>
         <App />

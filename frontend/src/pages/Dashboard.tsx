@@ -10,11 +10,13 @@ import {
   FingerPrintIcon,
   HeartIcon,
   HomeIcon,
+  IdentificationIcon,
   MagnifyingGlassIcon,
   PlusIcon,
   QrCodeIcon,
   ShieldCheckIcon,
   TrophyIcon,
+  UserPlusIcon,
   WalletIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
@@ -26,7 +28,7 @@ import { clearLocalSession, readLocalSession, writeLocalSession } from '../lib/a
 import { fetchMedicalRecords, type MedicalRecord } from '../lib/records';
 import { readProState, refreshProFromProfile } from '../lib/pro';
 import { fetchEarnings, formatNaira } from '../lib/earnings';
-import { hydrateAppearance, startAppearanceSync } from '../lib/preferences';
+import { claimPendingReferral } from '../lib/referrals';
 import { syncPushSubscription } from '../lib/push';
 import type { NotificationRow } from '../lib/notifications';
 import { prewarmOcr } from '../lib/ocr';
@@ -37,6 +39,7 @@ import Home from '../components/dashboard/Home';
 import Records from '../components/dashboard/Records';
 import Research from '../components/dashboard/Research';
 import Earnings from '../components/dashboard/Earnings';
+import Referrals from '../components/dashboard/Referrals';
 import Profile from '../components/dashboard/Profile';
 import AddRecordModal from '../components/dashboard/AddRecordModal';
 import MobileWalkthrough from '../components/MobileWalkthrough';
@@ -56,6 +59,7 @@ import SearchResults from './SearchResults';
 import SelorahCard from './SelorahCard';
 import Resilience from './Resilience';
 import Rewards from './Rewards';
+import Kyc from './Kyc';
 import KeyboardShortcuts from '../components/KeyboardShortcuts';
 
 export type RecentAccess = {
@@ -73,6 +77,16 @@ export type DashboardSummary = {
   earningsAvailable: number;
 };
 
+type DashboardUser = {
+  email?: string;
+  user_metadata?: {
+    first_name?: string;
+    last_name?: string;
+    avatar_url?: string;
+    is_pro?: boolean;
+  };
+};
+
 const EMPTY_SUMMARY: DashboardSummary = {
   activeGrants: 0,
   recentAccess: [],
@@ -83,7 +97,7 @@ const EMPTY_SUMMARY: DashboardSummary = {
 export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<DashboardUser | null>(null);
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -111,6 +125,10 @@ export default function Dashboard() {
         return;
       }
 
+      // Link a referral saved at signup. The database rejects duplicates, so
+      // this is safe to run on every dashboard load.
+      void claimPendingReferral(supabase);
+
       const next: DashboardSummary = { ...(cached || EMPTY_SUMMARY) };
 
       try {
@@ -137,17 +155,17 @@ export default function Dashboard() {
           .order('accessed_at', { ascending: false })
           .limit(5);
 
-        next.recentAccess = (logs || []).map((log: Record<string, any>) => ({
+        next.recentAccess = (logs || []).map((log: Record<string, unknown>) => ({
           id: String(log.id),
-          title: log.organization_name || log.provider_name || 'Verified provider',
-          action: log.action || 'Viewed your medical record',
+          title: String(log.organization_name || log.provider_name || 'Verified provider'),
+          action: String(log.action || 'Viewed your medical record'),
           date: log.accessed_at
-            ? new Date(log.accessed_at).toLocaleDateString(undefined, {
+            ? new Date(String(log.accessed_at)).toLocaleDateString(undefined, {
                 month: 'short',
                 day: 'numeric',
               })
             : '',
-          color: log.color || 'bg-primary',
+          color: String(log.color || 'bg-primary'),
         }));
       } catch {
         // Access logs are optional on older projects.
@@ -219,7 +237,7 @@ export default function Dashboard() {
 
       const local = readLocalSession();
       if (local) {
-        setUser((prev: any) => prev || {
+        setUser((prev) => prev || {
           email: local.email || local.phone,
           user_metadata: {
             first_name: local.first_name || 'User',
@@ -323,7 +341,7 @@ export default function Dashboard() {
       const local = readLocalSession();
       if (local) {
         setIsPro(Boolean(local.is_pro));
-        setUser((prev: any) =>
+        setUser((prev) =>
           prev
             ? {
                 ...prev,
@@ -341,7 +359,7 @@ export default function Dashboard() {
 
     const handleAvatarUpdate = (event: Event) => {
       const url = (event as CustomEvent<string>).detail || '';
-      setUser((prev: any) =>
+      setUser((prev) =>
         prev
           ? {
               ...prev,
@@ -369,20 +387,6 @@ export default function Dashboard() {
       window.removeEventListener('focus', handleFocus);
     };
   }, [supabase, loadRecords, loadSummary]);
-
-  useEffect(() => {
-    let stopSync: (() => void) | undefined;
-    let cancelled = false;
-
-    void hydrateAppearance(supabase).finally(() => {
-      if (!cancelled) stopSync = startAppearanceSync(supabase);
-    });
-
-    return () => {
-      cancelled = true;
-      stopSync?.();
-    };
-  }, [supabase]);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -454,7 +458,8 @@ export default function Dashboard() {
   }, [supabase, loadSummary]);
 
   useEffect(() => {
-    setIsSidebarOpen(false);
+    const timer = window.setTimeout(() => setIsSidebarOpen(false), 0);
+    return () => window.clearTimeout(timer);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -509,9 +514,11 @@ export default function Dashboard() {
     { name: 'Records', icon: DocumentDuplicateIcon, path: '/dashboard/records' },
     { name: 'Research', icon: BeakerIcon, path: '/dashboard/research' },
     { name: 'Earnings', icon: WalletIcon, path: '/dashboard/earnings' },
+    { name: 'Referrals', icon: UserPlusIcon, path: '/dashboard/referrals' },
   ];
 
   const secondaryItems = [
+    { name: 'KYC', icon: IdentificationIcon, path: '/dashboard/kyc' },
     { name: 'Access log', icon: ShieldCheckIcon, path: '/dashboard/access-log' },
     { name: 'QR codes', icon: QrCodeIcon, path: '/dashboard/qrcodes' },
     { name: 'Selorah card', icon: CreditCardIcon, path: '/dashboard/card' },
@@ -540,7 +547,9 @@ export default function Dashboard() {
     if (path.startsWith('/dashboard/records')) return 'Medical records';
     if (path === '/dashboard/research') return 'Research';
     if (path === '/dashboard/earnings') return 'Earnings';
+    if (path === '/dashboard/referrals') return 'Referrals';
     if (path === '/dashboard/profile') return 'Profile and settings';
+    if (path === '/dashboard/kyc') return 'KYC and identity';
     if (path === '/dashboard/notifications') return 'Notifications';
     if (path === '/dashboard/access-log') return 'Access log';
     if (path === '/dashboard/qrcodes') return 'QR codes';
@@ -894,6 +903,7 @@ export default function Dashboard() {
               <Route path="records/:id" element={<RecordDetails />} />
               <Route path="research" element={<Research />} />
               <Route path="earnings" element={<Earnings />} />
+              <Route path="referrals" element={<Referrals />} />
               <Route
                 path="profile"
                 element={<Profile user={user} avatarGradient={avatarGradient} isPro={isPro} />}
@@ -906,6 +916,7 @@ export default function Dashboard() {
               <Route path="rewards" element={<Rewards />} />
               <Route path="resilience" element={<Resilience />} />
               <Route path="search" element={<SearchResults />} />
+              <Route path="kyc" element={<Kyc />} />
               <Route path="security" element={<Security />} />
               <Route path="billing" element={<Billing />} />
               <Route path="upgrade" element={<ProUpgrade />} />

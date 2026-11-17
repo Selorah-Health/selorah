@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   ArrowUpRightIcon,
+  BriefcaseIcon,
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ClipboardDocumentIcon,
@@ -11,19 +13,16 @@ import {
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import StaticPage from '../components/StaticPage';
+import { useSiteContent } from '../contexts/SiteContentContext';
 import { useToast } from '../contexts/ToastContext';
 
-// Use the monitored support inbox for every channel. The topic in the subject
-// keeps privacy and security requests easy to route.
-const CONTACT_EMAIL = 'support@selorah.app';
-const PRIVACY_EMAIL = CONTACT_EMAIL;
-const SECURITY_EMAIL = CONTACT_EMAIL;
 const WHATSAPP_URL = 'https://chat.whatsapp.com/JI2LK41IF8yHiJjEuWKk2M?mode=gi_t';
 
 const TOPICS = [
   'General question',
   'Patient support',
   'Hospital or clinic',
+  'Investment or partnership',
   'Research partnership',
   'Insurance partnership',
   'Privacy or data request',
@@ -31,15 +30,51 @@ const TOPICS = [
   'Press or media',
 ];
 
+const FOUNDER_TOPICS = new Set([
+  'Hospital or clinic',
+  'Investment or partnership',
+  'Research partnership',
+  'Insurance partnership',
+  'Press or media',
+]);
+
 export default function Contact() {
   const { success, error: toastError } = useToast();
+  const { content } = useSiteContent();
+  const contact = content.contact;
+  const [searchParams] = useSearchParams();
+  const requestedTopic = searchParams.get('topic');
+  const requestedRole = searchParams.get('role');
+  const initialTopic =
+    requestedTopic && TOPICS.includes(requestedTopic) ? requestedTopic : TOPICS[0];
   const [form, setForm] = useState({
     name: '',
     email: '',
-    topic: TOPICS[0],
+    topic: initialTopic,
     message: '',
   });
   const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    if (!requestedTopic || !TOPICS.includes(requestedTopic)) return;
+    // The query string is the source of truth for deep links from the header,
+    // footer, and role cards. Keep the select in sync when it changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm((current) => ({ ...current, topic: requestedTopic }));
+  }, [requestedTopic]);
+
+  const roleContext =
+    requestedRole === 'hospital'
+      ? 'hospital or clinic onboarding'
+      : requestedRole === 'researcher'
+        ? 'a research partnership'
+        : requestedRole === 'insurer'
+          ? 'an insurance partnership'
+          : '';
+
+  const recipient = FOUNDER_TOPICS.has(form.topic)
+    ? contact.founderEmail
+    : contact.generalEmail;
 
   const mailto = useMemo(() => {
     const subject = `[${form.topic}] Message from ${form.name.trim() || 'Selorah visitor'}`;
@@ -50,8 +85,8 @@ export default function Contact() {
       '',
       form.message.trim(),
     ].join('\n');
-    return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }, [form]);
+    return `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, [form, recipient]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -77,16 +112,16 @@ export default function Contact() {
 
   const copyEmail = async () => {
     try {
-      await navigator.clipboard.writeText(CONTACT_EMAIL);
-      success(`${CONTACT_EMAIL} is copied to your clipboard.`, 'Email copied');
+      await navigator.clipboard.writeText(contact.generalEmail);
+      success(`${contact.generalEmail} is copied to your clipboard.`, 'Email copied');
     } catch {
-      toastError(`Copy ${CONTACT_EMAIL} from the page.`, 'Copy failed');
+      toastError(`Copy ${contact.generalEmail} from the page.`, 'Copy failed');
     }
   };
 
   const copyMessage = async () => {
     const text = [
-      `To: ${CONTACT_EMAIL}`,
+      `To: ${recipient}`,
       `Subject: [${form.topic}] Message from ${form.name.trim() || 'Selorah visitor'}`,
       '',
       `Name: ${form.name.trim() || 'Not provided'}`,
@@ -98,7 +133,7 @@ export default function Contact() {
 
     try {
       await navigator.clipboard.writeText(text);
-      success('Message copied. Paste it into any email app and send it to support.', 'Message copied');
+      success('Message copied. Paste it into any email app and send it to the right team.', 'Message copied');
     } catch {
       toastError('Copying failed. Select the message text and copy it manually.', 'Copy failed');
     }
@@ -106,9 +141,9 @@ export default function Contact() {
 
   return (
     <StaticPage
-      title="Talk to a human who cares about your records."
+      title={contact.title}
       eyebrow="Contact"
-      description="Questions about your vault, a hospital rollout, research, privacy, or a security report. Pick the path that fits and we will route it to the right person."
+      description={contact.description}
       heroTone="light"
     >
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
@@ -123,6 +158,11 @@ export default function Contact() {
                 This opens your email app with the details filled in. Nothing is sent until you
                 press send there.
               </p>
+              {roleContext && (
+                <p className="mt-2 inline-flex border border-primary/15 bg-primary/5 px-2.5 py-1.5 text-[10px] font-semibold text-primary">
+                  You are contacting us about {roleContext}.
+                </p>
+              )}
             </div>
           </div>
 
@@ -194,8 +234,8 @@ export default function Contact() {
                 <p className="text-[11px] font-semibold leading-relaxed text-green-700">
                   Your email app should be open. If it did not open, use Copy message above or write
                   to{' '}
-                  <a href={`mailto:${CONTACT_EMAIL}`} className="underline">
-                    {CONTACT_EMAIL}
+                  <a href={`mailto:${recipient}`} className="underline">
+                    {recipient}
                   </a>
                   .
                 </p>
@@ -237,19 +277,25 @@ export default function Contact() {
               {[
                 {
                   label: 'General and patient support',
-                  email: CONTACT_EMAIL,
+                  email: contact.generalEmail,
                   subject: 'General question',
                   icon: EnvelopeIcon,
                 },
                 {
+                  label: 'Investor and partnership enquiries',
+                  email: contact.founderEmail,
+                  subject: 'Investment or partnership',
+                  icon: BriefcaseIcon,
+                },
+                {
                   label: 'Privacy and data requests',
-                  email: PRIVACY_EMAIL,
+                  email: contact.privacyEmail,
                   subject: 'Privacy or data request',
                   icon: ShieldCheckIcon,
                 },
                 {
                   label: 'Security reports',
-                  email: SECURITY_EMAIL,
+                  email: contact.securityEmail,
                   subject: 'Security report',
                   icon: ShieldCheckIcon,
                 },

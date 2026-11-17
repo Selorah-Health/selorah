@@ -201,8 +201,32 @@ function renderTemplate(email: QueuedEmail): RenderedEmail {
   const event = stringValue(payload.event);
   const eventTime = stringValue(payload.time);
   const device = stringValue(payload.device);
+  const city = stringValue(payload.city);
+  const role = stringValue(payload.role);
 
   switch (email.template) {
+    case 'waitlist_confirmation':
+      return layout({
+        subject: email.subject || 'You are on the Selorah waitlist',
+        preheader: city
+          ? `Early access updates for ${city} are on the way.`
+          : 'Early access updates are on the way.',
+        eyebrow: 'Waitlist',
+        heading: city ? `You are on the list for ${city}` : 'You are on the list',
+        paragraphs: [
+          `Hi ${firstName}, you are on the Selorah waitlist. We will email you when early access opens in your city.`,
+          role === 'hospital' || role === 'doctor'
+            ? 'We will also share the hospital and clinician onboarding steps before launch.'
+            : 'In the meantime, you can read the blog for product updates and practical notes on portable health records.',
+        ],
+        details: [
+          { label: 'Role', value: role || 'Patient' },
+          { label: 'City', value: city || 'Not provided' },
+        ],
+        action: { label: 'Read the latest updates', href: `${BRAND.site}/blog` },
+        note: 'You can reply to this email if your city or role changes. We will not send spam.',
+      });
+
     case 'welcome':
       return layout({
         subject: email.subject || `Welcome to ${BRAND.name}`,

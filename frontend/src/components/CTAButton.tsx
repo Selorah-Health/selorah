@@ -1,4 +1,5 @@
-import { ArrowUpRightIcon } from '@heroicons/react/24/outline';
+import { m } from 'framer-motion';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface CTAButtonProps {
   children: React.ReactNode;
@@ -19,59 +20,48 @@ export default function CTAButton({
   size = 'md',
   type = 'button',
 }: CTAButtonProps) {
-  const sizeMap = {
-    sm: { pad: 'pl-4 pr-1.5 py-1.5 text-sm', circle: 'w-7 h-7', icon: 'w-3.5 h-3.5' },
-    md: { pad: 'pl-5 pr-1.5 py-1.5 text-base', circle: 'w-8 h-8', icon: 'w-4 h-4' },
-    lg: { pad: 'pl-6 pr-2 py-2 text-lg', circle: 'w-9 h-9', icon: 'w-4.5 h-4.5' },
+  const sizes = {
+    sm: 'min-h-[38px] px-3.5 py-2 text-sm',
+    md: 'min-h-[44px] px-4 py-2.5 text-sm',
+    lg: 'min-h-[48px] px-5 py-3 text-base',
   };
-
-  const s = sizeMap[size];
 
   const variants = {
-    primary: {
-      wrap: 'bg-gradient-to-r from-primary to-primary-hover text-white border border-primary/40 shadow-lg shadow-primary/20',
-      circle: 'bg-white text-primary',
-    },
-    outline: {
-      wrap: 'bg-transparent text-white border-2 border-white/70',
-      circle: 'bg-white text-[#020924]',
-    },
-    white: {
-      wrap: 'bg-white text-[#020924] border border-white/20 shadow-sm',
-      circle: 'bg-[#020924] text-white',
-    },
-    dark: {
-      wrap: 'bg-[#020924] text-white border border-[#020924]',
-      circle: 'bg-white text-[#020924]',
-    },
+    primary: 'bg-primary text-white hover:bg-primary-hover',
+    outline: 'border border-[#D5DCE8] bg-white text-[#101217] hover:bg-[#F6F8FA]',
+    white: 'border border-white/20 bg-white text-[#101217] hover:bg-[#F6F8FA]',
+    dark: 'bg-[#101217] text-white hover:bg-[#020924]',
   };
 
-  const v = variants[variant];
+  const base = `group inline-flex items-center justify-center gap-2 rounded-none font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${sizes[size]} ${variants[variant]} ${className}`;
 
   const content = (
     <>
-      <span className="leading-none font-semibold text-left">{children}</span>
-      <span
-        className={`${s.circle} rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${v.circle}`}
-      >
-        <ArrowUpRightIcon className={s.icon} strokeWidth={2.5} />
-      </span>
+      <span>{children}</span>
+      <ArrowRightIcon
+        className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+        strokeWidth={2}
+      />
     </>
   );
 
-  const base = `inline-flex items-center justify-between gap-3 rounded-full transition-all duration-300 active:scale-[0.98] group select-none ${s.pad} ${v.wrap} ${className}`;
+  const motionProps = {
+    whileHover: { y: -1 },
+    whileTap: { scale: 0.985 },
+    transition: { duration: 0.18, ease: 'easeOut' as const },
+  };
 
   if (href) {
     return (
-      <a href={href} className={base}>
+      <m.a href={href} className={base} {...motionProps}>
         {content}
-      </a>
+      </m.a>
     );
   }
 
   return (
-    <button type={type} onClick={onClick} className={base}>
+    <m.button type={type} onClick={onClick} className={base} {...motionProps}>
       {content}
-    </button>
+    </m.button>
   );
 }

@@ -5,6 +5,7 @@ import CTAButton from '../components/CTAButton';
 import Footer from '../components/Footer';
 import SEOTitle from '../components/SEOTitle';
 import WaitlistModal from '../components/WaitlistModal';
+import MotionProvider from '../components/MotionProvider';
 import { PRO_PLANS } from '../lib/pro';
 
 const NGN_RATE = 1400; // ₦ per $1
@@ -14,7 +15,7 @@ function formatNaira(usd: number) {
   return `₦${ngn.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
 }
 
-export default function Pricing() {
+function PricingContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -47,7 +48,7 @@ export default function Pricing() {
           </h1>
           <p className="text-base sm:text-lg text-white/75 leading-relaxed max-w-2xl mx-auto">
             Why do patients pay? Because when the product is free, you are the product. We charge a
-            minimal subscription so your data remains entirely yours—encrypted, secure, and never
+            minimal subscription so your data remains entirely yours, encrypted, secure, and never
             sold without your explicit consent and compensation.
           </p>
         </div>
@@ -183,5 +184,13 @@ export default function Pricing() {
       <Footer />
       <WaitlistModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
+  );
+}
+
+export default function Pricing() {
+  return (
+    <MotionProvider>
+      <PricingContent />
+    </MotionProvider>
   );
 }

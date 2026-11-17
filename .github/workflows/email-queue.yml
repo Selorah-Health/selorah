@@ -1,0 +1,39 @@
+name: Drain email queue
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: email-queue
+  cancel-in-progress: false
+
+jobs:
+  drain:
+    name: Send queued email
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+      EMAIL_CRON_SECRET: ${{ secrets.EMAIL_CRON_SECRET }}
+
+    steps:
+      - name: Call send-email
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "::warning::SUPABASE_URL is not set. Add it to repository secrets to drain the email queue."
+            exit 0
+          fi
+
+          if [ -z "$EMAIL_CRON_SECRET" ]; then
+            echo "::warning::EMAIL_CRON_SECRET is not set. The function will reject the request if it is configured."
+          fi
+
+          curl --fail-with-body --silent --show-error \
+            --request POST "$SUPABASE_URL/functions/v1/send-email" \
+            --header "Content-Type: application/json" \
+            --header "x-email-cron-secret: $EMAIL_CRON_SECRET" \
+            --data '{"limit":25}'

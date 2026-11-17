@@ -2,8 +2,10 @@
  * Session helpers for role-based portal access.
  *
  * Rules:
- * - patient  → /dashboard only (not hospital / researcher / insurer)
- * - provider / hospital / researcher / insurer → their portal + patient dashboard
+ * - patient  -> /dashboard only (not hospital / researcher / insurer)
+ * - provider / hospital / researcher / insurer -> their portal + patient dashboard
+ * - writer -> /adb
+ * - qa / admin -> /qa
  */
 
 export type UserRole =
@@ -12,10 +14,47 @@ export type UserRole =
   | 'hospital'
   | 'researcher'
   | 'insurer'
+  | 'writer'
   | 'qa'
   | 'admin'
   | 'developer'
   | 'partner';
+
+/** Internal staff domain. Any authenticated user on this domain can open the CMS. */
+export const SELORAH_STAFF_DOMAIN = 'selorah.app';
+
+/**
+ * Bootstrap owner accounts. These are checked in the browser only so the owner
+ * can open the website admin before a profile role is set. Database writes are
+ * still protected by RLS; add the same address to public.site_admins before
+ * expecting saves to succeed.
+ */
+const BOOTSTRAP_SITE_ADMIN_EMAILS = [
+  'officialsammy61@gmail.com',
+  'officalsammy61@gmail.com',
+  'samuelamanze@selorah.app',
+];
+
+const EXTRA_SITE_ADMIN_EMAILS = String(import.meta.env.VITE_SITE_ADMIN_EMAILS || '')
+  .split(',')
+  .map((value: string) => value.trim().toLowerCase())
+  .filter(Boolean);
+
+export function isSelorahStaffEmail(email?: string | null): boolean {
+  const normalized = (email || '').trim().toLowerCase();
+  return normalized.endsWith(`@${SELORAH_STAFF_DOMAIN}`);
+}
+
+/** Staff, the bootstrap owner, and any address in VITE_SITE_ADMIN_EMAILS. */
+export function isSelorahSiteAdminEmail(email?: string | null): boolean {
+  const normalized = (email || '').trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    isSelorahStaffEmail(normalized) ||
+    BOOTSTRAP_SITE_ADMIN_EMAILS.includes(normalized) ||
+    EXTRA_SITE_ADMIN_EMAILS.includes(normalized)
+  );
+}
 
 export interface SelorahSession {
   id?: string;
@@ -54,6 +93,7 @@ export function normalizeRole(role?: string | null): UserRole {
   if (r === 'hospital' || r === 'provider') return 'provider';
   if (r === 'researcher') return 'researcher';
   if (r === 'insurer') return 'insurer';
+  if (r === 'writer') return 'writer';
   if (r === 'qa') return 'qa';
   if (r === 'admin') return 'admin';
   return 'patient';
@@ -62,7 +102,7 @@ export function normalizeRole(role?: string | null): UserRole {
 /** Staff roles may also use the patient portal. */
 export function isStaffRole(role?: string | null): boolean {
   const r = normalizeRole(role);
-  return r === 'provider' || r === 'researcher' || r === 'insurer';
+  return r === 'provider' || r === 'researcher' || r === 'insurer' || r === 'writer';
 }
 
 /**
@@ -71,7 +111,8 @@ export function isStaffRole(role?: string | null): boolean {
  */
 export function resolvePortalAccess(
   role: string | null | undefined,
-  targetPath: string
+  targetPath: string,
+  email?: string | null
 ): { allowed: boolean; redirectTo: string } {
   const r = normalizeRole(role);
   const path = targetPath.split('?')[0];
@@ -80,6 +121,7 @@ export function resolvePortalAccess(
   const isHospital = path.startsWith('/hospital');
   const isResearcher = path.startsWith('/researcher');
   const isInsurer = path.startsWith('/insurer');
+  const isCms = path.startsWith('/cms') || path.startsWith('/adb');
   const isQa = path.startsWith('/qa');
 
   // Patient portal: everyone logged in may enter
@@ -90,6 +132,16 @@ export function resolvePortalAccess(
   if (isQa) {
     if (r === 'qa' || r === 'admin') return { allowed: true, redirectTo: path };
     return { allowed: false, redirectTo: homeForRole(r) };
+  }
+
+  if (isCms) {
+    if (r === 'writer' || r === 'admin' || isSelorahSiteAdminEmail(email)) {
+      return { allowed: true, redirectTo: path };
+    }
+    // Do not bounce an authenticated visitor to the patient dashboard. The
+    // website admin renders a clear access message instead, which is easier to
+    // understand and avoids a redirect loop when the profile lookup is slow.
+    return { allowed: false, redirectTo: path };
   }
 
   if (isHospital) {
@@ -113,6 +165,7 @@ export function homeForRole(role?: string | null): string {
   if (r === 'provider') return '/hospital';
   if (r === 'researcher') return '/researcher';
   if (r === 'insurer') return '/insurer';
+  if (r === 'writer') return '/adb';
   if (r === 'qa' || r === 'admin') return '/qa';
   return '/dashboard';
 }

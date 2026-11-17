@@ -82,7 +82,7 @@ export default function CookiePolicy() {
 
       <section className="mb-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">14. Contact</h2>
-        <p className="text-gray-600">Questions about cookies: privacy@selorah.health — Selorah Health Limited. For general privacy rights requests, use the same address and describe your request clearly.</p>
+        <p className="text-gray-600">Questions about cookies: privacy@selorah.health. Selorah Health Limited. For general privacy rights requests, use the same address and describe your request clearly.</p>
       </section>
     </LegalLayout>
   );
