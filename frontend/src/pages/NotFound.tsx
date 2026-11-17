@@ -12,7 +12,7 @@ export default function NotFound() {
           </p>
           <Link 
             to="/" 
-            className="inline-flex items-center justify-center px-8 py-3 bg-primary text-white font-bold rounded-full hover:bg-primary-hover transition-all"
+            className="inline-flex items-center justify-center px-8 py-3 bg-primary text-white font-bold rounded-none hover:bg-primary-hover transition-all"
           >
             Go back home
           </Link>

@@ -702,7 +702,7 @@ export default function SharedRecord() {
                 <button
                   type="submit"
                   disabled={loggingAccess}
-                  className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+                  className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-none bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
                 >
                   {loggingAccess ? 'Opening record...' : 'Open patient record'}
                   {!loggingAccess && <ChevronRightIcon className="h-4 w-4" />}

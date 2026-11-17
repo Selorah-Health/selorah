@@ -25,10 +25,18 @@ export default function StaticPage({
   const location = useLocation();
 
   useEffect(() => {
+    const hash = location.hash.replace(/^#/, '');
+    if (hash) {
+      const target = document.getElementById(decodeURIComponent(hash));
+      if (target) {
+        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+        return;
+      }
+    }
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-  }, [location.pathname]);
+  }, [location.pathname, location.hash]);
 
   const dark = heroTone === 'dark';
 

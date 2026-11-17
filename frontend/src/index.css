@@ -748,6 +748,7 @@ a:hover .btn-arrow-right {
 .dark [class~='bg-[#FBFCFE]'],
 .dark [class~='bg-[#F4F6FA]'],
 .dark [class~='bg-[#F4F7FF]'],
+.dark [class~='bg-[#F8FAFC]'],
 .dark [class~='bg-[#F6F8FA]'] {
   background-color: #121727 !important;
 }

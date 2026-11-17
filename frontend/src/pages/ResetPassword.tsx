@@ -122,7 +122,7 @@ export default function ResetPassword() {
               </p>
               <Link
                 to="/forgot-password"
-                className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+                className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-none bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
               >
                 Request a new link
               </Link>
@@ -141,7 +141,7 @@ export default function ResetPassword() {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+                className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-none bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
               >
                 Go to login
               </button>
@@ -233,7 +233,7 @@ export default function ResetPassword() {
                 <button
                   type="submit"
                   disabled={status === 'saving'}
-                  className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-none bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {status === 'saving' ? 'Updating password...' : 'Update password'}
                 </button>

@@ -394,48 +394,50 @@ function FaqSection() {
           </div>
         </Reveal>
 
-        <div className="border-y border-[#E5E7EB]">
-          {section.items.map((item, index) => {
-            const isOpen = openIndex === index;
-            return (
-              <div key={item.question} className={index > 0 ? 'border-t border-[#E5E7EB]' : ''}>
-                <button
-                  type="button"
-                  onClick={() => setOpenIndex(isOpen ? null : index)}
-                  aria-expanded={isOpen}
-                  className="flex w-full items-start justify-between gap-6 py-5 text-left transition-colors sm:py-6"
-                >
-                  <span
-                    className={`text-base font-medium leading-snug ${
-                      isOpen ? 'text-primary' : 'text-[#101217]'
+        <Reveal delay={80}>
+          <div className="border-y border-[#E5E7EB]">
+            {section.items.map((item, index) => {
+              const isOpen = openIndex === index;
+              return (
+                <div key={item.question} className={index > 0 ? 'border-t border-[#E5E7EB]' : ''}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenIndex(isOpen ? null : index)}
+                    aria-expanded={isOpen}
+                    className="flex w-full items-start justify-between gap-6 py-5 text-left transition-colors sm:py-6"
+                  >
+                    <span
+                      className={`text-base font-medium leading-snug ${
+                        isOpen ? 'text-primary' : 'text-[#101217]'
+                      }`}
+                    >
+                      {item.question}
+                    </span>
+                    {isOpen ? (
+                      <MinusIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
+                    ) : (
+                      <PlusIcon
+                        className="mt-0.5 h-4 w-4 shrink-0 text-[#8A94A6]"
+                        strokeWidth={2}
+                      />
+                    )}
+                  </button>
+                  <div
+                    className={`grid transition-all duration-300 ease-out ${
+                      isOpen ? 'grid-rows-[1fr] pb-6 opacity-100' : 'grid-rows-[0fr] opacity-0'
                     }`}
                   >
-                    {item.question}
-                  </span>
-                  {isOpen ? (
-                    <MinusIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
-                  ) : (
-                    <PlusIcon
-                      className="mt-0.5 h-4 w-4 shrink-0 text-[#8A94A6]"
-                      strokeWidth={2}
-                    />
-                  )}
-                </button>
-                <div
-                  className={`grid transition-all duration-300 ease-out ${
-                    isOpen ? 'grid-rows-[1fr] pb-6 opacity-100' : 'grid-rows-[0fr] opacity-0'
-                  }`}
-                >
-                  <div className="overflow-hidden">
-                    <p className="max-w-xl pr-8 text-sm leading-relaxed text-[#6B7280]">
-                      {item.answer}
-                    </p>
+                    <div className="overflow-hidden">
+                      <p className="max-w-xl pr-8 text-sm leading-relaxed text-[#6B7280]">
+                        {item.answer}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -647,20 +649,34 @@ export default function LandingPage() {
         </section>
 
         <ProductPreviewSection />
-        <PartnerBand />
-        <ProblemSection />
-        <HowItWorksSection />
+        <Reveal>
+          <PartnerBand />
+        </Reveal>
+        <Reveal>
+          <ProblemSection />
+        </Reveal>
+        <Reveal>
+          <HowItWorksSection />
+        </Reveal>
         <CareTeamsSection onJoin={openWaitlist} />
-        <AdSlot />
+        <Reveal>
+          <AdSlot />
+        </Reveal>
         <RoleSolutionsSection onJoin={openWaitlist} />
-        <OwnershipSection />
+        <Reveal>
+          <OwnershipSection />
+        </Reveal>
         <TrustSecuritySection />
         <BlogTeaserSection />
         <WhatHappensNext />
-        <AdSlot variant="native" />
+        <Reveal>
+          <AdSlot variant="native" />
+        </Reveal>
         <FaqSection />
         <FounderSection />
-        <FinalCtaSection onJoin={() => openWaitlist('patient', 'final-cta')} />
+        <Reveal>
+          <FinalCtaSection onJoin={() => openWaitlist('patient', 'final-cta')} />
+        </Reveal>
 
         <div ref={footerSentinelRef} aria-hidden className="h-px" />
         <Footer />

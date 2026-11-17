@@ -35,11 +35,6 @@ const ACCENT_STORAGE_KEY = 'selorah_accent';
 const THEME_EVENT = 'selorah:theme-updated';
 const ACCENT_EVENT = 'selorah:accent-updated';
 
-function systemTheme(): Theme {
-  if (typeof window === 'undefined') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
 export function readTheme(): Theme {
   if (typeof window === 'undefined') return 'light';
   try {
@@ -48,7 +43,7 @@ export function readTheme(): Theme {
   } catch {
     // Storage can be blocked in private mode.
   }
-  return systemTheme();
+  return 'light';
 }
 
 export function readAccent(): AccentId {
@@ -124,19 +119,6 @@ export function initTheme() {
 
   applyAccent(readAccent(), false);
   applyTheme(readTheme(), false);
-
-  let stored: string | null = null;
-  try {
-    stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-  } catch {
-    stored = null;
-  }
-
-  if (!stored) {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => applyTheme(media.matches ? 'dark' : 'light', false);
-    media.addEventListener('change', onChange);
-  }
 }
 
 export function listenForTheme(callback: (theme: Theme) => void) {

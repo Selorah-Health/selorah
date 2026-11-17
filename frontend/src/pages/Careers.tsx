@@ -14,6 +14,29 @@ import { Link } from 'react-router-dom';
 import StaticPage from '../components/StaticPage';
 import { CAREER_ROLES, applyHref } from '../lib/careers';
 
+const HOW_WE_HIRE = [
+  {
+    title: 'Apply',
+    duration: 'About 15 minutes',
+    body: 'Send your resume, links, and a short note. No account is needed, and you can save your answers as you go.',
+  },
+  {
+    title: 'We review',
+    duration: '10 working days',
+    body: 'A person reads every application. We reply either way, and we tell you what stood out or what was missing.',
+  },
+  {
+    title: 'A conversation',
+    duration: '30 minutes',
+    body: 'A call about your work, what you want to learn, and how we collaborate. You will meet the person you would work with.',
+  },
+  {
+    title: 'Show us',
+    duration: '60 to 90 minutes',
+    body: 'A short paid exercise or working session based on the role. We keep it focused and respect your time.',
+  },
+];
+
 const PERKS = [
   {
     title: 'Remote first',
@@ -88,7 +111,7 @@ export default function Careers() {
           </div>
           <a
             href={applyHref('General application')}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-primary/30"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-none border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-primary/30"
           >
             <EnvelopeIcon className="h-4 w-4 text-primary" />
             Send a general application
@@ -151,17 +174,17 @@ export default function Careers() {
                 <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
                   <Link
                     to={`/careers/${role.slug}`}
-                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-primary/30 hover:text-primary"
+                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-none border border-gray-200 bg-white px-5 text-xs font-bold text-[#101217] transition-colors hover:border-primary/30 hover:text-primary"
                   >
                     View details
                   </Link>
-                  <a
-                    href={applyHref(role.title)}
-                    className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+                  <Link
+                    to={`/careers/${role.slug}#application`}
+                    className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-none bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
                   >
                     Apply now
                     <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </a>
+                  </Link>
                 </div>
               </div>
             </article>
@@ -212,12 +235,50 @@ export default function Careers() {
           </div>
           <a
             href={applyHref('General application')}
-            className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-bold text-[#101217] transition-colors hover:bg-[#F4F7FF]"
+            className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-none bg-white px-6 text-sm font-bold text-[#101217] transition-colors hover:bg-[#F4F7FF]"
           >
             <EnvelopeIcon className="h-4 w-4 text-primary" />
             Introduce yourself
           </a>
         </div>
+      </section>
+
+      <section className="mt-16">
+        <div className="max-w-2xl">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            How we hire
+          </p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-[#101217] sm:text-4xl">
+            Four steps. No black box.
+          </h2>
+          <p className="mt-3 text-sm font-medium leading-relaxed text-gray-500">
+            We keep the process short, tell you where you stand, and respect the time you give us.
+          </p>
+        </div>
+
+        <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {HOW_WE_HIRE.map((step, index) => (
+            <li
+              key={step.title}
+              className="relative rounded-[26px] border border-gray-100 bg-white p-5 shadow-[0_22px_60px_-48px_rgba(15,23,42,0.45)]"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#101217] text-[11px] font-black text-white">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="text-[9px] font-black uppercase tracking-[0.12em] text-gray-400">
+                  {step.duration}
+                </span>
+              </div>
+              <h3 className="mt-4 text-base font-black tracking-tight text-[#101217]">
+                {step.title}
+              </h3>
+              <p className="mt-1.5 text-[11px] font-medium leading-relaxed text-gray-500">
+                {step.body}
+              </p>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="mt-16 text-center">
@@ -230,7 +291,7 @@ export default function Careers() {
         </p>
         <a
           href={applyHref('Open application')}
-          className="mt-6 inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+          className="mt-6 inline-flex min-h-[50px] items-center justify-center gap-2 rounded-none bg-primary px-7 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
         >
           Send your resume
           <ArrowRightIcon className="h-4 w-4" />

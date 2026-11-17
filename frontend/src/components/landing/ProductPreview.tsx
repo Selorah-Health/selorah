@@ -42,7 +42,7 @@ export default function ProductPreview() {
         className="absolute -inset-x-8 -top-8 bottom-10 rounded-[40px] bg-gradient-to-b from-primary/20 via-[#5FFAB0]/10 to-transparent blur-2xl"
       />
 
-      <div className="relative overflow-hidden rounded-[24px] border border-white/70 bg-white shadow-[0_40px_120px_-32px_rgba(2,9,36,0.38)] ring-1 ring-[#020924]/5 sm:rounded-[30px]">
+      <div className="relative overflow-hidden rounded-[14px] border border-white/70 bg-white shadow-[0_40px_120px_-32px_rgba(2,9,36,0.38)] ring-1 ring-[#020924]/5 sm:rounded-[15px]">
         <div className="flex items-center gap-3 border-b border-[#E9EDF5] bg-[#FBFCFE] px-4 py-3 sm:px-5">
           <div className="flex gap-1.5" aria-hidden>
             <span className="h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />

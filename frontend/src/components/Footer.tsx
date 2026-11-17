@@ -67,11 +67,11 @@ export default function Footer() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center gap-2.5 bg-white text-[#020924] font-semibold rounded-full pl-5 pr-1.5 py-1.5 text-sm transition-all duration-300 hover:bg-gray-50 active:scale-[0.98] group"
+                className="inline-flex items-center gap-2.5 bg-white text-[#020924] font-semibold rounded-none pl-5 pr-1.5 py-1.5 text-sm transition-all duration-300 hover:bg-gray-50 active:scale-[0.98] group"
               >
                 <span>Join The Waitlist</span>
-                <span className="w-8 h-8 rounded-full bg-[#020924] text-white flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                  <ArrowUpRightIcon className="w-4 h-4" strokeWidth={2.5} />
+                <span className="w-8 h-8 rounded-none bg-[#ffffff] text-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                  <ArrowUpRightIcon className="w-4 h-4" strokeWidth={3} />
                 </span>
               </button>
             </div>

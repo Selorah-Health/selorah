@@ -481,7 +481,7 @@ export default function Onboarding() {
             <ThemeToggle />
             <Link
               to="/dashboard"
-              className="rounded-full border border-gray-200 px-3.5 py-2 text-[11px] font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
+              className="rounded-none border border-gray-200 px-3.5 py-2 text-[11px] font-bold text-gray-500 transition-colors hover:border-primary/40 hover:text-primary"
             >
               Skip for now
             </Link>
@@ -764,7 +764,7 @@ export default function Onboarding() {
                   <button
                     type="button"
                     onClick={prevStep}
-                    className="flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-white text-xs font-bold text-gray-600 transition-colors hover:bg-gray-50"
+                    className="flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-none border border-gray-200 bg-white text-xs font-bold text-gray-600 transition-colors hover:bg-gray-50"
                   >
                     <ArrowLeftIcon className="h-3.5 w-3.5" />
                     Back
@@ -774,7 +774,7 @@ export default function Onboarding() {
                   type="button"
                   onClick={nextStep}
                   disabled={isPatient ? !formData.firstName.trim() : !formData.orgName.trim()}
-                  className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-none bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Continue
                   <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -941,7 +941,7 @@ export default function Onboarding() {
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-white text-xs font-bold text-gray-600 transition-colors hover:bg-gray-50"
+                  className="flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-none border border-gray-200 bg-white text-xs font-bold text-gray-600 transition-colors hover:bg-gray-50"
                 >
                   <ArrowLeftIcon className="h-3.5 w-3.5" />
                   Back
@@ -949,7 +949,7 @@ export default function Onboarding() {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+                  className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-none bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
                 >
                   Continue
                   <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -1018,7 +1018,7 @@ export default function Onboarding() {
                       <button
                         type="button"
                         onClick={addContact}
-                        className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 text-[11px] font-bold text-gray-400 transition-colors hover:border-primary/40 hover:text-primary"
+                        className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-none border-2 border-dashed border-gray-200 text-[11px] font-bold text-gray-400 transition-colors hover:border-primary/40 hover:text-primary"
                       >
                         <PlusIcon className="h-4 w-4" />
                         Add an emergency contact
@@ -1043,7 +1043,7 @@ export default function Onboarding() {
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-white text-xs font-bold text-gray-600 transition-colors hover:bg-gray-50"
+                  className="flex min-h-[48px] flex-1 items-center justify-center gap-1.5 rounded-none border border-gray-200 bg-white text-xs font-bold text-gray-600 transition-colors hover:bg-gray-50"
                 >
                   <ArrowLeftIcon className="h-3.5 w-3.5" />
                   Back
@@ -1052,7 +1052,7 @@ export default function Onboarding() {
                   <button
                     type="button"
                     onClick={nextStep}
-                    className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+                    className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-none bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
                   >
                     Review and finish
                     <ArrowRightIcon className="h-3.5 w-3.5" />
@@ -1062,7 +1062,7 @@ export default function Onboarding() {
                     type="button"
                     onClick={handleFinish}
                     disabled={saving}
-                    className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-2xl bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:opacity-60"
+                    className="flex min-h-[48px] flex-[2] items-center justify-center gap-1.5 rounded-none bg-primary text-xs font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover disabled:opacity-60"
                   >
                     {saving ? 'Saving profile...' : 'Go to dashboard'}
                   </button>
@@ -1114,7 +1114,7 @@ export default function Onboarding() {
                 type="button"
                 onClick={handleFinish}
                 disabled={saving}
-                className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover disabled:opacity-60"
+                className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-none bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover disabled:opacity-60"
               >
                 {saving ? (
                   <>
@@ -1129,7 +1129,7 @@ export default function Onboarding() {
               <button
                 type="button"
                 onClick={prevStep}
-                className="mt-2 min-h-[44px] w-full rounded-2xl text-xs font-bold text-gray-400 transition-colors hover:text-gray-600"
+                className="mt-2 min-h-[44px] w-full rounded-none text-xs font-bold text-gray-400 transition-colors hover:text-gray-600"
               >
                 Back to emergency contacts
               </button>

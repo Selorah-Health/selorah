@@ -245,7 +245,7 @@ export default function Contact() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="submit"
-                className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+                className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-none bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
               >
                 <PaperAirplaneIcon className="h-4 w-4" />
                 Open email and send
@@ -253,7 +253,7 @@ export default function Contact() {
               <button
                 type="button"
                 onClick={copyMessage}
-                className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-bold text-gray-600 transition-colors hover:border-primary/40 hover:text-primary"
+                className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-none border border-gray-200 bg-white px-5 text-sm font-bold text-gray-600 transition-colors hover:border-primary/40 hover:text-primary"
               >
                 <ClipboardDocumentIcon className="h-4 w-4" />
                 Copy message
@@ -324,7 +324,7 @@ export default function Contact() {
             <button
               type="button"
               onClick={copyEmail}
-              className="mt-4 min-h-[40px] w-full rounded-full border border-white/15 px-4 text-[10px] font-black uppercase tracking-[0.12em] text-white/70 transition-colors hover:border-white/30 hover:text-white"
+              className="mt-4 min-h-[40px] w-full rounded-none border border-white/15 px-4 text-[10px] font-black uppercase tracking-[0.12em] text-white/70 transition-colors hover:border-white/30 hover:text-white"
             >
               Copy general email
             </button>

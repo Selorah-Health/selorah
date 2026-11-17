@@ -538,7 +538,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary-hover active:scale-[0.99] disabled:opacity-60"
+              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-none bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary-hover active:scale-[0.99] disabled:opacity-60"
             >
               {loading ? (
                 <>

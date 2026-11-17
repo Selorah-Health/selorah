@@ -796,7 +796,7 @@ function WhatsHappeningSection() {
           <Reveal>
             <div>
               <h2 className="text-3xl font-semibold tracking-[-0.04em] text-[#101217] sm:text-4xl">
-                What's happening
+                What&apos;s happening
               </h2>
               <p className="mt-2 text-base text-[#6B7280]">See the latest from Selorah.</p>
             </div>
@@ -1037,7 +1037,9 @@ export default function LandingPageStripe() {
           <SecuritySection />
           <WhatsHappeningSection />
           <StandardSection />
-          <FinalCtaSection onJoin={() => openWaitlist('patient', 'final-cta')} />
+          <Reveal>
+            <FinalCtaSection onJoin={() => openWaitlist('patient', 'final-cta')} />
+          </Reveal>
         </main>
 
         <div ref={footerSentinelRef} aria-hidden className="h-px" />

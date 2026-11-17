@@ -108,14 +108,14 @@ export default function About() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               to="/signup"
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-none bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
             >
               Create your vault
               <ArrowRightIcon className="h-4 w-4" />
             </Link>
             <Link
               to="/contact"
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 text-sm font-bold text-[#101217] transition-colors hover:border-primary/30"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-none border border-gray-200 bg-white px-6 text-sm font-bold text-[#101217] transition-colors hover:border-primary/30"
             >
               Talk to the team
             </Link>
@@ -255,14 +255,14 @@ export default function About() {
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             to="/signup"
-            className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full bg-primary px-7 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover sm:w-auto"
+            className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-none bg-primary px-7 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover sm:w-auto"
           >
             Get started now
             <ArrowRightIcon className="h-4 w-4" />
           </Link>
           <Link
             to="/careers"
-            className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-bold text-[#101217] transition-colors hover:border-primary/30 sm:w-auto"
+            className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-none border border-gray-200 bg-white px-7 text-sm font-bold text-[#101217] transition-colors hover:border-primary/30 sm:w-auto"
           >
             View openings
             <BeakerIcon className="h-4 w-4" />

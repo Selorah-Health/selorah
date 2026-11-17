@@ -151,7 +151,7 @@ export default function LegalLayout({
 
               <Link
                 to="/contact"
-                className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2.5 text-[11px] font-bold text-primary transition-colors hover:border-primary/30"
+                className="mt-4 flex items-center justify-between gap-2 rounded-none border border-gray-100 bg-white px-3 py-2.5 text-[11px] font-bold text-primary transition-colors hover:border-primary/30"
               >
                 Questions? Contact us
                 <ArrowUpRightIcon className="h-3.5 w-3.5" />
@@ -173,7 +173,7 @@ export default function LegalLayout({
               </div>
               <Link
                 to="/contact"
-                className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-[11px] font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+                className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-none bg-primary px-5 text-[11px] font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
               >
                 Contact Selorah
                 <ArrowUpRightIcon className="h-3.5 w-3.5" />

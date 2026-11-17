@@ -1,4 +1,4 @@
-export const CAREERS_EMAIL = 'support@selorah.app';
+export const CAREERS_EMAIL = 'samuelamanze@selorah.app';
 
 export type CareerRole = {
   slug: string;
@@ -21,7 +21,7 @@ export const CAREER_ROLES: CareerRole[] = [
     type: 'Full-time',
     team: 'Engineering',
     summary:
-      'Build the secure record vault, sharing flows, and provider integrations. You will work across React, TypeScript, Postgres, and Supabase edge functions.',
+      'Build the secure record vault, sharing flows, and provider integrations. You will work across React, TypeScript, Go, Postgres, and Supabase edge functions.',
     skills: ['React', 'TypeScript', 'Postgres', 'Supabase', 'Security'],
     responsibilities: [
       'Design and ship patient facing features across the web app and edge functions.',
@@ -31,7 +31,7 @@ export const CAREER_ROLES: CareerRole[] = [
       'Work with design and clinical advisors to turn messy workflows into clear screens.',
     ],
     requirements: [
-      '4 or more years building production web applications.',
+      '2 or more years building production web applications.',
       'Strong React and TypeScript skills, with a good eye for accessibility and performance.',
       'Comfort with relational databases, migrations, and row level security.',
       'A security minded approach to authentication, authorization, and personal data.',
@@ -39,6 +39,7 @@ export const CAREER_ROLES: CareerRole[] = [
     ],
     niceToHave: [
       'Experience with Supabase, Postgres policies, or edge functions.',
+      'Experience with GoLang.',
       'Background in health tech, fintech, or another regulated industry.',
       'Experience with offline first web apps and service workers.',
     ],

@@ -159,7 +159,7 @@ export default function InstallPrompt() {
               type="button"
               onClick={install}
               disabled={installing}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-hover px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.99] disabled:opacity-60"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-none bg-gradient-to-r from-primary to-primary-hover px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.99] disabled:opacity-60"
             >
               <ArrowDownTrayIcon className="h-4.5 w-4.5" />
               {installing ? 'Opening installer...' : 'Install app'}
@@ -168,7 +168,7 @@ export default function InstallPrompt() {
             <button
               type="button"
               onClick={() => dismiss()}
-              className="flex min-h-[44px] w-full items-center justify-center rounded-2xl bg-[#101217] px-5 text-sm font-bold text-white transition-all active:scale-[0.99]"
+              className="flex min-h-[44px] w-full items-center justify-center rounded-none bg-[#101217] px-5 text-sm font-bold text-white transition-all active:scale-[0.99]"
             >
               Got it
             </button>

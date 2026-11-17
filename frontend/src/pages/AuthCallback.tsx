@@ -146,7 +146,7 @@ export default function AuthCallback() {
             <p className="mt-2 text-sm font-medium leading-relaxed text-gray-500">{error}</p>
             <Link
               to="/login"
-              className="mt-6 flex min-h-[50px] w-full items-center justify-center rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover"
+              className="mt-6 flex min-h-[50px] w-full items-center justify-center rounded-none bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-colors hover:bg-primary-hover"
             >
               Back to login
             </Link>

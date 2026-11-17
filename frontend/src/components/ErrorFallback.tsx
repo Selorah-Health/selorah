@@ -78,7 +78,7 @@ export default function ErrorFallback({ onRetry }: ErrorFallbackProps) {
             <button
               type="button"
               onClick={refresh}
-              className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
+              className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-none bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-colors hover:bg-primary-hover"
             >
               <ArrowPathIcon className="h-4 w-4" />
               Refresh Selorah
