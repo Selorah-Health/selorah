@@ -11,7 +11,7 @@ import BlogCard from '../blog/BlogCard';
 import Reveal from './Reveal';
 
 const TEASER_MIN = 3;
-const TEASER_LIMIT = 9;
+const TEASER_LIMIT = TEASER_MIN;
 
 function fallbackPosts(limit = TEASER_MIN) {
   return previewBlogPosts().slice(0, limit);
